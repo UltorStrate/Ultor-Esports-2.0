@@ -8,6 +8,7 @@ import {
   handleTeamsApi,
   handlePublicTeamsApi
 } from "./teams-api.js";
+
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
@@ -288,4 +289,3 @@ export default {
     });
   }
 };
-
