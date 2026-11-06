@@ -782,3 +782,7 @@ export async function handleTeamsApi(request, env, auth) {
     error: "Teams-API-Endpunkt nicht gefunden."
   }, 404);
 }
+export async function handlePublicTeamsApi(request, env) {
+  if (request.method !== "GET") {
+    return publicJson({ error: "Methode nicht erlaubt." }, 405);
+  }
