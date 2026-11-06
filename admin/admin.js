@@ -454,3 +454,106 @@ document.getElementById("logoutButton")?.addEventListener("click", async () => {
 
 // Start
 loadDashboard();
+// =========================================
+// ULTOR CMS – NAVIGATION
+// =========================================
+
+const VIEW_TITLES = {
+  dashboard: "Dashboard",
+  news: "News",
+  teams: "Teams & Spieler",
+  partners: "Partner",
+  media: "Medien",
+  users: "Benutzer & Rechte",
+  activity: "Aktivitätsprotokoll"
+};
+
+function openCmsView(viewName) {
+  const target = document.getElementById(`view-${viewName}`);
+
+  if (!target) return;
+
+  document.querySelectorAll(".cms-view").forEach(view => {
+    view.classList.remove("active");
+  });
+
+  target.classList.add("active");
+
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.view === viewName
+    );
+  });
+
+  const breadcrumb = document.getElementById("breadcrumbTitle");
+
+  if (breadcrumb) {
+    breadcrumb.textContent = VIEW_TITLES[viewName] || "Dashboard";
+  }
+
+  document.getElementById("sidebar")?.classList.remove("open");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+document.querySelectorAll("[data-view]").forEach(button => {
+  button.addEventListener("click", () => {
+    openCmsView(button.dataset.view);
+  });
+});
+
+// Mobile Navigation
+document.getElementById("mobileMenuButton")?.addEventListener("click", () => {
+  document.getElementById("sidebar")?.classList.toggle("open");
+});
+
+// Benutzerinformationen im neuen Dashboard anzeigen
+const originalLoadDashboard = loadDashboard;
+
+loadDashboard = async function () {
+  await originalLoadDashboard();
+
+  const userLabel = document.getElementById("currentUser");
+
+  if (!userLabel) return;
+
+  try {
+    const data = await apiRequest(`${API_ADMIN}/me`);
+    const user = data.user;
+    const isOwner = user.is_owner === 1;
+
+    const sidebarName = document.getElementById("sidebarUserName");
+    const sidebarRole = document.getElementById("sidebarUserRole");
+    const avatar = document.getElementById("userAvatar");
+
+    if (sidebarName) sidebarName.textContent = user.name;
+    if (sidebarRole) sidebarRole.textContent = isOwner ? "Owner" : "CMS-Benutzer";
+    if (avatar) avatar.textContent = (user.name || "U").charAt(0).toUpperCase();
+
+    const roleText = isOwner ? "OWNER" : "BENUTZER";
+    const statRole = document.getElementById("statUserRole");
+    const statPermissions = document.getElementById("statPermissionCount");
+
+    if (statRole) statRole.textContent = roleText;
+    if (statPermissions) {
+      statPermissions.textContent = isOwner
+        ? "Alle"
+        : String(data.permissions.length);
+    }
+
+    const accountName = document.getElementById("accountName");
+    const accountEmail = document.getElementById("accountEmail");
+    const accountRole = document.getElementById("accountRole");
+
+    if (accountName) accountName.textContent = user.name;
+    if (accountEmail) accountEmail.textContent = user.email;
+    if (accountRole) accountRole.textContent = roleText;
+
+  } catch (error) {
+    console.error("Dashboard profile error:", error);
+  }
+};
