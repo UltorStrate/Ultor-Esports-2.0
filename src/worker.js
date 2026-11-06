@@ -154,6 +154,26 @@ export default {
     }
 
     // =========================================
+    // ÖFFENTLICHE TEAMS-API
+    // =========================================
+
+    if (
+      normalizedPath === "/api/teams" ||
+      normalizedPath.startsWith("/api/teams/")
+    ) {
+      try {
+        return await handlePublicTeamsApi(request, env);
+      } catch (error) {
+        console.error("Public Teams API error:", error);
+
+        return Response.json(
+          { error: "Teams konnten nicht geladen werden." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================================
     // ÖFFENTLICHE NEWS-API
     // =========================================
 
@@ -268,75 +288,4 @@ export default {
     });
   }
 };
-
-// =========================================
-// ÖFFENTLICHE TEAMS-API
-// =========================================
-
-if (
-  normalizedPath === "/api/teams" ||
-  normalizedPath.startsWith("/api/teams/")
-) {
-  try {
-    return await handlePublicTeamsApi(request, env);
-  } catch (error) {
-    console.error("Public Teams API error:", error);
-
-    return Response.json(
-      { error: "Teams konnten nicht geladen werden." },
-      { status: 500 }
-    );
-  }
-}
-
-  
-
-  // Einzelnes Team anhand des Slugs
-  const match = path.match(/^\/api\/teams\/([a-z0-9-]+)$/);
-
-  if (match) {
-    const slug = match[1];
-
-    const team = await env.DB.prepare(`
-      SELECT
-        id,
-        name,
-        slug,
-        description,
-        logo_key,
-        status
-      FROM teams
-      WHERE slug = ?
-      AND status = 'active'
-    `).bind(slug).first();
-
-    if (!team) {
-      return publicJson({ error: "Team nicht gefunden." }, 404);
-    }
-
-    const players = await env.DB.prepare(`
-      SELECT
-        id,
-        name,
-        position,
-        image_key,
-        is_substitute
-      FROM players
-      WHERE team_id = ?
-      ORDER BY
-        is_substitute ASC,
-        name COLLATE NOCASE ASC
-    `).bind(team.id).all();
-
-    return publicJson({
-      success: true,
-      team,
-      players: players.results
-    });
-  }
-
-  return publicJson({
-    error: "Öffentlicher Teams-Endpunkt nicht gefunden."
-  }, 404);
-}
 
