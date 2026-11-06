@@ -928,6 +928,631 @@ removeNewsImageButton?.addEventListener("click", () => {
   if (newsUploadStatus) newsUploadStatus.textContent = "Kein Bild ausgewählt.";
 });
 
+// ==================================================
+// ULTOR CMS – TEAMS, SPIELER UND KADERHISTORIE
+// ==================================================
+
+let teamPermissions = [];
+let teamItems = [];
+let playerItems = [];
+
+const teamsList = document.getElementById("teamsList");
+const teamsMessage = document.getElementById("teamsMessage");
+const teamForm = document.getElementById("teamForm");
+const teamEditor = document.getElementById("teamEditor");
+
+const playersList = document.getElementById("playersList");
+const playerForm = document.getElementById("playerForm");
+const playerEditor = document.getElementById("playerEditor");
+
+const rosterHistoryList = document.getElementById("rosterHistoryList");
+
+let editingTeamId = null;
+let editingPlayerId = null;
+
+function teamCan(permission) {
+  return teamPermissions.includes("*") ||
+    teamPermissions.includes(permission);
+}
+
+function teamActionButton(label, className, callback) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener("click", callback);
+  return button;
+}
+
+function teamStatusLabel(status) {
+  return {
+    active: "Aktiv",
+    inactive: "Inaktiv",
+    draft: "Entwurf"
+  }[status] || status;
+}
+
+function teamMessage(message, type = "") {
+  showMessage(teamsMessage, message, type);
+}
+
+function closeTeamEditor() {
+  if (!teamEditor || !teamForm) return;
+
+  teamEditor.hidden = true;
+  teamForm.reset();
+  editingTeamId = null;
+}
+
+function closePlayerEditor() {
+  if (!playerEditor || !playerForm) return;
+
+  playerEditor.hidden = true;
+  playerForm.reset();
+  editingPlayerId = null;
+}
+
+// ==================================================
+// TEAMS LADEN
+// ==================================================
+
+async function loadTeams() {
+  if (!teamsList) return;
+
+  teamsList.replaceChildren(
+    createElement("p", "muted", "Teams werden geladen …")
+  );
+
+  try {
+    const data = await apiRequest("/api/admin/teams");
+    teamItems = data.teams || [];
+
+    const filter = document.getElementById("teamStatusFilter")?.value || "";
+
+    const visibleTeams = filter
+      ? teamItems.filter(team => team.status === filter)
+      : teamItems;
+
+    teamsList.replaceChildren();
+
+    if (!visibleTeams.length) {
+      teamsList.append(
+        createElement("p", "muted", "Noch keine Teams vorhanden.")
+      );
+    }
+
+    for (const team of visibleTeams) {
+      const card = createElement("article", "news-card");
+      const details = createElement("div", "news-card-details");
+
+      details.append(
+        createElement("h3", "", team.name),
+        createElement(
+          "p",
+          "news-meta",
+          `${teamStatusLabel(team.status)} · ${team.player_count || 0} Spieler`
+        )
+      );
+
+      if (team.description) {
+        details.append(
+          createElement("p", "news-excerpt", team.description)
+        );
+      }
+
+      const actions = createElement("div", "news-actions");
+
+      if (teamCan("teams.edit")) {
+        actions.append(
+          teamActionButton(
+            "Bearbeiten",
+            "secondary-button",
+            () => openTeamEditor(team)
+          )
+        );
+      }
+
+      if (teamCan("teams.delete")) {
+        actions.append(
+          teamActionButton(
+            "Löschen / Deaktivieren",
+            "danger-button",
+            () => deleteTeam(team)
+          )
+        );
+      }
+
+      card.append(details, actions);
+      teamsList.append(card);
+    }
+
+    updateTeamSelects();
+
+  } catch (error) {
+    teamsList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
+
+// ==================================================
+// TEAM ERSTELLEN / BEARBEITEN
+// ==================================================
+
+function openTeamEditor(team = null) {
+  if (!teamForm || !teamEditor) return;
+
+  editingTeamId = team?.id || null;
+
+  document.getElementById("teamEditorTitle").textContent =
+    team ? "Team bearbeiten" : "Neues Team erstellen";
+
+  document.getElementById("teamId").value = team?.id || "";
+  document.getElementById("teamName").value = team?.name || "";
+  document.getElementById("teamDescription").value =
+    team?.description || "";
+  document.getElementById("teamLogoKey").value =
+    team?.logo_key || "";
+  document.getElementById("teamStatus").value =
+    team?.status || "active";
+
+  teamEditor.hidden = false;
+  teamEditor.scrollIntoView({ behavior: "smooth" });
+}
+
+async function deleteTeam(team) {
+  if (!window.confirm(
+    `Möchtest du das Team "${team.name}" löschen bzw. deaktivieren?`
+  )) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/teams/${encodeURIComponent(team.id)}`,
+      { method: "DELETE" }
+    );
+
+    teamMessage(data.message || "Team wurde bearbeitet.", "success");
+
+    await loadTeams();
+    await loadPlayers();
+    await loadRosterHistory();
+
+  } catch (error) {
+    teamMessage(getErrorMessage(error), "error");
+  }
+}
+
+teamForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = teamForm.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+
+  const body = {
+    name: document.getElementById("teamName").value.trim(),
+    description: document.getElementById("teamDescription").value.trim(),
+    logo_key: document.getElementById("teamLogoKey").value.trim(),
+    status: document.getElementById("teamStatus").value
+  };
+
+  try {
+    if (editingTeamId) {
+      await apiRequest(
+        `/api/admin/teams/${encodeURIComponent(editingTeamId)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body)
+        }
+      );
+
+      teamMessage("Team wurde aktualisiert.", "success");
+
+    } else {
+      await apiRequest("/api/admin/teams", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      teamMessage("Team wurde erstellt.", "success");
+    }
+
+    closeTeamEditor();
+
+    await loadTeams();
+    await loadPlayers();
+
+  } catch (error) {
+    teamMessage(getErrorMessage(error), "error");
+
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+// ==================================================
+// SPIELER – TEAM-AUSWAHLEN
+// ==================================================
+
+function updateTeamSelects() {
+  const selects = [
+    document.getElementById("playerTeam"),
+    document.getElementById("playerTeamFilter")
+  ];
+
+  for (const select of selects) {
+    if (!select) continue;
+
+    const previousValue = select.value;
+    const isFilter = select.id === "playerTeamFilter";
+
+    select.replaceChildren();
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = isFilter
+      ? "Alle Teams"
+      : "Team auswählen";
+
+    select.append(defaultOption);
+
+    for (const team of teamItems) {
+      if (team.status === "inactive") continue;
+
+      const option = document.createElement("option");
+      option.value = team.id;
+      option.textContent = team.name;
+
+      select.append(option);
+    }
+
+    if (
+      previousValue &&
+      Array.from(select.options).some(option =>
+        option.value === previousValue
+      )
+    ) {
+      select.value = previousValue;
+    }
+  }
+}
+
+// ==================================================
+// SPIELER LADEN
+// ==================================================
+
+async function loadPlayers() {
+  if (!playersList) return;
+
+  playersList.replaceChildren(
+    createElement("p", "muted", "Spieler werden geladen …")
+  );
+
+  try {
+    const teamFilter =
+      document.getElementById("playerTeamFilter")?.value || "";
+
+    const query = teamFilter
+      ? `?team_id=${encodeURIComponent(teamFilter)}`
+      : "";
+
+    const data = await apiRequest(`/api/admin/players${query}`);
+    playerItems = data.players || [];
+
+    playersList.replaceChildren();
+
+    if (!playerItems.length) {
+      playersList.append(
+        createElement("p", "muted", "Noch keine Spieler vorhanden.")
+      );
+      return;
+    }
+
+    for (const player of playerItems) {
+      const card = createElement("article", "news-card");
+      const details = createElement("div", "news-card-details");
+
+      details.append(
+        createElement("h3", "", player.name),
+        createElement(
+          "p",
+          "news-meta",
+          `${player.team_name || "Kein Team"} · ${player.position || "Keine Position"}${player.is_substitute ? " · Ersatzspieler" : ""}`
+        )
+      );
+
+      const actions = createElement("div", "news-actions");
+
+      if (teamCan("teams.edit")) {
+        actions.append(
+          teamActionButton(
+            "Bearbeiten",
+            "secondary-button",
+            () => openPlayerEditor(player)
+          ),
+          teamActionButton(
+            "Entfernen",
+            "danger-button",
+            () => deletePlayer(player)
+          )
+        );
+      }
+
+      card.append(details, actions);
+      playersList.append(card);
+    }
+
+  } catch (error) {
+    playersList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
+
+// ==================================================
+// SPIELER ERSTELLEN / BEARBEITEN
+// ==================================================
+
+function openPlayerEditor(player = null) {
+  if (!playerForm || !playerEditor) return;
+
+  editingPlayerId = player?.id || null;
+
+  document.getElementById("playerEditorTitle").textContent =
+    player ? "Spieler bearbeiten" : "Neuen Spieler hinzufügen";
+
+  document.getElementById("playerId").value = player?.id || "";
+  document.getElementById("playerName").value = player?.name || "";
+  document.getElementById("playerPosition").value =
+    player?.position || "";
+  document.getElementById("playerImageKey").value =
+    player?.image_key || "";
+  document.getElementById("playerIsSubstitute").checked =
+    Boolean(player?.is_substitute);
+
+  updateTeamSelects();
+
+  document.getElementById("playerTeam").value =
+    player?.team_id || "";
+
+  playerEditor.hidden = false;
+  playerEditor.scrollIntoView({ behavior: "smooth" });
+}
+
+async function deletePlayer(player) {
+  if (!window.confirm(
+    `Möchtest du "${player.name}" aus dem Team entfernen?`
+  )) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/players/${encodeURIComponent(player.id)}`,
+      { method: "DELETE" }
+    );
+
+    teamMessage(data.message || "Spieler wurde entfernt.", "success");
+
+    await loadPlayers();
+    await loadTeams();
+    await loadRosterHistory();
+
+  } catch (error) {
+    teamMessage(getErrorMessage(error), "error");
+  }
+}
+
+playerForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = playerForm.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+
+  const body = {
+    name: document.getElementById("playerName").value.trim(),
+    team_id: document.getElementById("playerTeam").value,
+    position: document.getElementById("playerPosition").value.trim(),
+    image_key: document.getElementById("playerImageKey").value.trim(),
+    is_substitute: document.getElementById("playerIsSubstitute").checked
+  };
+
+  try {
+    if (editingPlayerId) {
+      await apiRequest(
+        `/api/admin/players/${encodeURIComponent(editingPlayerId)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body)
+        }
+      );
+
+      teamMessage("Spieler wurde aktualisiert.", "success");
+
+    } else {
+      await apiRequest("/api/admin/players", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      teamMessage("Spieler wurde hinzugefügt.", "success");
+    }
+
+    closePlayerEditor();
+
+    await loadPlayers();
+    await loadTeams();
+    await loadRosterHistory();
+
+  } catch (error) {
+    teamMessage(getErrorMessage(error), "error");
+
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
+
+// ==================================================
+// KADERHISTORIE
+// ==================================================
+
+async function loadRosterHistory() {
+  if (!rosterHistoryList) return;
+
+  rosterHistoryList.replaceChildren(
+    createElement("p", "muted", "Kaderhistorie wird geladen …")
+  );
+
+  try {
+    const data = await apiRequest("/api/admin/roster-history");
+    const history = data.history || [];
+
+    rosterHistoryList.replaceChildren();
+
+    if (!history.length) {
+      rosterHistoryList.append(
+        createElement("p", "muted", "Noch keine Kaderbewegungen vorhanden.")
+      );
+      return;
+    }
+
+    const labels = {
+      joined: "Beigetreten",
+      left: "Ausgetreten",
+      transferred: "Teamwechsel"
+    };
+
+    for (const entry of history) {
+      const card = createElement("article", "news-card");
+      const details = createElement("div", "news-card-details");
+
+      details.append(
+        createElement(
+          "h3",
+          "",
+          labels[entry.action] || entry.action
+        ),
+        createElement(
+          "p",
+          "news-meta",
+          `${entry.team_name || "Unbekanntes Team"} · ${entry.changed_by_name || "Unbekannt"} · ${entry.created_at || ""}`
+        ),
+        createElement(
+          "p",
+          "news-excerpt",
+          entry.description || ""
+        )
+      );
+
+      card.append(details);
+      rosterHistoryList.append(card);
+    }
+
+  } catch (error) {
+    rosterHistoryList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
+
+// ==================================================
+// BUTTONS UND FILTER
+// ==================================================
+
+document.getElementById("createTeamButton")
+  ?.addEventListener("click", () => {
+    if (!teamCan("teams.create")) {
+      teamMessage("Du hast keine Berechtigung, Teams zu erstellen.", "error");
+      return;
+    }
+
+    openTeamEditor();
+  });
+
+document.getElementById("closeTeamEditor")
+  ?.addEventListener("click", closeTeamEditor);
+
+document.getElementById("cancelTeamEditor")
+  ?.addEventListener("click", closeTeamEditor);
+
+document.getElementById("createPlayerButton")
+  ?.addEventListener("click", () => {
+    if (!teamCan("teams.edit")) {
+      teamMessage("Du hast keine Berechtigung, Spieler zu verwalten.", "error");
+      return;
+    }
+
+    if (!teamItems.some(team => team.status !== "inactive")) {
+      teamMessage("Erstelle zuerst ein aktives Team.", "error");
+      return;
+    }
+
+    openPlayerEditor();
+  });
+
+document.getElementById("closePlayerEditor")
+  ?.addEventListener("click", closePlayerEditor);
+
+document.getElementById("cancelPlayerEditor")
+  ?.addEventListener("click", closePlayerEditor);
+
+document.getElementById("teamStatusFilter")
+  ?.addEventListener("change", loadTeams);
+
+document.getElementById("playerTeamFilter")
+  ?.addEventListener("change", loadPlayers);
+
+// ==================================================
+// BERECHTIGUNGEN UND NAVIGATION
+// ==================================================
+
+const previousTeamsOpenCmsView = openCmsView;
+
+openCmsView = function(viewName) {
+  previousTeamsOpenCmsView(viewName);
+
+  if (viewName !== "teams") return;
+
+  apiRequest("/api/admin/me")
+    .then(data => {
+      teamPermissions = data.permissions || [];
+
+      const canView = teamCan("teams.view");
+
+      if (!canView) {
+        teamMessage(
+          "Du hast keine Berechtigung, die Teamverwaltung aufzurufen.",
+          "error"
+        );
+
+        teamsList?.replaceChildren();
+        playersList?.replaceChildren();
+        rosterHistoryList?.replaceChildren();
+
+        return;
+      }
+
+      const createTeamButton =
+        document.getElementById("createTeamButton");
+
+      const createPlayerButton =
+        document.getElementById("createPlayerButton");
+
+      if (createTeamButton) {
+        createTeamButton.hidden = !teamCan("teams.create");
+      }
+
+      if (createPlayerButton) {
+        createPlayerButton.hidden = !teamCan("teams.edit");
+      }
+
+      loadTeams().then(() => {
+        loadPlayers();
+        loadRosterHistory();
+      });
+    })
+    .catch(error => {
+      teamMessage(getErrorMessage(error), "error");
+    });
+};
+
 newsImageKeyInput?.addEventListener("input", () =>
   showNewsImagePreview(newsImageKeyInput.value.trim())
 );
