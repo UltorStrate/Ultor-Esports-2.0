@@ -289,34 +289,7 @@ if (
   }
 }
 
-  const url = new URL(request.url);
-  const path = url.pathname.replace(/\/+$/, "");
-
-  // Alle aktiven Teams
-  if (path === "/api/teams") {
-    const result = await env.DB.prepare(`
-      SELECT
-        t.id,
-        t.name,
-        t.slug,
-        t.description,
-        t.logo_key,
-        t.status,
-        (
-          SELECT COUNT(*)
-          FROM players p
-          WHERE p.team_id = t.id
-        ) AS player_count
-      FROM teams t
-      WHERE t.status = 'active'
-      ORDER BY t.name COLLATE NOCASE ASC
-    `).all();
-
-    return publicJson({
-      success: true,
-      teams: result.results
-    });
-  }
+  
 
   // Einzelnes Team anhand des Slugs
   const match = path.match(/^\/api\/teams\/([a-z0-9-]+)$/);
