@@ -20,7 +20,7 @@
     --font-main: Arial, Helvetica, sans-serif;
 
     --container-width: 1240px;
-    --header-height: 84px;
+    --header-height: 88px;
 
     --transition: 0.3s ease;
 }
@@ -41,7 +41,8 @@ html {
 }
 
 body {
-    background-color: var(--color-background);
+    min-width: 320px;
+    background: var(--color-background);
     color: var(--color-white);
     font-family: var(--font-main);
     line-height: 1.6;
@@ -53,17 +54,12 @@ a {
     text-decoration: none;
 }
 
-button,
-input,
-textarea {
-    font: inherit;
+img {
+    max-width: 100%;
 }
 
 .container {
-    width: min(
-        calc(100% - 48px),
-        var(--container-width)
-    );
+    width: min(calc(100% - 64px), var(--container-width));
     margin-inline: auto;
 }
 
@@ -76,7 +72,7 @@ textarea {
     width: 100%;
     height: var(--header-height);
 
-    background: rgba(9, 8, 16, 0.94);
+    background: rgba(9, 8, 16, 0.96);
     border-bottom: 1px solid var(--color-border);
 
     position: relative;
@@ -93,6 +89,8 @@ textarea {
 }
 
 
+/* LOGO */
+
 .logo {
     display: flex;
     align-items: center;
@@ -102,7 +100,7 @@ textarea {
 
 .logo img {
     display: block;
-    width: 125px;
+    width: 100px;
     height: auto;
     object-fit: contain;
 }
@@ -112,17 +110,26 @@ textarea {
 }
 
 
+/* NAVIGATION */
+
+.main-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 30px;
+}
+
 .main-navigation a {
     color: var(--color-text);
 
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.8px;
 
     text-transform: uppercase;
-    transition: var(--transition);
-
     white-space: nowrap;
+
+    transition: var(--transition);
 }
 
 .main-navigation a:hover {
@@ -153,8 +160,8 @@ textarea {
 
     background:
         radial-gradient(
-            ellipse at 85% 45%,
-            rgba(135, 53, 245, 0.17),
+            ellipse at 80% 50%,
+            rgba(135, 53, 245, 0.18),
             transparent 42%
         ),
         linear-gradient(
@@ -164,6 +171,9 @@ textarea {
             #130D20 100%
         );
 }
+
+
+/* BACKGROUND PATTERN */
 
 .hero::before {
     content: "";
@@ -194,6 +204,7 @@ textarea {
     transform: translateY(-50%) rotate(45deg);
 
     border: 1px solid rgba(135, 53, 245, 0.17);
+
     box-shadow:
         0 0 100px rgba(135, 53, 245, 0.08),
         inset 0 0 100px rgba(135, 53, 245, 0.04);
@@ -201,14 +212,31 @@ textarea {
     pointer-events: none;
 }
 
-.hero .container {
+
+/* TWO COLUMN LAYOUT */
+
+.hero-layout {
     position: relative;
     z-index: 2;
+
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+
+    align-items: center;
+    gap: 50px;
+
+    padding-top: 80px;
+    padding-bottom: 80px;
 }
 
+
+/* LEFT SIDE */
+
 .hero-content {
-    max-width: 780px;
-    padding: 110px 0;
+    position: relative;
+    z-index: 3;
+
+    max-width: 720px;
 }
 
 .eyebrow {
@@ -224,10 +252,10 @@ textarea {
 .hero h1 {
     color: var(--color-white);
 
-    font-size: clamp(64px, 9vw, 112px);
+    font-size: clamp(64px, 7vw, 108px);
     font-weight: 950;
 
-    line-height: 0.88;
+    line-height: 0.9;
     letter-spacing: -5px;
 
     margin-bottom: 32px;
@@ -244,6 +272,9 @@ textarea {
     margin-bottom: 36px;
 }
 
+
+/* BUTTONS */
+
 .hero-actions {
     display: flex;
     align-items: center;
@@ -251,13 +282,8 @@ textarea {
     gap: 18px;
 }
 
-
-/* =========================================
-   BUTTONS
-========================================= */
-
 .button {
-    min-height: 48px;
+    min-height: 50px;
     padding: 0 25px;
 
     display: inline-flex;
@@ -305,14 +331,98 @@ textarea {
 
 
 /* =========================================
+   HERO VISUAL – RIGHT SIDE
+========================================= */
+
+.hero-visual {
+    min-height: 480px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* PURPLE GLOW */
+
+.hero-logo-glow {
+    position: absolute;
+
+    width: 360px;
+    height: 360px;
+
+    border-radius: 50%;
+
+    background: rgba(135, 53, 245, 0.24);
+
+    filter: blur(100px);
+}
+
+
+/* MAIN LOGO */
+
+.hero-logo {
+    position: relative;
+    z-index: 2;
+
+    display: block;
+
+    width: min(100%, 390px);
+    height: auto;
+
+    object-fit: contain;
+
+    filter:
+        drop-shadow(0 0 25px rgba(135, 53, 245, 0.25));
+
+    transition: transform 0.5s ease;
+}
+
+.hero-logo:hover {
+    transform: scale(1.04);
+}
+
+
+/* LOGO LABEL */
+
+.hero-visual-label {
+    position: absolute;
+
+    right: 0;
+    bottom: 25px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+
+    color: var(--color-muted);
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+
+/* =========================================
    FOOTER
 ========================================= */
 
 .site-footer {
+    width: 100%;
+
     padding: 30px 0;
 
     background: #07060C;
     border-top: 1px solid var(--color-border);
+}
+
+.site-footer .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .site-footer p {
@@ -323,6 +433,7 @@ textarea {
     letter-spacing: 1.5px;
 
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
 
@@ -332,6 +443,10 @@ textarea {
 
 @media (max-width: 1000px) {
 
+    .container {
+        width: calc(100% - 48px);
+    }
+
     .main-navigation {
         gap: 16px;
     }
@@ -340,12 +455,23 @@ textarea {
         font-size: 10px;
     }
 
-    .hero {
-        min-height: 600px;
+    .hero-layout {
+        grid-template-columns: 1fr 0.8fr;
+        gap: 25px;
     }
 
     .hero h1 {
-        font-size: clamp(62px, 10vw, 90px);
+        font-size: clamp(58px, 7vw, 82px);
+        letter-spacing: -3px;
+    }
+
+    .hero-logo {
+        width: 300px;
+    }
+
+    .hero-logo-glow {
+        width: 280px;
+        height: 280px;
     }
 
 }
@@ -365,41 +491,59 @@ textarea {
         width: calc(100% - 36px);
     }
 
+    /* HEADER */
+
     .site-header {
-        min-height: 76px;
         height: auto;
+        min-height: 76px;
     }
 
     .site-header .container {
-        padding: 22px 0;
+        padding: 18px 0;
 
-        align-items: flex-start;
         flex-direction: column;
-        gap: 20px;
+        align-items: flex-start;
+        gap: 18px;
+    }
+
+    .logo img {
+        width: 90px;
     }
 
     .main-navigation {
         width: 100%;
 
-        display: flex;
+        justify-content: flex-start;
         flex-wrap: wrap;
-        gap: 14px 20px;
+
+        gap: 13px 18px;
     }
 
     .main-navigation a {
         font-size: 10px;
     }
 
+
+    /* HERO */
+
     .hero {
-        min-height: 570px;
+        min-height: auto;
+    }
+
+    .hero-layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+
+        padding-top: 85px;
+        padding-bottom: 35px;
     }
 
     .hero-content {
-        padding: 90px 0;
+        max-width: 100%;
     }
 
     .hero h1 {
-        font-size: clamp(55px, 13vw, 76px);
+        font-size: clamp(52px, 12vw, 76px);
         letter-spacing: -3px;
     }
 
@@ -407,21 +551,41 @@ textarea {
         font-size: 14px;
     }
 
-    .hero::after {
-        width: 350px;
-        height: 350px;
 
-        right: -240px;
-    }
+    /* BUTTONS */
 
     .hero-actions {
         align-items: stretch;
         flex-direction: column;
-        max-width: 250px;
+
+        max-width: 260px;
     }
 
     .button {
         width: 100%;
+    }
+
+
+    /* HERO LOGO */
+
+    .hero-visual {
+        min-height: 320px;
+    }
+
+    .hero-logo {
+        width: 230px;
+    }
+
+    .hero-logo-glow {
+        width: 230px;
+        height: 230px;
+
+        filter: blur(75px);
+    }
+
+    .hero-visual-label {
+        right: 5px;
+        bottom: 5px;
     }
 
 }
@@ -435,15 +599,23 @@ textarea {
 
     .hero h1 {
         font-size: 48px;
-    }
-
-    .logo {
-        font-size: 14px;
+        letter-spacing: -2px;
     }
 
     .main-navigation {
         gap: 12px;
     }
 
-}
+    .main-navigation a {
+        font-size: 9px;
+    }
 
+    .hero-visual {
+        min-height: 270px;
+    }
+
+    .hero-logo {
+        width: 200px;
+    }
+
+}
