@@ -1,1 +1,371 @@
 
+/* =========================================
+   ULTOR ESPORTS - CONTACT PAGE
+========================================= */
+
+.contact-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 150px 0 100px;
+    background:
+        linear-gradient(120deg, rgba(135, 53, 245, 0.08), transparent 55%),
+        var(--bg);
+}
+
+.contact-hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    top: -300px;
+    right: -150px;
+    background: rgba(135, 53, 245, 0.18);
+    filter: blur(150px);
+    pointer-events: none;
+}
+
+.contact-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+}
+
+.contact-hero h1 {
+    margin: 25px 0;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(4rem, 9vw, 8rem);
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -2px;
+    color: var(--white);
+}
+
+.contact-hero h1 span {
+    color: var(--purple-light);
+}
+
+.contact-hero-content > p {
+    max-width: 650px;
+    color: var(--text);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.contact-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 35px;
+    margin-top: 55px;
+    padding-top: 25px;
+    border-top: 1px solid var(--border);
+}
+
+.contact-hero-meta span {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+
+/* SOCIAL SECTION */
+
+.contact-social-section {
+    padding: 100px 0 120px;
+    background: var(--bg-light);
+}
+
+.contact-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 50px;
+    margin-bottom: 55px;
+}
+
+.contact-section-heading h2 {
+    margin: 15px 0 0;
+    color: var(--white);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(3rem, 6vw, 5rem);
+    line-height: 1;
+    font-weight: 900;
+}
+
+.contact-section-heading h2 span {
+    color: var(--purple-light);
+}
+
+.contact-section-heading > p {
+    max-width: 440px;
+    margin: 0 0 5px;
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+
+/* SOCIAL GRID */
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.social-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 290px;
+    padding: 30px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--white);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease;
+}
+
+.social-card::before {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -80px;
+    top: -90px;
+    background: var(--social-glow, rgba(135, 53, 245, 0.2));
+    filter: blur(65px);
+    opacity: 0.8;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.social-card:hover {
+    transform: translateY(-7px);
+    border-color: var(--purple);
+    background: var(--panel-light);
+}
+
+.social-card:hover::before {
+    opacity: 1;
+}
+
+.social-card-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+}
+
+.social-icon svg {
+    width: 27px;
+    height: 27px;
+    fill: currentColor;
+}
+
+.social-arrow {
+    color: var(--muted);
+    font-size: 1.5rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.social-card:hover .social-arrow {
+    color: var(--purple-light);
+    transform: translate(3px, -3px);
+}
+
+.social-card-content {
+    position: relative;
+    z-index: 1;
+    margin-top: 35px;
+}
+
+.social-platform {
+    color: var(--purple-light);
+    font-size: 0.67rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.social-card h3 {
+    margin: 8px 0 10px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 2.1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+}
+
+.social-card-content p {
+    max-width: 310px;
+    margin: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+    line-height: 1.7;
+}
+
+.social-card-link {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    margin-top: auto;
+    padding-top: 30px;
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+}
+
+
+/* PLATFORM ACCENTS */
+
+.discord {
+    --social-glow: rgba(88, 101, 242, 0.3);
+}
+
+.discord .social-icon {
+    color: #8290ff;
+}
+
+.twitch {
+    --social-glow: rgba(145, 70, 255, 0.3);
+}
+
+.twitch .social-icon {
+    color: #a970ff;
+}
+
+.youtube {
+    --social-glow: rgba(255, 0, 0, 0.2);
+}
+
+.youtube .social-icon {
+    color: #ff6666;
+}
+
+.tiktok {
+    --social-glow: rgba(0, 220, 220, 0.2);
+}
+
+.tiktok .social-icon {
+    color: #5de6e6;
+}
+
+.x-social {
+    --social-glow: rgba(255, 255, 255, 0.13);
+}
+
+.x-social .social-icon {
+    color: var(--white);
+}
+
+
+/* FINAL CTA */
+
+.contact-cta {
+    position: relative;
+    overflow: hidden;
+    padding: 110px 0;
+    background: var(--bg);
+    text-align: center;
+}
+
+.contact-cta-glow {
+    position: absolute;
+    width: 500px;
+    height: 300px;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    background: rgba(135, 53, 245, 0.18);
+    filter: blur(120px);
+    pointer-events: none;
+}
+
+.contact-cta-content {
+    position: relative;
+    z-index: 1;
+}
+
+.contact-cta h2 {
+    margin: 25px 0;
+    color: var(--white);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    line-height: 0.98;
+}
+
+.contact-cta h2 span {
+    color: var(--purple-light);
+}
+
+.contact-cta p {
+    max-width: 600px;
+    margin: 0 auto 30px;
+    color: var(--text);
+    line-height: 1.8;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    .social-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .contact-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .contact-hero {
+        padding: 110px 0 75px;
+    }
+
+    .contact-hero h1 {
+        font-size: 4rem;
+    }
+
+    .contact-hero-meta {
+        gap: 15px 25px;
+    }
+
+    .contact-social-section {
+        padding: 75px 0;
+    }
+
+    .social-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .social-card {
+        min-height: 260px;
+        padding: 25px;
+    }
+
+    .contact-cta {
+        padding: 80px 0;
+    }
+}
+
