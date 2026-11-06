@@ -120,7 +120,7 @@ export async function handleMediaUpload(request, env, auth) {
   const id = crypto.randomUUID();
 
 const requestedFolder = formData.get("folder") || "news";
-const allowedFolders = ["news", "teams", "players"];
+const allowedFolders = ["news", "teams", "players", "partners"];
 
 if (!allowedFolders.includes(requestedFolder)) {
   return json({ error: "Ungültiger Medienordner." }, 400);
