@@ -130,6 +130,65 @@
         tabsEl.hidden = teams.length === 0;
     }
 
+function getRoleInfo(position) {
+    const normalized = String(position || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s*lane$/, "");
+
+    const roles = {
+        top: {
+            label: "TOP",
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 20 10 5l4 9 3-5 4 11H3Z"/>
+                <path d="M10 5 12 9"/>
+            </svg>`
+        },
+        jungle: {
+            label: "JUNGLE",
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3 5 11h4l-3 5h5v5h2v-5h5l-3-5h4L12 3Z"/>
+            </svg>`
+        },
+        mid: {
+            label: "MID",
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="8"/>
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v4M12 19v4M1 12h4M19 12h4"/>
+            </svg>`
+        },
+        adc: {
+            label: "ADC",
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 3c10 2 14 9 14 18"/>
+                <path d="M5 3c-2 7 2 13 14 18"/>
+                <path d="m7 12 12-1M14 7l5 4-5 4"/>
+            </svg>`
+        },
+        support: {
+            label: "SUPPORT",
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2 20 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-3Z"/>
+                <path d="m8.5 12 2.3 2.3 4.7-5"/>
+            </svg>`
+        }
+    };
+
+    const aliases = {
+        bot: "adc",
+        bottom: "adc",
+        sup: "support"
+    };
+
+    const key = aliases[normalized] || normalized;
+
+    return roles[key] || {
+        label: position ? String(position).toUpperCase() : "PLAYER",
+        icon: ""
+    };
+}
+
     function renderPlayer(player) {
         const card = document.createElement("article");
         card.className = "player-card";
