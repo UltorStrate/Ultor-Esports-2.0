@@ -20,12 +20,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate Better Auth schema
-       run: npx auth generate --config ./src/auth.config.js 
+      - name: Generate SQLite schema
+        run: npx auth generate --config ./src/auth.config.js --adapter drizzle --dialect sqlite --output ./auth-schema.ts
 
       - name: Upload generated schema
         uses: actions/upload-artifact@v4
         with:
           name: better-auth-schema
           path: auth-schema.ts
-
