@@ -221,9 +221,42 @@
       <textarea id="newsExcerpt" rows="3" maxlength="500"
         placeholder="Kurze Zusammenfassung des Beitrags"></textarea>
 
-      <label for="newsContent">Artikelinhalt</label>
-      <textarea id="newsContent" rows="12" required
-        placeholder="Schreibe hier deinen Artikel …"></textarea>
+      
+<label>Artikelinhalt</label>
+
+<div class="editor-toolbar">
+  <button type="button" data-command="bold"><strong>B</strong></button>
+  <button type="button" data-command="italic"><em>I</em></button>
+  <button type="button" data-command="underline"><u>U</u></button>
+  <button type="button" data-command="formatBlock" data-value="H2">Überschrift</button>
+  <button type="button" data-command="formatBlock" data-value="P">Absatz</button>
+  <button type="button" data-command="insertUnorderedList">• Liste</button>
+  <button type="button" data-command="insertOrderedList">1. Liste</button>
+  <button type="button" id="newsLinkButton">Link</button>
+</div>
+
+<div
+  id="newsContent"
+  class="rich-editor"
+  contenteditable="true"
+  role="textbox"
+  aria-multiline="true"
+  data-placeholder="Schreibe hier deinen Artikel …">
+</div>
+
+<input id="newsContentRequired" type="text" hidden>
+
+<div class="editor-preview-actions">
+  <button id="toggleNewsPreview" class="secondary-button" type="button">
+    Vorschau anzeigen
+  </button>
+</div>
+
+<div id="newsPreview" class="news-preview" hidden>
+  <div class="preview-label">ARTIKELVORSCHAU</div>
+  <div id="newsPreviewContent" class="preview-article"></div>
+</div>
+
 
       <label for="newsImageFile">Beitragsbild</label>
 
