@@ -1403,7 +1403,21 @@ body.dashboard-page .coming-soon {
   flex-direction: column;
   gap: 24px;
 }
+/* CMS-Reiter korrekt ein- und ausblenden */
 
+.cms-view:not(.active) {
+  display: none !important;
+}
+
+.cms-view.active {
+  display: block;
+}
+
+#view-teams.active {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 #view-teams .page-heading {
   margin-bottom: 0;
 }
