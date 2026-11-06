@@ -2,23 +2,20 @@
 import { betterAuth } from "better-auth";
 import { withCloudflare } from "better-auth-cloudflare";
 
-export function createAuth(env) {
+export function createAuth(env, cf) {
   if (!env.DB) {
     throw new Error("D1 database binding DB is missing");
   }
 
-  if (!env.BETTER_AUTH_SECRET) {
-    throw new Error("BETTER_AUTH_SECRET is missing");
-  }
-
-  if (!env.BETTER_AUTH_URL) {
-    throw new Error("BETTER_AUTH_URL is missing");
+  if (!env.BETTER_AUTH_SECRET || !env.BETTER_AUTH_URL) {
+    throw new Error("Better Auth environment variables are missing");
   }
 
   return betterAuth({
     ...withCloudflare(
       {
-        d1Native: env.DB
+        d1Native: env.DB,
+        cf
       },
       {
         baseURL: env.BETTER_AUTH_URL,
@@ -29,19 +26,8 @@ export function createAuth(env) {
         emailAndPassword: {
           enabled: true,
           autoSignIn: false
-        },
-        user: {
-          additionalFields: {
-            accessStatus: {
-              type: "string",
-              required: false,
-              defaultValue: "pending",
-              input: false
-            }
-          }
         }
       }
     )
   });
 }
-
