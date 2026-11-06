@@ -521,11 +521,37 @@
               maxlength="80"
               placeholder="z. B. Top, Jungle, Mid, ADC, Support">
 
-            <label for="playerImageKey">Spielerbild-Schlüssel</label>
-            <input id="playerImageKey"
-              type="text"
-              maxlength="500"
-              placeholder="R2-Bildschlüssel des Spielerbildes">
+            <label for="playerImageFile">Spielerbild</label>
+
+<div class="image-upload-control">
+  <input
+    type="file"
+    id="playerImageFile"
+    accept="image/png,image/jpeg,image/webp"
+  >
+
+  <button
+    type="button"
+    id="uploadPlayerImage"
+    class="secondary-button"
+  >
+    Spielerbild hochladen
+  </button>
+</div>
+
+<div id="playerImagePreview" class="image-preview" hidden>
+  <img id="playerImagePreviewImg" alt="Spielerbild-Vorschau">
+
+  <button
+    type="button"
+    id="removePlayerImage"
+    class="secondary-button"
+  >
+    Bild entfernen
+  </button>
+</div>
+
+<input id="playerImageKey" type="hidden">
 
             <label class="permission-option">
               <input id="playerIsSubstitute" type="checkbox">
