@@ -2,7 +2,7 @@ import { createAuth } from "./auth.js";
 import { handleAdminApi } from "./admin-api.js";
 import { handleNewsApi } from "./news-api.js";
 import { handleMediaUpload } from "./media-api.js";
-
+import { handlePublicNewsApi } from "./public-news-api.js";
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
