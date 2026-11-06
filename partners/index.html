@@ -1,1 +1,254 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Our Partners | ULTOR ESPORTS</title>
+    <meta name="description" content="Meet the partners supporting ULTOR ESPORTS and our journey in competitive gaming.">
+
+    <link rel="stylesheet" href="/style.css?v=5">
+    <link rel="stylesheet" href="/partners/partners.css?v=1">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="container header-inner">
+        <a href="/" class="brand">
+            <img src="/assets/logos/ultor-logo-transparent.png" alt="ULTOR ESPORTS Logo">
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="/">HOME</a>
+            <a href="/about/">ABOUT</a>
+            <a href="/teams/">TEAMS</a>
+            <a href="/#news">NEWS</a>
+            <a href="/partners/" class="active" aria-current="page">PARTNERS</a>
+            <a href="/contact/">CONTACT</a>
+            <a href="/shop/" class="nav-shop">OFFICIAL SHOP <span>↗</span></a>
+            <a href="/admin/login.html" class="nav-login">LOGIN</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+
+    <section class="partner-hero">
+        <div class="partner-hero-glow"></div>
+
+        <div class="container partner-hero-content">
+            <div class="section-label">STRONGER TOGETHER · ULTOR ESPORTS</div>
+
+            <h1>BUILT <span>TOGETHER.</span></h1>
+
+            <p>
+                Behind every ambitious organization are people and brands
+                who believe in the same vision. Discover the partners
+                supporting our journey.
+            </p>
+        </div>
+    </section>
+
+    <section class="partner-directory">
+        <div class="container">
+
+            <div class="partner-section-heading">
+                <div>
+                    <div class="section-label">OUR PARTNERS</div>
+                    <h2>THE PEOPLE BEHIND <span>ULTOR.</span></h2>
+                </div>
+
+                <p>
+                    We are proud to work with partners who share our ambition,
+                    passion and commitment to continuous development.
+                </p>
+            </div>
+
+            <div id="partnerGrid" class="partner-grid">
+                <p class="partner-message">Loading partners...</p>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="partner-cta">
+        <div class="container partner-cta-content">
+            <div class="section-label">BECOME PART OF ULTOR</div>
+
+            <h2>LET'S BUILD<br><span>SOMETHING BIGGER.</span></h2>
+
+            <p>
+                Interested in working with ULTOR ESPORTS?
+                We are always open to new partnerships and opportunities.
+            </p>
+
+            <a href="/contact/" class="button button-primary">
+                GET IN TOUCH <span>↗</span>
+            </a>
+        </div>
+    </section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+
+        <div class="footer-main">
+
+            <div class="footer-brand">
+                <a href="/">
+                    <img src="/assets/logos/ultor-logo-transparent.png" alt="ULTOR ESPORTS Logo">
+                </a>
+                <p>BUILT ON MORE THAN COMPETITION.</p>
+            </div>
+
+            <div class="footer-links">
+
+                <div class="footer-column">
+                    <h4>EXPLORE</h4>
+                    <a href="/">Home</a>
+                    <a href="/about/">About</a>
+                    <a href="/teams/">Teams</a>
+                    <a href="/news/">News</a>
+                </div>
+
+                <div class="footer-column">
+                    <h4>CONNECT</h4>
+                    <a href="/partners/">Partners</a>
+                    <a href="/contact/">Contact</a>
+                    <a href="/shop/">Official Shop</a>
+                </div>
+
+                <div class="footer-column">
+                    <h4>FOLLOW US</h4>
+                    <a href="https://www.youtube.com/@ULTORESPORTS" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                    <a href="https://www.twitch.tv/ultoresports" target="_blank" rel="noopener noreferrer">Twitch ↗</a>
+                    <a href="https://www.tiktok.com/@ultoresports" target="_blank" rel="noopener noreferrer">TikTok ↗</a>
+                    <a href="https://x.com/ultoresports" target="_blank" rel="noopener noreferrer">X ↗</a>
+                    <a href="https://discord.com/invite/dAZfn2vp3X" target="_blank" rel="noopener noreferrer">Discord ↗</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© 2026 ULTOR ESPORTS. ALL RIGHTS RESERVED.</span>
+
+            <div>
+                <a href="/imprint/">IMPRINT</a>
+                <a href="/privacy/">PRIVACY</a>
+            </div>
+        </div>
+
+    </div>
+</footer>
+
+<script>
+async function loadPartners() {
+    const grid = document.getElementById("partnerGrid");
+
+    try {
+        const response = await fetch("/api/partners");
+        if (!response.ok) {
+            throw new Error("Partner konnten nicht geladen werden.");
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !Array.isArray(data.partners)) {
+            throw new Error("Ungültige Serverantwort.");
+        }
+
+        grid.replaceChildren();
+
+        if (data.partners.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "partner-message";
+            empty.textContent = "New partnerships are coming soon. Stay tuned!";
+            grid.appendChild(empty);
+            return;
+        }
+
+        data.partners.forEach(partner => {
+            const card = document.createElement("article");
+            card.className = "partner-card";
+
+            const logoArea = document.createElement("div");
+            logoArea.className = "partner-card-logo";
+
+            if (partner.logo_key) {
+                const image = document.createElement("img");
+                const encodedKey = partner.logo_key
+                    .split("/")
+                    .map(segment => encodeURIComponent(segment))
+                    .join("/");
+
+                image.src = "/media/" + encodedKey;
+                image.alt = partner.name + " logo";
+                image.loading = "lazy";
+
+                image.onerror = () => {
+                    image.remove();
+                    logoArea.textContent = partner.name;
+                };
+
+                logoArea.appendChild(image);
+            } else {
+                logoArea.textContent = partner.name;
+            }
+
+            const content = document.createElement("div");
+            content.className = "partner-card-content";
+
+            const heading = document.createElement("h3");
+            heading.textContent = partner.name;
+
+            const description = document.createElement("p");
+            description.textContent = partner.description || "";
+
+            content.appendChild(heading);
+
+            if (partner.description) {
+                content.appendChild(description);
+            }
+
+            card.appendChild(logoArea);
+            card.appendChild(content);
+
+            if (partner.website_url) {
+                const link = document.createElement("a");
+                link.className = "partner-card-link";
+                link.href = partner.website_url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = "VISIT WEBSITE ↗";
+                card.appendChild(link);
+            }
+
+            grid.appendChild(card);
+        });
+
+    } catch (error) {
+        grid.replaceChildren();
+
+        const message = document.createElement("p");
+        message.className = "partner-message";
+        message.textContent = "Partners are currently unavailable. Please try again later.";
+
+        grid.appendChild(message);
+        console.error("Partner loading error:", error);
+    }
+}
+
+loadPartners();
+</script>
+
+</body>
+</html>
+
