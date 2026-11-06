@@ -1,4 +1,7 @@
 
+import { createAuth } from "./auth.js";
+import { handleAdminApi } from "./admin-api.js";
+
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
@@ -25,9 +28,9 @@ export default {
       return new Response("Bad Request", { status: 400 });
     }
 
-    // Interne Projektdateien niemals öffentlich ausliefern.
     const normalizedPath = pathname.toLowerCase();
 
+    // Interne Projektdateien schützen.
     if (
       BLOCKED_PREFIXES.some(
         prefix =>
@@ -39,7 +42,44 @@ export default {
       return new Response("Not Found", { status: 404 });
     }
 
-    // API-Endpunkte werden später hier implementiert.
+    // Better Auth
+    if (
+      normalizedPath === "/api/auth" ||
+      normalizedPath.startsWith("/api/auth/")
+    ) {
+      try {
+        const auth = createAuth(env, request.cf);
+        return await auth.handler(request);
+      } catch (error) {
+        console.error("Authentication error:", error);
+
+        return Response.json(
+          { error: "Authentication service unavailable" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Geschützte Admin-API
+    if (
+      normalizedPath === "/api/admin" ||
+      normalizedPath.startsWith("/api/admin/")
+    ) {
+      try {
+        const auth = createAuth(env, request.cf);
+
+        return await handleAdminApi(request, env, auth);
+      } catch (error) {
+        console.error("Admin API error:", error);
+
+        return Response.json(
+          { error: "Admin API unavailable" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Sonstige API-Endpunkte sperren.
     if (
       normalizedPath === "/api" ||
       normalizedPath.startsWith("/api/")
@@ -50,7 +90,7 @@ export default {
       );
     }
 
-    // Bestehende Website über Cloudflare Assets ausliefern.
+    // Bestehende Website ausliefern.
     if (!env.ASSETS) {
       return new Response("Assets binding missing", {
         status: 500
@@ -58,10 +98,13 @@ export default {
     }
 
     const response = await env.ASSETS.fetch(request);
-
     const headers = new Headers(response.headers);
+
     headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    headers.set(
+      "Referrer-Policy",
+      "strict-origin-when-cross-origin"
+    );
     headers.set("X-Frame-Options", "SAMEORIGIN");
 
     return new Response(response.body, {
@@ -71,6 +114,3 @@ export default {
     });
   }
 };
-
-
-
