@@ -1,1 +1,157 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTOR ESPORTS | Teams</title>
+    <meta name="description" content="Meet the teams and players of ULTOR ESPORTS.">
+    <link rel="stylesheet" href="/style.css?v=5">
+    <link rel="stylesheet" href="/teams/teams.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="brand">
+                <img src="/assets/logos/ultor-logo-transparent.png" alt="ULTOR ESPORTS Logo">
+            </a>
+            <nav class="main-nav" aria-label="Main navigation">
+                <a href="/">HOME</a>
+                <a href="/about/">ABOUT</a>
+                <a href="/teams/" class="active" aria-current="page">TEAMS</a>
+                <a href="/#news">NEWS</a>
+                <a href="/#partners">PARTNERS</a>
+                <a href="/#contact">CONTACT</a>
+                <a href="/shop/" class="nav-shop">OFFICIAL SHOP <span>↗</span></a>
+                <a href="/admin/login.html" class="nav-login">LOGIN</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="teams-hero">
+            <div class="teams-hero-glow"></div>
+            <div class="container teams-hero-content">
+                <div class="section-label">LEAGUE OF LEGENDS ESPORTS ORGANIZATION</div>
+                <h1>OUR <span>ROSTER.</span></h1>
+                <p>One identity. Different lineups. A shared ambition to compete, improve and grow together.</p>
+                <div class="teams-hero-meta">
+                    <span>ULTOR ESPORTS</span>
+                    <span>BUILT TO COMPETE</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="teams-section">
+            <div class="container">
+                <div class="teams-section-heading">
+                    <div>
+                        <div class="section-label">MEET THE LINEUPS</div>
+                        <h2>OUR <span>TEAMS.</span></h2>
+                    </div>
+                    <p id="teamsCount" class="teams-count" aria-live="polite"></p>
+                </div>
+
+                <div id="teamsStatus" class="teams-status" role="status" aria-live="polite">
+                    Loading teams ...
+                </div>
+
+                <div id="teamTabs" class="team-tabs" role="tablist" aria-label="Select a team" hidden></div>
+                <section id="teamPanel" class="team-panel" aria-live="polite" hidden>
+                    <div class="team-intro">
+                        <div class="team-intro-logo-wrap">
+                            <img id="teamLogo" class="team-intro-logo" alt="" hidden>
+                            <div id="teamLogoFallback" class="team-logo-fallback" aria-hidden="true">U.</div>
+                        </div>
+                        <div class="team-intro-copy">
+                            <div class="section-label">ACTIVE ROSTER</div>
+                            <h3 id="teamName">TEAM</h3>
+                            <p id="teamDescription"></p>
+                        </div>
+                        <div class="team-player-total">
+                            <strong id="teamPlayerCount">0</strong>
+                            <span>PLAYERS</span>
+                        </div>
+                    </div>
+
+                    <div class="roster-heading">
+                        <h3>THE <span>PLAYERS.</span></h3>
+                        <span id="rosterSubline">MAIN ROSTER</span>
+                    </div>
+                    <div id="playersGrid" class="players-grid"></div>
+                    <div id="substitutesSection" class="substitutes-section" hidden>
+                        <div class="roster-heading substitutes-heading">
+                            <h3>SUBSTITUTES<span>.</span></h3>
+                            <span>READY TO STEP IN</span>
+                        </div>
+                        <div id="substitutesGrid" class="players-grid"></div>
+                    </div>
+                </section>
+
+                <div id="teamsEmpty" class="teams-empty" hidden>
+                    <span class="teams-empty-mark">U.</span>
+                    <h3>NO ACTIVE TEAMS YET.</h3>
+                    <p>Our next lineups will be announced here. Check back soon.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="teams-join">
+            <div class="container teams-join-content">
+                <div class="section-label">ONE IDENTITY. SHARED AMBITION.</div>
+                <h2>BUILT TO <span>COMPETE.</span></h2>
+                <p>Follow ULTOR ESPORTS and stay up to date with our teams, players and latest developments.</p>
+                <a href="/#news" class="button button-primary">LATEST UPDATES <span>↗</span></a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <a href="/">
+                        <img src="/assets/logos/ultor-logo-transparent.png" alt="ULTOR ESPORTS Logo">
+                    </a>
+                    <p>BUILT ON MORE THAN COMPETITION.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>EXPLORE</h4>
+                        <a href="/">Home</a>
+                        <a href="/about/">About</a>
+                        <a href="/teams/">Teams</a>
+                        <a href="/news/">News</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>CONNECT</h4>
+                        <a href="/#partners">Partners</a>
+                        <a href="/contact/">Contact</a>
+                        <a href="/shop/">Official Shop</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>FOLLOW US</h4>
+                        <a href="#" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                        <a href="#" target="_blank" rel="noopener noreferrer">Twitch ↗</a>
+                        <a href="#" target="_blank" rel="noopener noreferrer">TikTok ↗</a>
+                        <a href="#" target="_blank" rel="noopener noreferrer">X ↗</a>
+                        <a href="#" target="_blank" rel="noopener noreferrer">Discord ↗</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 ULTOR ESPORTS. ALL RIGHTS RESERVED.</span>
+                <div>
+                    <a href="/imprint/">IMPRINT</a>
+                    <a href="/privacy/">PRIVACY</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="/teams/teams.js?v=1" defer></script>
+</body>
+</html>
+
