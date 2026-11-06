@@ -6,6 +6,10 @@ function json(data, status = 200) {
   });
 }
 
+// =========================================
+// AUTHENTIFIZIERUNG
+// =========================================
+
 async function getCurrentUser(request, env, auth) {
   const session = await auth.api.getSession({
     headers: request.headers
@@ -45,6 +49,10 @@ function hasPermission(current, permission) {
     current.permissions.includes(permission);
 }
 
+// =========================================
+// HILFSFUNKTIONEN
+// =========================================
+
 async function audit(env, userId, action, entityType, entityId, details = null) {
   await env.DB.prepare(`
     INSERT INTO audit_logs (
@@ -58,6 +66,30 @@ async function audit(env, userId, action, entityType, entityId, details = null) 
     entityType,
     entityId,
     details ? JSON.stringify(details) : null
+  ).run();
+}
+
+async function writeHistory(
+  env,
+  teamId,
+  playerId,
+  action,
+  description,
+  userId
+) {
+  await env.DB.prepare(`
+    INSERT INTO roster_history (
+      id, team_id, player_id, action,
+      description, changed_by, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+  `).bind(
+    crypto.randomUUID(),
+    teamId,
+    playerId,
+    action,
+    description,
+    userId
   ).run();
 }
 
@@ -89,12 +121,6 @@ function makeSlug(value) {
     .replace(/^-|-$/g, "");
 }
 
-function isValidId(value) {
-  return typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 128;
-}
-
 async function createUniqueSlug(env, name, excludeId = null) {
   const base = makeSlug(name);
 
@@ -105,20 +131,37 @@ async function createUniqueSlug(env, name, excludeId = null) {
 
   while (true) {
     const existing = await env.DB.prepare(`
-      SELECT id FROM teams
+      SELECT id
+      FROM teams
       WHERE slug = ?
       AND (? IS NULL OR id != ?)
     `).bind(slug, excludeId, excludeId).first();
 
     if (!existing) return slug;
 
-    slug = `${base}-${suffix++}`;
+    slug = `${base}-${suffix}`;
+
+    suffix++;
 
     if (suffix > 1000) {
-      throw new Error("Es konnte kein eindeutiger Team-Slug erstellt werden.");
+      throw new Error("Kein eindeutiger Team-Slug verfügbar.");
     }
   }
 }
+
+function validId(value) {
+  return typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= 128;
+}
+
+function validStatus(status) {
+  return ["active", "inactive", "draft"].includes(status);
+}
+
+// =========================================
+// HAUPT-API
+// =========================================
 
 export async function handleTeamsApi(request, env, auth) {
   const url = new URL(request.url);
@@ -130,7 +173,7 @@ export async function handleTeamsApi(request, env, auth) {
   if (current.error) return current.error;
 
   // =========================================
-  // TEAMS
+  // TEAMS ABRUFEN
   // =========================================
 
   if (path === "/api/admin/teams" && method === "GET") {
@@ -156,6 +199,10 @@ export async function handleTeamsApi(request, env, auth) {
     });
   }
 
+  // =========================================
+  // TEAM ERSTELLEN
+  // =========================================
+
   if (path === "/api/admin/teams" && method === "POST") {
     if (!hasPermission(current, "teams.create")) {
       return json({ error: "Keine Berechtigung zum Erstellen von Teams." }, 403);
@@ -170,13 +217,13 @@ export async function handleTeamsApi(request, env, auth) {
     const name = cleanText(body.name, 120);
     const description = cleanText(body.description, 5000);
     const logoKey = cleanText(body.logo_key, 500);
-    const status = body.status || "draft";
+    const status = body.status || "active";
 
     if (!name) {
       return json({ error: "Ein Teamname ist erforderlich." }, 400);
     }
 
-    if (!["draft", "active", "inactive"].includes(status)) {
+    if (!validStatus(status)) {
       return json({ error: "Ungültiger Teamstatus." }, 400);
     }
 
@@ -185,8 +232,8 @@ export async function handleTeamsApi(request, env, auth) {
 
     await env.DB.prepare(`
       INSERT INTO teams (
-        id, name, slug, description, logo_key, status,
-        created_at, updated_at
+        id, name, slug, description, logo_key,
+        status, created_at, updated_at
       )
       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `).bind(
@@ -198,10 +245,14 @@ export async function handleTeamsApi(request, env, auth) {
       status
     ).run();
 
-    await audit(env, current.user.id, "team.created", "team", id, {
-      name,
-      slug
-    });
+    await audit(
+      env,
+      current.user.id,
+      "team.created",
+      "team",
+      id,
+      { name, slug }
+    );
 
     return json({
       success: true,
@@ -217,12 +268,16 @@ export async function handleTeamsApi(request, env, auth) {
     }, 201);
   }
 
+  // =========================================
+  // TEAM BEARBEITEN / LÖSCHEN
+  // =========================================
+
   const teamMatch = path.match(/^\/api\/admin\/teams\/([^/]+)$/);
 
   if (teamMatch) {
     const teamId = teamMatch[1];
 
-    if (!isValidId(teamId)) {
+    if (!validId(teamId)) {
       return json({ error: "Ungültige Team-ID." }, 400);
     }
 
@@ -265,7 +320,7 @@ export async function handleTeamsApi(request, env, auth) {
         return json({ error: "Ein Teamname ist erforderlich." }, 400);
       }
 
-      if (!["draft", "active", "inactive"].includes(status)) {
+      if (!validStatus(status)) {
         return json({ error: "Ungültiger Teamstatus." }, 400);
       }
 
@@ -275,12 +330,13 @@ export async function handleTeamsApi(request, env, auth) {
 
       await env.DB.prepare(`
         UPDATE teams
-        SET name = ?,
-            slug = ?,
-            description = ?,
-            logo_key = ?,
-            status = ?,
-            updated_at = CURRENT_TIMESTAMP
+        SET
+          name = ?,
+          slug = ?,
+          description = ?,
+          logo_key = ?,
+          status = ?,
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(
         name,
@@ -291,11 +347,14 @@ export async function handleTeamsApi(request, env, auth) {
         teamId
       ).run();
 
-      await audit(env, current.user.id, "team.updated", "team", teamId, {
-        name,
-        slug,
-        status
-      });
+      await audit(
+        env,
+        current.user.id,
+        "team.updated",
+        "team",
+        teamId,
+        { name, slug, status }
+      );
 
       return json({
         success: true,
@@ -320,18 +379,47 @@ export async function handleTeamsApi(request, env, auth) {
         }, 409);
       }
 
-      await env.DB.batch([
-        env.DB.prepare(`
-          DELETE FROM roster_history WHERE team_id = ?
-        `).bind(teamId),
-        env.DB.prepare(`
-          DELETE FROM teams WHERE id = ?
-        `).bind(teamId)
-      ]);
+      const history = await env.DB.prepare(`
+        SELECT COUNT(*) AS total
+        FROM roster_history
+        WHERE team_id = ?
+      `).bind(teamId).first();
 
-      await audit(env, current.user.id, "team.deleted", "team", teamId, {
-        name: team.name
-      });
+      if (history.total > 0) {
+        await env.DB.prepare(`
+          UPDATE teams
+          SET status = 'inactive',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(teamId).run();
+
+        await audit(
+          env,
+          current.user.id,
+          "team.deactivated",
+          "team",
+          teamId,
+          { name: team.name }
+        );
+
+        return json({
+          success: true,
+          message: "Team wurde deaktiviert. Die Kaderhistorie bleibt erhalten."
+        });
+      }
+
+      await env.DB.prepare(`
+        DELETE FROM teams WHERE id = ?
+      `).bind(teamId).run();
+
+      await audit(
+        env,
+        current.user.id,
+        "team.deleted",
+        "team",
+        teamId,
+        { name: team.name }
+      );
 
       return json({
         success: true,
@@ -341,7 +429,7 @@ export async function handleTeamsApi(request, env, auth) {
   }
 
   // =========================================
-  // SPIELER
+  // SPIELER ABRUFEN
   // =========================================
 
   if (path === "/api/admin/players" && method === "GET") {
@@ -366,9 +454,10 @@ export async function handleTeamsApi(request, env, auth) {
         SELECT p.*, t.name AS team_name
         FROM players p
         LEFT JOIN teams t ON t.id = p.team_id
-        ORDER BY t.name COLLATE NOCASE ASC,
-                 p.is_substitute ASC,
-                 p.name COLLATE NOCASE ASC
+        ORDER BY
+          t.name COLLATE NOCASE ASC,
+          p.is_substitute ASC,
+          p.name COLLATE NOCASE ASC
       `).all();
     }
 
@@ -377,6 +466,10 @@ export async function handleTeamsApi(request, env, auth) {
       players: result.results
     });
   }
+
+  // =========================================
+  // SPIELER HINZUFÜGEN
+  // =========================================
 
   if (path === "/api/admin/players" && method === "POST") {
     if (!hasPermission(current, "teams.edit")) {
@@ -393,15 +486,20 @@ export async function handleTeamsApi(request, env, auth) {
     const position = cleanText(body.position, 80);
     const teamId = cleanText(body.team_id, 128);
     const imageKey = cleanText(body.image_key, 500);
-    const isSubstitute = body.is_substitute === true ||
-      body.is_substitute === 1 ? 1 : 0;
+
+    const isSubstitute =
+      body.is_substitute === true || body.is_substitute === 1
+        ? 1
+        : 0;
 
     if (!name || !teamId) {
-      return json({ error: "Spielername und Team sind erforderlich." }, 400);
+      return json({
+        error: "Spielername und Team sind erforderlich."
+      }, 400);
     }
 
     const team = await env.DB.prepare(`
-      SELECT id FROM teams WHERE id = ?
+      SELECT id, name FROM teams WHERE id = ?
     `).bind(teamId).first();
 
     if (!team) {
@@ -425,24 +523,23 @@ export async function handleTeamsApi(request, env, auth) {
       isSubstitute
     ).run();
 
-    await env.DB.prepare(`
-      INSERT INTO roster_history (
-        id, team_id, player_id, action, description,
-        changed_by, created_at
-      )
-      VALUES (?, ?, ?, 'joined', ?, ?, CURRENT_TIMESTAMP)
-    `).bind(
-      crypto.randomUUID(),
+    await writeHistory(
+      env,
       teamId,
       id,
-      `${name} wurde dem Team hinzugefügt.`,
+      "joined",
+      `${name} wurde dem Team ${team.name} hinzugefügt.`,
       current.user.id
-    ).run();
+    );
 
-    await audit(env, current.user.id, "player.created", "player", id, {
-      name,
-      teamId
-    });
+    await audit(
+      env,
+      current.user.id,
+      "player.created",
+      "player",
+      id,
+      { name, teamId }
+    );
 
     return json({
       success: true,
@@ -458,12 +555,16 @@ export async function handleTeamsApi(request, env, auth) {
     }, 201);
   }
 
+  // =========================================
+  // SPIELER BEARBEITEN / ENTFERNEN
+  // =========================================
+
   const playerMatch = path.match(/^\/api\/admin\/players\/([^/]+)$/);
 
   if (playerMatch) {
     const playerId = playerMatch[1];
 
-    if (!isValidId(playerId)) {
+    if (!validId(playerId)) {
       return json({ error: "Ungültige Spieler-ID." }, 400);
     }
 
@@ -507,25 +608,28 @@ export async function handleTeamsApi(request, env, auth) {
         : player.is_substitute;
 
       if (!name || !teamId) {
-        return json({ error: "Spielername und Team sind erforderlich." }, 400);
+        return json({
+          error: "Spielername und Team sind erforderlich."
+        }, 400);
       }
 
-      const team = await env.DB.prepare(`
-        SELECT id FROM teams WHERE id = ?
+      const newTeam = await env.DB.prepare(`
+        SELECT id, name FROM teams WHERE id = ?
       `).bind(teamId).first();
 
-      if (!team) {
+      if (!newTeam) {
         return json({ error: "Team nicht gefunden." }, 404);
       }
 
       await env.DB.prepare(`
         UPDATE players
-        SET team_id = ?,
-            name = ?,
-            position = ?,
-            image_key = ?,
-            is_substitute = ?,
-            updated_at = CURRENT_TIMESTAMP
+        SET
+          team_id = ?,
+          name = ?,
+          position = ?,
+          image_key = ?,
+          is_substitute = ?,
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(
         teamId,
@@ -537,25 +641,41 @@ export async function handleTeamsApi(request, env, auth) {
       ).run();
 
       if (teamId !== player.team_id) {
-        await env.DB.prepare(`
-          INSERT INTO roster_history (
-            id, team_id, player_id, action, description,
-            changed_by, created_at
-          )
-          VALUES (?, ?, ?, 'transferred', ?, ?, CURRENT_TIMESTAMP)
-        `).bind(
-          crypto.randomUUID(),
+        const oldTeam = await env.DB.prepare(`
+          SELECT name FROM teams WHERE id = ?
+        `).bind(player.team_id).first();
+
+        await writeHistory(
+          env,
+          player.team_id,
+          playerId,
+          "left",
+          `${player.name} hat das Team ${oldTeam?.name || ""} verlassen.`,
+          current.user.id
+        );
+
+        await writeHistory(
+          env,
           teamId,
           playerId,
-          `${name} wechselte das Team.`,
+          "joined",
+          `${name} ist dem Team ${newTeam.name} beigetreten.`,
           current.user.id
-        ).run();
+        );
       }
 
-      await audit(env, current.user.id, "player.updated", "player", playerId, {
-        name,
-        teamId
-      });
+      await audit(
+        env,
+        current.user.id,
+        "player.updated",
+        "player",
+        playerId,
+        {
+          name,
+          oldTeamId: player.team_id,
+          newTeamId: teamId
+        }
+      );
 
       return json({
         success: true,
@@ -568,18 +688,22 @@ export async function handleTeamsApi(request, env, auth) {
         return json({ error: "Keine Berechtigung zum Entfernen von Spielern." }, 403);
       }
 
+      const team = await env.DB.prepare(`
+        SELECT name FROM teams WHERE id = ?
+      `).bind(player.team_id).first();
+
       await env.DB.batch([
         env.DB.prepare(`
           INSERT INTO roster_history (
-            id, team_id, player_id, action, description,
-            changed_by, created_at
+            id, team_id, player_id, action,
+            description, changed_by, created_at
           )
           VALUES (?, ?, ?, 'left', ?, ?, CURRENT_TIMESTAMP)
         `).bind(
           crypto.randomUUID(),
           player.team_id,
           playerId,
-          `${player.name} wurde aus dem Team entfernt.`,
+          `${player.name} hat das Team ${team?.name || ""} verlassen.`,
           current.user.id
         ),
         env.DB.prepare(`
@@ -587,10 +711,17 @@ export async function handleTeamsApi(request, env, auth) {
         `).bind(playerId)
       ]);
 
-      await audit(env, current.user.id, "player.deleted", "player", playerId, {
-        name: player.name,
-        teamId: player.team_id
-      });
+      await audit(
+        env,
+        current.user.id,
+        "player.deleted",
+        "player",
+        playerId,
+        {
+          name: player.name,
+          teamId: player.team_id
+        }
+      );
 
       return json({
         success: true,
@@ -600,12 +731,14 @@ export async function handleTeamsApi(request, env, auth) {
   }
 
   // =========================================
-  // KADERHISTORIE
+  // KADERHISTORIE ABRUFEN
   // =========================================
 
   if (path === "/api/admin/roster-history" && method === "GET") {
     if (!hasPermission(current, "teams.view")) {
-      return json({ error: "Keine Berechtigung für die Kaderhistorie." }, 403);
+      return json({
+        error: "Keine Berechtigung für die Kaderhistorie."
+      }, 403);
     }
 
     const teamId = url.searchParams.get("team_id");
@@ -645,6 +778,7 @@ export async function handleTeamsApi(request, env, auth) {
     });
   }
 
-  return json({ error: "Teams-API-Endpunkt nicht gefunden." }, 404);
+  return json({
+    error: "Teams-API-Endpunkt nicht gefunden."
+  }, 404);
 }
-
