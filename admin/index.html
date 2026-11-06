@@ -225,9 +225,32 @@
       <textarea id="newsContent" rows="12" required
         placeholder="Schreibe hier deinen Artikel …"></textarea>
 
-      <label for="newsImageKey">Bildverweis (optional)</label>
-      <input id="newsImageKey" type="text" maxlength="500"
-        placeholder="Dateischlüssel oder Bildpfad">
+      <label for="newsImageFile">Beitragsbild</label>
+
+<div class="news-upload-area">
+  <input
+    id="newsImageFile"
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/gif"
+  >
+
+  <button id="uploadNewsImage" class="secondary-button" type="button">
+    Bild hochladen
+  </button>
+
+  <span id="newsUploadStatus" class="muted">
+    JPG, PNG, WEBP oder GIF · maximal 8 MB
+  </span>
+</div>
+
+<div id="newsImagePreview" class="news-image-preview" hidden>
+  <img id="newsPreviewImg" alt="Vorschau des Beitragsbildes">
+  <button id="removeNewsImage" class="secondary-button" type="button">
+    Bild entfernen
+  </button>
+</div>
+
+<input id="newsImageKey" type="hidden">
 
       <div class="news-editor-actions">
         <button class="primary-button" type="submit">
