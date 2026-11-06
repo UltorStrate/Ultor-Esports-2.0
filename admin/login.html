@@ -4,161 +4,78 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-
   <title>ULTOR ESPORTS – CMS Login</title>
 
-  <link rel="stylesheet" href="./admin.css">
+  <link rel="stylesheet" href="/admin/admin.css?v=20261106">
 
-  <script src="./admin.js" defer></script>
+  <script src="/admin/admin.js?v=20261106" defer></script>
 </head>
 
 <body class="auth-page">
-
   <main class="auth-card">
 
-    <!-- BRANDING -->
     <a href="/" class="brand">
       ULTOR <span>ESPORTS</span>
     </a>
 
     <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
 
-    <!-- TABS -->
     <div class="auth-tabs">
-      <button
-        type="button"
-        id="loginTab"
-        class="tab-button active"
-      >
+      <button type="button" id="loginTab" class="tab-button active">
         Anmelden
       </button>
-
-      <button
-        type="button"
-        id="registerTab"
-        class="tab-button"
-      >
+      <button type="button" id="registerTab" class="tab-button">
         Registrieren
       </button>
     </div>
 
-    <!-- LOGIN -->
     <form id="loginForm">
-
       <h1>Willkommen zurück.</h1>
+      <p class="muted">Melde dich mit deinem CMS-Konto an.</p>
 
-      <p class="muted">
-        Melde dich mit deinem CMS-Konto an.
-      </p>
+      <label for="loginEmail">E-Mail-Adresse</label>
+      <input type="email" id="loginEmail" name="email"
+        placeholder="name@beispiel.de" autocomplete="username" required>
 
-      <label for="loginEmail">
-        E-Mail-Adresse
-      </label>
+      <label for="loginPassword">Passwort</label>
+      <input type="password" id="loginPassword" name="password"
+        placeholder="Dein Passwort" autocomplete="current-password" required>
 
-      <input
-        type="email"
-        id="loginEmail"
-        name="email"
-        placeholder="name@beispiel.de"
-        autocomplete="username"
-        required
-      >
-
-      <label for="loginPassword">
-        Passwort
-      </label>
-
-      <input
-        type="password"
-        id="loginPassword"
-        name="password"
-        placeholder="Dein Passwort"
-        autocomplete="current-password"
-        required
-      >
-
-      <button
-        type="submit"
-        class="primary-button full-width"
-      >
+      <button type="submit" class="primary-button full-width">
         Anmelden
       </button>
-
     </form>
 
-    <!-- REGISTRIERUNG -->
     <form id="registerForm" hidden>
-
       <h1>Konto erstellen.</h1>
-
       <p class="muted">
         Erstelle ein CMS-Konto für ULTOR ESPORTS.
         Dein Zugang muss anschließend vom Owner freigegeben werden.
       </p>
 
-      <label for="registerName">
-        Vollständiger Name
-      </label>
+      <label for="registerName">Vollständiger Name</label>
+      <input type="text" id="registerName" name="name"
+        placeholder="Dein Name" autocomplete="name" required>
 
-      <input
-        type="text"
-        id="registerName"
-        name="name"
-        placeholder="Dein Name"
-        autocomplete="name"
-        required
-      >
+      <label for="registerEmail">E-Mail-Adresse</label>
+      <input type="email" id="registerEmail" name="email"
+        placeholder="name@beispiel.de" autocomplete="email" required>
 
-      <label for="registerEmail">
-        E-Mail-Adresse
-      </label>
+      <label for="registerPassword">Passwort</label>
+      <input type="password" id="registerPassword" name="password"
+        placeholder="Mindestens 8 Zeichen" autocomplete="new-password"
+        minlength="8" required>
 
-      <input
-        type="email"
-        id="registerEmail"
-        name="email"
-        placeholder="name@beispiel.de"
-        autocomplete="email"
-        required
-      >
-
-      <label for="registerPassword">
-        Passwort
-      </label>
-
-      <input
-        type="password"
-        id="registerPassword"
-        name="password"
-        placeholder="Mindestens 8 Zeichen"
-        autocomplete="new-password"
-        minlength="8"
-        required
-      >
-
-      <button
-        type="submit"
-        class="primary-button full-width"
-      >
+      <button type="submit" class="primary-button full-width">
         Konto erstellen
       </button>
-
     </form>
 
-    <!-- FEEDBACK -->
-    <div
-      id="authMessage"
-      class="message"
-      role="status"
-      aria-live="polite"
-    ></div>
+    <div id="authMessage" class="message"
+      role="status" aria-live="polite"></div>
 
-    <!-- BACK LINK -->
-    <a href="/" class="back-link">
-      ← Zurück zur Website
-    </a>
+    <a href="/" class="back-link">← Zurück zur Website</a>
 
   </main>
-
 </body>
 </html>
