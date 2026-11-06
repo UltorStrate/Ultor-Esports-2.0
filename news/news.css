@@ -1,1 +1,211 @@
 
+/* ULTOR ESPORTS – PUBLIC NEWS */
+
+.news-hero {
+  padding: 105px 0 90px;
+  background:
+    radial-gradient(ellipse at 80% 30%, #8735f52b, transparent 45%),
+    #090810;
+  border-bottom: 1px solid var(--border);
+}
+
+.news-hero h1 {
+  margin-top: 20px;
+  font-family: var(--font-heading);
+  font-size: clamp(65px, 10vw, 115px);
+  line-height: .9;
+  font-weight: 900;
+}
+
+.news-hero h1 span,
+.news-section-heading h2 span {
+  color: var(--purple);
+}
+
+.news-hero p {
+  max-width: 550px;
+  margin-top: 24px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.news-overview {
+  min-height: 500px;
+  padding: 85px 0 110px;
+  background: var(--bg-light);
+}
+
+.news-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 38px;
+}
+
+.news-section-heading h2 {
+  margin-top: 12px;
+  font-family: var(--font-heading);
+  font-size: clamp(48px, 7vw, 75px);
+  line-height: .95;
+}
+
+.news-status {
+  margin-bottom: 25px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.news-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  transition: .25s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--purple);
+}
+
+.news-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #171321;
+}
+
+.news-card-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  background:
+    radial-gradient(circle at center, #8735f533, transparent 65%),
+    #171321;
+  color: #b58aff;
+  font-family: var(--font-heading);
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+.news-card-body {
+  padding: 23px;
+}
+
+.news-card-date {
+  color: var(--purple-light);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.news-card h3 {
+  margin: 12px 0;
+  font-family: var(--font-heading);
+  font-size: 27px;
+  line-height: 1.05;
+}
+
+.news-card p {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.news-card-link {
+  display: inline-block;
+  margin-top: 20px;
+  color: var(--purple-light);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.news-card-link:hover {
+  color: white;
+}
+
+.news-article {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.news-back {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--purple-light);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.article-date {
+  color: var(--purple-light);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.article-title {
+  margin: 15px 0 25px;
+  font-family: var(--font-heading);
+  font-size: clamp(42px, 7vw, 76px);
+  line-height: .98;
+}
+
+.article-image {
+  width: 100%;
+  max-height: 480px;
+  margin-bottom: 35px;
+  object-fit: cover;
+}
+
+.article-excerpt {
+  margin-bottom: 28px;
+  color: var(--purple-light);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.article-body {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 850px) {
+  .news-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .news-hero {
+    padding: 75px 0 65px;
+  }
+
+  .news-overview {
+    padding: 65px 0 80px;
+  }
+
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .news-card-body {
+    padding: 20px;
+  }
+}
+
