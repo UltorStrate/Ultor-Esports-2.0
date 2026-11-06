@@ -1143,3 +1143,250 @@ textarea:focus-visible {
     animation-duration: .01ms !important;
   }
 }
+
+/* =========================================
+   ULTOR CMS – FINAL DASHBOARD OVERRIDES
+   Erzwingt Farben und Typografie im Admin
+========================================= */
+
+body.dashboard-page,
+body.dashboard-page * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+body.dashboard-page {
+  background: #09070f !important;
+  color: #f5f1fa !important;
+}
+
+/* Überschriften */
+body.dashboard-page h1,
+body.dashboard-page h2,
+body.dashboard-page h3,
+body.dashboard-page h4,
+body.dashboard-page strong,
+body.dashboard-page b {
+  color: #f5f1fa !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Allgemeine Texte */
+body.dashboard-page p,
+body.dashboard-page span,
+body.dashboard-page label,
+body.dashboard-page small {
+  color: #aaa2bd;
+}
+
+/* Sidebar */
+body.dashboard-page .sidebar {
+  background: #0c0a12 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .sidebar-brand,
+body.dashboard-page .sidebar-brand small {
+  color: #f5f1fa !important;
+}
+
+body.dashboard-page .sidebar-brand span {
+  color: #a45cff !important;
+}
+
+body.dashboard-page .sidebar-label {
+  color: #a45cff !important;
+}
+
+body.dashboard-page .nav-item {
+  color: #c8bfd6 !important;
+  background: transparent !important;
+}
+
+body.dashboard-page .nav-item:hover {
+  color: #ffffff !important;
+  background: #1b1527 !important;
+}
+
+body.dashboard-page .nav-item.active {
+  color: #c59aff !important;
+  background: #29183c !important;
+  border-color: #6330a0 !important;
+}
+
+/* Topbar */
+body.dashboard-page .cms-topbar {
+  background: #0c0a12 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .topbar-label {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page #breadcrumbTitle {
+  color: #f5f1fa !important;
+}
+
+/* Dashboard-Inhalte */
+body.dashboard-page .cms-content {
+  color: #f5f1fa !important;
+}
+
+body.dashboard-page .page-heading h1 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .page-heading p {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .eyebrow,
+body.dashboard-page .welcome-label {
+  color: #b77cff !important;
+}
+
+/* Willkommen-Panel */
+body.dashboard-page .welcome-panel {
+  background:
+    radial-gradient(
+      ellipse at 85% 50%,
+      rgba(139, 53, 245, .18),
+      transparent 55%
+    ),
+    linear-gradient(110deg, #191222, #100d18) !important;
+  border-color: #49305f !important;
+}
+
+body.dashboard-page .welcome-panel h2 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .welcome-panel p {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .welcome-mark {
+  color: rgba(139, 53, 245, .17) !important;
+}
+
+/* Statistik-Karten */
+body.dashboard-page .stat-card,
+body.dashboard-page .content-panel {
+  background: #13101c !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .stat-label {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .stat-card strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .stat-description {
+  color: #aaa2bd !important;
+}
+
+/* Schnellzugriff */
+body.dashboard-page .quick-card {
+  background: #0e0b15 !important;
+  border-color: #30263e !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page .quick-card:hover {
+  background: #21152f !important;
+  border-color: #8b35f5 !important;
+}
+
+body.dashboard-page .quick-card strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .quick-card span {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .quick-icon,
+body.dashboard-page .placeholder-icon {
+  color: #b77cff !important;
+}
+
+/* Benutzerkonto */
+body.dashboard-page .account-info strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .account-info span {
+  color: #aaa2bd !important;
+}
+
+/* News und Benutzerkarten */
+body.dashboard-page .news-card,
+body.dashboard-page .user-card,
+body.dashboard-page .permission-group {
+  background: #0e0b15 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .news-card h3,
+body.dashboard-page .user-card h3,
+body.dashboard-page .permission-group h3 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .news-meta {
+  color: #b77cff !important;
+}
+
+body.dashboard-page .news-excerpt,
+body.dashboard-page .user-card p {
+  color: #aaa2bd !important;
+}
+
+/* Buttons */
+body.dashboard-page .primary-button {
+  background: #8b35f5 !important;
+  border-color: #8b35f5 !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page .secondary-button {
+  background: #21152f !important;
+  border-color: #49305f !important;
+  color: #e7d8fa !important;
+}
+
+body.dashboard-page .danger-button {
+  background: #29131b !important;
+  border-color: #69333f !important;
+  color: #ff9eae !important;
+}
+
+/* Formulare */
+body.dashboard-page input,
+body.dashboard-page select,
+body.dashboard-page textarea {
+  background: #0b0911 !important;
+  border-color: #393047 !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page input::placeholder,
+body.dashboard-page textarea::placeholder {
+  color: #70677e !important;
+}
+
+/* Hilfstexte */
+body.dashboard-page .muted,
+body.dashboard-page .stat-description {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .coming-soon {
+  color: #c59aff !important;
+  background: #21152f !important;
+  border-color: #6330a0 !important;
+}
+
