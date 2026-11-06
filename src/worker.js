@@ -289,11 +289,6 @@ if (
   }
 }
 
-export async function handlePublicTeamsApi(request, env) {
-  if (request.method !== "GET") {
-    return publicJson({ error: "Methode nicht erlaubt." }, 405);
-  }
-
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "");
 
