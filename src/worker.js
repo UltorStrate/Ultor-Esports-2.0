@@ -1,5 +1,6 @@
 import { createAuth } from "./auth.js";
 import { handleAdminApi } from "./admin-api.js";
+import { handleNewsApi } from "./news-api.js";
 
 const BLOCKED_PREFIXES = [
   "/src",
@@ -58,7 +59,23 @@ export default {
         );
       }
     }
+// Geschützte News-API
+if (
+  normalizedPath === "/api/admin/news" ||
+  normalizedPath.startsWith("/api/admin/news/")
+) {
+  try {
+    const auth = createAuth(env);
+    return await handleNewsApi(request, env, auth);
+  } catch (error) {
+    console.error("News API error:", error);
 
+    return Response.json(
+      { error: "Interner Fehler in der News-Verwaltung." },
+      { status: 500 }
+    );
+  }
+}
     // Geschützte CMS-API
     if (
       normalizedPath === "/api/admin" ||
