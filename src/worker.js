@@ -211,7 +211,7 @@ export default {
       const key = pathname.slice("/media/".length);
 
       // Nur gültige News-Bilder ausliefern
-      if (!/^news\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
+      if (!/^(news|teams|players)\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
         return new Response("Not Found", { status: 404 });
       }
 
