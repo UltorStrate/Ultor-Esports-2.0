@@ -1706,3 +1706,486 @@ openCmsView = function(viewName) {
 newsImageKeyInput?.addEventListener("input", () =>
   showNewsImagePreview(newsImageKeyInput.value.trim())
 );
+
+// ==================================================
+// ULTOR CMS – PARTNER VERWALTUNG
+// ==================================================
+
+let partnerPermissions = [];
+let partnerItems = [];
+let editingPartnerId = null;
+
+const partnersList = document.getElementById("partnersList");
+const partnersMessage = document.getElementById("partnersMessage");
+const partnerEditor = document.getElementById("partnerEditor");
+const partnerForm = document.getElementById("partnerForm");
+
+const partnerLogoFile = document.getElementById("partnerLogoFile");
+const uploadPartnerLogoButton = document.getElementById("uploadPartnerLogo");
+const partnerUploadStatus = document.getElementById("partnerUploadStatus");
+const partnerLogoPreview = document.getElementById("partnerLogoPreview");
+const partnerLogoPreviewImg = document.getElementById("partnerLogoPreviewImg");
+const partnerLogoKeyInput = document.getElementById("partnerLogoKey");
+const removePartnerLogoButton = document.getElementById("removePartnerLogo");
+
+function partnerCan(permission) {
+  return partnerPermissions.includes("*") ||
+    partnerPermissions.includes(permission);
+}
+
+function partnerMessage(message, type = "") {
+  showMessage(partnersMessage, message, type);
+}
+
+function partnerButton(label, className, callback) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener("click", callback);
+  return button;
+}
+
+function partnerStatusLabel(status) {
+  return status === "active" ? "Aktiv" : "Inaktiv";
+}
+
+function showPartnerLogoPreview(key) {
+  if (!partnerLogoPreview || !partnerLogoPreviewImg) return;
+
+  if (!key) {
+    partnerLogoPreview.hidden = true;
+    partnerLogoPreviewImg.removeAttribute("src");
+    return;
+  }
+
+  partnerLogoPreviewImg.src = `/media/${String(key)
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+
+  partnerLogoPreview.hidden = false;
+}
+
+function closePartnerEditor() {
+  if (!partnerEditor || !partnerForm) return;
+
+  partnerEditor.hidden = true;
+  partnerForm.reset();
+  editingPartnerId = null;
+
+  if (partnerLogoPreview) {
+    partnerLogoPreview.hidden = true;
+  }
+
+  if (partnerLogoPreviewImg) {
+    partnerLogoPreviewImg.removeAttribute("src");
+  }
+
+  if (partnerUploadStatus) {
+    partnerUploadStatus.textContent = "";
+  }
+}
+
+function openPartnerEditor(partner = null) {
+  if (!partnerEditor || !partnerForm) return;
+
+  editingPartnerId = partner?.id || null;
+
+  document.getElementById("partnerEditorTitle").textContent =
+    partner ? "Partner bearbeiten" : "Neuen Partner erstellen";
+
+  document.getElementById("partnerId").value = partner?.id || "";
+  document.getElementById("partnerName").value = partner?.name || "";
+  document.getElementById("partnerDescription").value =
+    partner?.description || "";
+  document.getElementById("partnerWebsite").value =
+    partner?.website_url || "";
+  document.getElementById("partnerLogoKey").value =
+    partner?.logo_key || "";
+  document.getElementById("partnerStatus").value =
+    partner?.status || "inactive";
+
+  showPartnerLogoPreview(partner?.logo_key || "");
+
+  partnerEditor.hidden = false;
+  partnerEditor.scrollIntoView({ behavior: "smooth" });
+}
+
+async function loadPartners() {
+  if (!partnersList) return;
+
+  partnersList.replaceChildren(
+    createElement("p", "muted", "Partner werden geladen …")
+  );
+
+  try {
+    const data = await apiRequest("/api/admin/partners");
+    partnerItems = data.partners || [];
+
+    const filter =
+      document.getElementById("partnerStatusFilter")?.value || "";
+
+    const visiblePartners = filter
+      ? partnerItems.filter(partner => partner.status === filter)
+      : partnerItems;
+
+    partnersList.replaceChildren();
+
+    if (!visiblePartners.length) {
+      partnersList.append(
+        createElement("p", "muted", "Keine Partner vorhanden.")
+      );
+      return;
+    }
+
+    for (const partner of visiblePartners) {
+      const card = createElement("article", "news-card");
+      const details = createElement("div", "news-card-details");
+
+      details.append(
+        createElement("h3", "", partner.name),
+        createElement(
+          "p",
+          "news-meta",
+          `${partnerStatusLabel(partner.status)} · ${partner.website_url || "Keine Website"}`
+        )
+      );
+
+      if (partner.description) {
+        details.append(
+          createElement("p", "news-excerpt", partner.description)
+        );
+      }
+
+      const actions = createElement("div", "news-actions");
+
+      if (partnerCan("partners.edit")) {
+        actions.append(
+          partnerButton(
+            "Bearbeiten",
+            "secondary-button",
+            () => openPartnerEditor(partner)
+          )
+        );
+      }
+
+      if (partnerCan("partners.publish")) {
+        if (partner.status === "active") {
+          actions.append(
+            partnerButton(
+              "Deaktivieren",
+              "secondary-button",
+              () => changePartnerStatus(partner, "deactivate")
+            )
+          );
+        } else {
+          actions.append(
+            partnerButton(
+              "Aktivieren",
+              "primary-button",
+              () => changePartnerStatus(partner, "activate")
+            )
+          );
+        }
+      }
+
+      if (partnerCan("partners.delete")) {
+        actions.append(
+          partnerButton(
+            "Löschen",
+            "danger-button",
+            () => deletePartner(partner)
+          )
+        );
+      }
+
+      card.append(details, actions);
+      partnersList.append(card);
+    }
+  } catch (error) {
+    partnersList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
+
+async function changePartnerStatus(partner, action) {
+  const actionText = action === "activate"
+    ? "aktivieren"
+    : "deaktivieren";
+
+  if (!window.confirm(
+    `Möchtest du den Partner "${partner.name}" wirklich ${actionText}?`
+  )) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/partners/${encodeURIComponent(partner.id)}/${action}`,
+      {
+        method: "POST",
+        body: "{}"
+      }
+    );
+
+    partnerMessage(
+      data.message || `Partner wurde ${actionText}.`,
+      "success"
+    );
+
+    await loadPartners();
+  } catch (error) {
+    partnerMessage(getErrorMessage(error), "error");
+  }
+}
+
+async function deletePartner(partner) {
+  if (!window.confirm(
+    `Möchtest du den Partner "${partner.name}" endgültig löschen?`
+  )) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/partners/${encodeURIComponent(partner.id)}`,
+      { method: "DELETE" }
+    );
+
+    partnerMessage(
+      data.message || "Partner wurde gelöscht.",
+      "success"
+    );
+
+    await loadPartners();
+  } catch (error) {
+    partnerMessage(getErrorMessage(error), "error");
+  }
+}
+
+// Partner erstellen und bearbeiten
+partnerForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const submitButton = partnerForm.querySelector(
+    'button[type="submit"]'
+  );
+
+  if (submitButton) submitButton.disabled = true;
+
+  const requestedStatus =
+    document.getElementById("partnerStatus").value;
+
+  const body = {
+    name: document.getElementById("partnerName").value.trim(),
+    description: document.getElementById("partnerDescription").value.trim(),
+    website_url: document.getElementById("partnerWebsite").value.trim(),
+    logo_key: document.getElementById("partnerLogoKey").value.trim() || null
+  };
+
+  try {
+    let savedPartnerId = editingPartnerId;
+
+    if (editingPartnerId) {
+      await apiRequest(
+        `/api/admin/partners/${encodeURIComponent(editingPartnerId)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body)
+        }
+      );
+
+      partnerMessage("Partner wurde aktualisiert.", "success");
+    } else {
+      const data = await apiRequest("/api/admin/partners", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      savedPartnerId = data.partner?.id || data.id;
+
+      if (!savedPartnerId) {
+        throw new Error(
+          "Der Partner wurde erstellt, aber der Server hat keine Partner-ID zurückgegeben."
+        );
+      }
+
+      partnerMessage("Partner wurde erstellt.", "success");
+    }
+
+    const currentPartner = partnerItems.find(
+      partner => partner.id === savedPartnerId
+    );
+
+    const currentStatus = currentPartner?.status || "inactive";
+
+    if (requestedStatus !== currentStatus) {
+      const action = requestedStatus === "active"
+        ? "activate"
+        : "deactivate";
+
+      await apiRequest(
+        `/api/admin/partners/${encodeURIComponent(savedPartnerId)}/${action}`,
+        {
+          method: "POST",
+          body: "{}"
+        }
+      );
+    }
+
+    closePartnerEditor();
+    await loadPartners();
+
+  } catch (error) {
+    partnerMessage(getErrorMessage(error), "error");
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
+});
+
+// Partnerlogo hochladen
+uploadPartnerLogoButton?.addEventListener("click", async () => {
+  const file = partnerLogoFile?.files?.[0];
+
+  if (!file) {
+    partnerMessage("Bitte wähle zuerst ein Logo aus.", "error");
+    return;
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    partnerMessage("Das Logo darf maximal 8 MB groß sein.", "error");
+    return;
+  }
+
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+    partnerMessage("Erlaubt sind JPG, PNG, WEBP und GIF.", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", "partners");
+
+  uploadPartnerLogoButton.disabled = true;
+
+  if (partnerUploadStatus) {
+    partnerUploadStatus.textContent = "Logo wird hochgeladen …";
+  }
+
+  try {
+    const response = await fetch("/api/admin/media/upload", {
+      method: "POST",
+      credentials: "same-origin",
+      body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message ||
+        `Upload fehlgeschlagen (${response.status})`
+      );
+    }
+
+    if (!data.key) {
+      throw new Error("Der Server hat keinen Bildschlüssel zurückgegeben.");
+    }
+
+    partnerLogoKeyInput.value = data.key;
+    showPartnerLogoPreview(data.key);
+    partnerLogoFile.value = "";
+
+    if (partnerUploadStatus) {
+      partnerUploadStatus.textContent = "Upload erfolgreich.";
+    }
+
+    partnerMessage(
+      "Partnerlogo wurde hochgeladen. Speichere anschließend den Partner.",
+      "success"
+    );
+  } catch (error) {
+    if (partnerUploadStatus) {
+      partnerUploadStatus.textContent = "Upload fehlgeschlagen.";
+    }
+
+    partnerMessage(getErrorMessage(error), "error");
+  } finally {
+    uploadPartnerLogoButton.disabled = false;
+  }
+});
+
+// Logo entfernen
+removePartnerLogoButton?.addEventListener("click", () => {
+  if (partnerLogoKeyInput) partnerLogoKeyInput.value = "";
+  if (partnerLogoFile) partnerLogoFile.value = "";
+
+  showPartnerLogoPreview("");
+
+  if (partnerUploadStatus) {
+    partnerUploadStatus.textContent = "Kein Logo ausgewählt.";
+  }
+});
+
+// Logo-Vorschau bei manueller Änderung des Schlüssels
+partnerLogoKeyInput?.addEventListener("input", () => {
+  showPartnerLogoPreview(partnerLogoKeyInput.value.trim());
+});
+
+// Buttons und Filter
+document.getElementById("createPartnerButton")
+  ?.addEventListener("click", () => {
+    if (!partnerCan("partners.create")) {
+      partnerMessage(
+        "Du hast keine Berechtigung, Partner zu erstellen.",
+        "error"
+      );
+      return;
+    }
+
+    openPartnerEditor();
+  });
+
+document.getElementById("closePartnerEditor")
+  ?.addEventListener("click", closePartnerEditor);
+
+document.getElementById("cancelPartnerEditor")
+  ?.addEventListener("click", closePartnerEditor);
+
+document.getElementById("partnerStatusFilter")
+  ?.addEventListener("change", loadPartners);
+
+// Partnerbereich beim Öffnen laden
+const previousPartnersOpenCmsView = openCmsView;
+
+openCmsView = function(viewName) {
+  previousPartnersOpenCmsView(viewName);
+
+  if (viewName !== "partners") return;
+
+  apiRequest("/api/admin/me")
+    .then(data => {
+      partnerPermissions = data.permissions || [];
+
+      if (!partnerCan("partners.view")) {
+        partnerMessage(
+          "Du hast keine Berechtigung, die Partnerverwaltung aufzurufen.",
+          "error"
+        );
+
+        partnersList?.replaceChildren();
+        return;
+      }
+
+      const createButton =
+        document.getElementById("createPartnerButton");
+
+      if (createButton) {
+        createButton.hidden = !partnerCan("partners.create");
+      }
+
+      loadPartners();
+    })
+    .catch(error => {
+      partnerMessage(getErrorMessage(error), "error");
+    });
+};
+
