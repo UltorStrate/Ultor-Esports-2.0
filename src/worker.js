@@ -8,6 +8,10 @@ import {
   handleTeamsApi,
   handlePublicTeamsApi
 } from "./teams-api.js";
+import {
+  handlePartnersApi,
+  handlePublicPartnersApi
+} from "./partners-api.js";
 
 const BLOCKED_PREFIXES = [
   "/src",
@@ -86,6 +90,27 @@ export default {
 
         return Response.json(
           { error: "Interner Fehler in der News-Verwaltung." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================================
+    // GESCHÜTZTE PARTNER-VERWALTUNG
+    // =========================================
+
+    if (
+      normalizedPath === "/api/admin/partners" ||
+      normalizedPath.startsWith("/api/admin/partners/")
+    ) {
+      try {
+        const auth = createAuth(env);
+        return await handlePartnersApi(request, env, auth);
+      } catch (error) {
+        console.error("Partners API error:", error);
+
+        return Response.json(
+          { error: "Interner Fehler in der Partnerverwaltung." },
           { status: 500 }
         );
       }
@@ -175,6 +200,26 @@ export default {
     }
 
     // =========================================
+    // ÖFFENTLICHE PARTNER-API
+    // =========================================
+
+    if (
+      normalizedPath === "/api/partners" ||
+      normalizedPath.startsWith("/api/partners/")
+    ) {
+      try {
+        return await handlePublicPartnersApi(request, env);
+      } catch (error) {
+        console.error("Public Partners API error:", error);
+
+        return Response.json(
+          { error: "Partner konnten nicht geladen werden." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================================
     // ÖFFENTLICHE NEWS-API
     // =========================================
 
@@ -210,8 +255,8 @@ export default {
 
       const key = pathname.slice("/media/".length);
 
-      // Nur gültige News-Bilder ausliefern
-      if (!/^(news|teams|players)\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
+      // Nur gültige Bilder aus den freigegebenen Bereichen ausliefern
+      if (!/^(news|teams|players|partners)\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
         return new Response("Not Found", { status: 404 });
       }
 
@@ -281,6 +326,7 @@ export default {
       "strict-origin-when-cross-origin"
     );
     headers.set("X-Frame-Options", "SAMEORIGIN");
+
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -288,3 +334,4 @@ export default {
     });
   }
 };
+
