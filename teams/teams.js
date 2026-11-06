@@ -139,52 +139,55 @@
             .toLowerCase()
             .replace(/\s*lane$/, "");
     }
+function getRoleInfo(position) {
+    const normalized = String(position || "")
+        .trim()
+        .toLowerCase();
 
-    function getRoleInfo(position) {
-        const normalized = normalizePosition(position);
+    const aliases = {
+        "top": "top",
+        "top lane": "top",
+        "jungle": "jungle",
+        "jg": "jungle",
+        "jgl": "jungle",
+        "mid": "middle",
+        "mid lane": "middle",
+        "middle": "middle",
+        "adc": "bottom",
+        "bot": "bottom",
+        "bottom": "bottom",
+        "bottom lane": "bottom",
+        "support": "utility",
+        "sup": "utility"
+    };
 
-        const roles = {
-            top: {
-                label: "TOP",
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M3 20 10 5l4 9 3-5 4 11H3Z"/>
-                    <path d="M10 5 12 9"/>
-                </svg>`
-            },
+    const role = aliases[normalized] || "top";
 
-            jungle: {
-                label: "JUNGLE",
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 3 5 11h4l-3 5h5v5h2v-5h5l-3-5h4L12 3Z"/>
-                </svg>`
-            },
+    const roles = {
+        top: {
+            label: "TOP",
+            image: "/assets/icon-position-top.png"
+        },
+        jungle: {
+            label: "JUNGLE",
+            image: "/assets/icon-position-jungle.png"
+        },
+        middle: {
+            label: "MID",
+            image: "/assets/icon-position-middle.png"
+        },
+        bottom: {
+            label: "ADC",
+            image: "/assets/icon-position-bottom.png"
+        },
+        utility: {
+            label: "SUPPORT",
+            image: "/assets/icon-position-utility.png"
+        }
+    };
 
-            mid: {
-                label: "MID",
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="8"/>
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v4M12 19v4M1 12h4M19 12h4"/>
-                </svg>`
-            },
-
-            adc: {
-                label: "ADC",
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M5 3c10 2 14 9 14 18"/>
-                    <path d="M5 3c-2 7 2 13 14 18"/>
-                    <path d="m7 12 12-1M14 7l5 4-5 4"/>
-                </svg>`
-            },
-
-            support: {
-                label: "SUPPORT",
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 2 20 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-3Z"/>
-                    <path d="m8.5 12 2.3 2.3 4.7-5"/>
-                </svg>`
-            }
-        };
+    return roles[role] || roles.top;
+}
 
         const aliases = {
             jgl: "jungle",
