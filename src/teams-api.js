@@ -1,4 +1,3 @@
-
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -363,61 +362,11 @@ export async function handleTeamsApi(request, env, auth) {
     }
 
     if (method === "DELETE") {
-  if (!hasPermission(current, "teams.edit")) {
-    return json({
-      error: "Keine Berechtigung zum Entfernen von Spielern."
-    }, 403);
-  }
-
-  const team = await env.DB.prepare(`
-    SELECT name FROM teams WHERE id = ?
-  `).bind(player.team_id).first();
-
-  await env.DB.batch([
-    // Bestehende Historieneinträge vom Spieler entkoppeln
-    env.DB.prepare(`
-      UPDATE roster_history
-      SET player_id = NULL
-      WHERE player_id = ?
-    `).bind(playerId),
-
-    // Austritt in der Kaderhistorie dokumentieren
-    env.DB.prepare(`
-      INSERT INTO roster_history (
-        id, team_id, player_id, action,
-        description, changed_by, created_at
-      )
-      VALUES (?, ?, NULL, 'left', ?, ?, CURRENT_TIMESTAMP)
-    `).bind(
-      crypto.randomUUID(),
-      player.team_id,
-      `${player.name} hat das Team ${team?.name || ""} verlassen.`,
-      current.user.id
-    ),
-
-    // Spieler löschen
-    env.DB.prepare(`
-      DELETE FROM players WHERE id = ?
-    `).bind(playerId)
-  ]);
-
-  await audit(
-    env,
-    current.user.id,
-    "player.deleted",
-    "player",
-    playerId,
-    {
-      name: player.name,
-      teamId: player.team_id
-    }
-  );
-
-  return json({
-    success: true,
-    message: "Spieler wurde aus dem Team entfernt."
-  });
-}
+      if (!hasPermission(current, "teams.edit")) {
+        return json({
+          error: "Keine Berechtigung zum Löschen von Teams."
+        }, 403);
+      }
 
       const players = await env.DB.prepare(`
         SELECT COUNT(*) AS total
@@ -518,8 +467,7 @@ export async function handleTeamsApi(request, env, auth) {
       players: result.results
     });
   }
-
-  // =========================================
+    // =========================================
   // SPIELER HINZUFÜGEN
   // =========================================
 
@@ -745,19 +693,28 @@ export async function handleTeamsApi(request, env, auth) {
       `).bind(player.team_id).first();
 
       await env.DB.batch([
+        // Bestehende Historieneinträge vom Spieler entkoppeln
+        env.DB.prepare(`
+          UPDATE roster_history
+          SET player_id = NULL
+          WHERE player_id = ?
+        `).bind(playerId),
+
+        // Austritt in der Kaderhistorie dokumentieren
         env.DB.prepare(`
           INSERT INTO roster_history (
             id, team_id, player_id, action,
             description, changed_by, created_at
           )
-          VALUES (?, ?, ?, 'left', ?, ?, CURRENT_TIMESTAMP)
+          VALUES (?, ?, NULL, 'left', ?, ?, CURRENT_TIMESTAMP)
         `).bind(
           crypto.randomUUID(),
           player.team_id,
-          playerId,
           `${player.name} hat das Team ${team?.name || ""} verlassen.`,
           current.user.id
         ),
+
+        // Spieler löschen
         env.DB.prepare(`
           DELETE FROM players WHERE id = ?
         `).bind(playerId)
@@ -781,8 +738,7 @@ export async function handleTeamsApi(request, env, auth) {
       });
     }
   }
-
-  // =========================================
+    // =========================================
   // KADERHISTORIE ABRUFEN
   // =========================================
 
