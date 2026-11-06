@@ -22,7 +22,21 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     let pathname;
-
+// Öffentliche News API
+if (
+  normalizedPath === "/api/news" ||
+  normalizedPath.startsWith("/api/news/")
+) {
+  try {
+    return await handlePublicNewsApi(request, env);
+  } catch (error) {
+    console.error("Public News API error:", error);
+    return Response.json(
+      { error: "News konnten nicht geladen werden." },
+      { status: 500 }
+    );
+  }
+}
     try {
       pathname = decodeURIComponent(url.pathname);
     } catch {
