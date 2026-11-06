@@ -4,90 +4,148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+
   <title>ULTOR ESPORTS – CMS Login</title>
+
   <link rel="stylesheet" href="./admin.css">
+
+  <script src="./admin.js" defer></script>
 </head>
+
 <body class="auth-page">
+
   <main class="auth-card">
-    <a class="brand" href="/">ULTOR <span>ESPORTS</span></a>
+
+    <!-- BRANDING -->
+    <a href="/" class="brand">
+      ULTOR <span>ESPORTS</span>
+    </a>
+
     <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
 
+    <!-- TABS -->
     <div class="auth-tabs">
-      <button class="tab-button active" id="loginTab" type="button">
+      <button
+        type="button"
+        id="loginTab"
+        class="tab-button active"
+      >
         Anmelden
       </button>
-      <button class="tab-button" id="registerTab" type="button">
+
+      <button
+        type="button"
+        id="registerTab"
+        class="tab-button"
+      >
         Registrieren
       </button>
     </div>
 
+    <!-- LOGIN -->
     <form id="loginForm">
-      <h1>Willkommen zurück.</h1>
-      <p class="muted">Melde dich mit deinem CMS-Konto an.</p>
 
-      <label for="loginEmail">E-Mail-Adresse</label>
+      <h1>Willkommen zurück.</h1>
+
+      <p class="muted">
+        Melde dich mit deinem CMS-Konto an.
+      </p>
+
+      <label for="loginEmail">
+        E-Mail-Adresse
+      </label>
+
       <input
+        type="email"
         id="loginEmail"
         name="email"
-        type="email"
+        placeholder="name@beispiel.de"
         autocomplete="username"
         required
       >
 
-      <label for="loginPassword">Passwort</label>
+      <label for="loginPassword">
+        Passwort
+      </label>
+
       <input
+        type="password"
         id="loginPassword"
         name="password"
-        type="password"
+        placeholder="Dein Passwort"
         autocomplete="current-password"
         required
       >
 
-      <button class="primary-button full-width" type="submit">
+      <button
+        type="submit"
+        class="primary-button full-width"
+      >
         Anmelden
       </button>
+
     </form>
 
+    <!-- REGISTRIERUNG -->
     <form id="registerForm" hidden>
-      <h1>CMS-Zugang erstellen.</h1>
+
+      <h1>Konto erstellen.</h1>
+
       <p class="muted">
-        Neue Konten müssen zunächst vom Owner freigegeben werden.
+        Erstelle ein CMS-Konto für ULTOR ESPORTS.
+        Dein Zugang muss anschließend vom Owner freigegeben werden.
       </p>
 
-      <label for="registerName">Name</label>
+      <label for="registerName">
+        Vollständiger Name
+      </label>
+
       <input
+        type="text"
         id="registerName"
         name="name"
-        type="text"
+        placeholder="Dein Name"
         autocomplete="name"
         required
-        maxlength="100"
       >
 
-      <label for="registerEmail">E-Mail-Adresse</label>
+      <label for="registerEmail">
+        E-Mail-Adresse
+      </label>
+
       <input
+        type="email"
         id="registerEmail"
         name="email"
-        type="email"
+        placeholder="name@beispiel.de"
         autocomplete="email"
         required
       >
 
-      <label for="registerPassword">Passwort</label>
+      <label for="registerPassword">
+        Passwort
+      </label>
+
       <input
+        type="password"
         id="registerPassword"
         name="password"
-        type="password"
+        placeholder="Mindestens 8 Zeichen"
         autocomplete="new-password"
         minlength="8"
         required
       >
 
-      <button class="primary-button full-width" type="submit">
+      <button
+        type="submit"
+        class="primary-button full-width"
+      >
         Konto erstellen
       </button>
+
     </form>
 
+    <!-- FEEDBACK -->
     <div
       id="authMessage"
       class="message"
@@ -95,11 +153,12 @@
       aria-live="polite"
     ></div>
 
-    <a class="back-link" href="/">
+    <!-- BACK LINK -->
+    <a href="/" class="back-link">
       ← Zurück zur Website
     </a>
+
   </main>
 
-  <script src="admin.js" defer></script>
 </body>
 </html>
