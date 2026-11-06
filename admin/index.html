@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -16,32 +17,30 @@
     </a>
 
     <div class="sidebar-label">WORKSPACE</div>
-
     <nav class="sidebar-nav" aria-label="CMS Navigation">
-      <button class="nav-item active" data-view="dashboard">
+      <button class="nav-item active" data-view="dashboard" type="button">
         <span class="nav-icon">▦</span> Dashboard
       </button>
-      <button class="nav-item" data-view="news">
+      <button class="nav-item" data-view="news" type="button">
         <span class="nav-icon">▤</span> News
       </button>
-      <button class="nav-item" data-view="teams">
+      <button class="nav-item" data-view="teams" type="button">
         <span class="nav-icon">♟</span> Teams & Spieler
       </button>
-      <button class="nav-item" data-view="partners">
+      <button class="nav-item" data-view="partners" type="button">
         <span class="nav-icon">◇</span> Partner
       </button>
-      <button class="nav-item" data-view="media">
+      <button class="nav-item" data-view="media" type="button">
         <span class="nav-icon">▧</span> Medien
       </button>
     </nav>
 
     <div class="sidebar-label">ADMINISTRATION</div>
-
     <nav class="sidebar-nav" aria-label="Administration">
-      <button class="nav-item" data-view="users">
+      <button class="nav-item" data-view="users" type="button">
         <span class="nav-icon">♙</span> Benutzer & Rechte
       </button>
-      <button class="nav-item" data-view="activity">
+      <button class="nav-item" data-view="activity" type="button">
         <span class="nav-icon">≡</span> Aktivitätsprotokoll
       </button>
     </nav>
@@ -64,8 +63,8 @@
   <main class="cms-main">
     <header class="cms-topbar">
       <span id="currentUser" hidden></span>
-      <button id="mobileMenuButton" class="mobile-menu-button" type="button"
-        aria-label="Navigation öffnen">☰</button>
+      <button id="mobileMenuButton" class="mobile-menu-button"
+        type="button" aria-label="Navigation öffnen">☰</button>
       <div>
         <span class="topbar-label">ULTOR ESPORTS CMS</span>
         <span class="topbar-separator">/</span>
@@ -77,7 +76,8 @@
     </header>
 
     <div class="cms-content">
-      <div id="dashboardMessage" class="message" role="status" aria-live="polite"></div>
+      <div id="dashboardMessage" class="message"
+        role="status" aria-live="polite"></div>
 
       <!-- DASHBOARD -->
       <section class="cms-view active" id="view-dashboard">
@@ -123,24 +123,23 @@
               <p class="muted">Direkt zu den wichtigsten Verwaltungsbereichen.</p>
             </div>
           </div>
-
           <div class="quick-grid">
-            <button class="quick-card" data-view="news">
+            <button class="quick-card" data-view="news" type="button">
               <span class="quick-icon">▤</span>
               <strong>News verwalten</strong>
               <span>Artikel und Beiträge</span>
             </button>
-            <button class="quick-card" data-view="teams">
+            <button class="quick-card" data-view="teams" type="button">
               <span class="quick-icon">♟</span>
               <strong>Teams verwalten</strong>
               <span>Kader und Spieler</span>
             </button>
-            <button class="quick-card" data-view="partners">
+            <button class="quick-card" data-view="partners" type="button">
               <span class="quick-icon">◇</span>
               <strong>Partner verwalten</strong>
               <span>Sponsoren und Partner</span>
             </button>
-            <button class="quick-card" data-view="media">
+            <button class="quick-card" data-view="media" type="button">
               <span class="quick-icon">▧</span>
               <strong>Medien öffnen</strong>
               <span>Bilder und Dateien</span>
@@ -164,138 +163,97 @@
       </section>
 
       <!-- NEWS -->
-      <!-- NEWS -->
-<section class="cms-view" id="view-news">
-  <div class="page-heading news-heading">
-    <div>
-      <p class="eyebrow">CONTENT MANAGEMENT</p>
-      <h1>News</h1>
-      <p class="muted">Erstelle, bearbeite und veröffentliche ULTOR-Beiträge.</p>
-    </div>
-    <button id="createNewsButton" class="primary-button" type="button">
-      + Neuer Beitrag
-    </button>
-  </div>
+      <section class="cms-view" id="view-news">
+        <div class="page-heading news-heading">
+          <div>
+            <p class="eyebrow">CONTENT MANAGEMENT</p>
+            <h1>News</h1>
+            <p class="muted">Erstelle, bearbeite und veröffentliche ULTOR-Beiträge.</p>
+          </div>
+          <button id="createNewsButton" class="primary-button" type="button">
+            + Neuer Beitrag
+          </button>
+        </div>
 
-  <div id="newsMessage" class="message" role="status" aria-live="polite"></div>
+        <div id="newsMessage" class="message"
+          role="status" aria-live="polite"></div>
 
-  <div class="content-panel">
-    <div class="section-heading">
-      <div>
-        <h2>Beiträge</h2>
-        <p class="muted">Alle gespeicherten News-Beiträge.</p>
-      </div>
-      <select id="newsStatusFilter" aria-label="News-Status">
-        <option value="">Alle Beiträge</option>
-        <option value="draft">Entwürfe</option>
-        <option value="pending">Ausstehend</option>
-        <option value="published">Veröffentlicht</option>
-        <option value="archived">Archiviert</option>
-      </select>
-    </div>
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Beiträge</h2>
+              <p class="muted">Alle gespeicherten News-Beiträge.</p>
+            </div>
+            <select id="newsStatusFilter" aria-label="News-Status">
+              <option value="">Alle Beiträge</option>
+              <option value="draft">Entwürfe</option>
+              <option value="pending">Ausstehend</option>
+              <option value="published">Veröffentlicht</option>
+              <option value="archived">Archiviert</option>
+            </select>
+          </div>
+          <div id="newsList" class="news-list">
+            <p class="muted">News werden geladen …</p>
+          </div>
+        </div>
 
-    <div id="newsList" class="news-list">
-      <p class="muted">News werden geladen …</p>
-    </div>
-  </div>
+        <div id="newsEditor" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2 id="newsEditorTitle">Neuen Beitrag erstellen</h2>
+              <p class="muted">Inhalte und Beitragsinformationen bearbeiten.</p>
+            </div>
+            <button id="closeNewsEditor" class="secondary-button" type="button">
+              Schließen
+            </button>
+          </div>
 
-  <div id="newsEditor" class="content-panel" hidden>
-    <div class="section-heading">
-      <div>
-        <h2 id="newsEditorTitle">Neuen Beitrag erstellen</h2>
-        <p class="muted">Inhalte und Beitragsinformationen bearbeiten.</p>
-      </div>
-      <button id="closeNewsEditor" class="secondary-button" type="button">
-        Schließen
-      </button>
-    </div>
+          <form id="newsForm">
+            <input id="newsId" type="hidden">
 
-    <form id="newsForm">
-      <input id="newsId" type="hidden">
+            <label for="newsTitle">Überschrift</label>
+            <input id="newsTitle" type="text" maxlength="180" required
+              placeholder="Titel des Beitrags">
 
-      <label for="newsTitle">Überschrift</label>
-      <input id="newsTitle" type="text" maxlength="180" required
-        placeholder="Titel des Beitrags">
+            <label for="newsExcerpt">Kurzbeschreibung / Teaser</label>
+            <textarea id="newsExcerpt" rows="3" maxlength="500"
+              placeholder="Kurze Zusammenfassung des Beitrags"></textarea>
 
-      <label for="newsExcerpt">Kurzbeschreibung / Teaser</label>
-      <textarea id="newsExcerpt" rows="3" maxlength="500"
-        placeholder="Kurze Zusammenfassung des Beitrags"></textarea>
+            <label for="newsContent">Artikelinhalt</label>
+            <textarea id="newsContent" rows="12" required
+              placeholder="Schreibe hier deinen Artikel …"></textarea>
 
-      
-<label>Artikelinhalt</label>
+            <label for="newsImageFile">Beitragsbild hochladen (optional)</label>
+            <div class="news-upload-area">
+              <input id="newsImageFile" type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif">
+              <button id="uploadNewsImage" class="secondary-button"
+                type="button">Bild hochladen</button>
+            </div>
+            <p id="newsUploadStatus" class="muted" role="status">
+              JPG, PNG, WEBP oder GIF · maximal 8 MB
+            </p>
 
-<div class="editor-toolbar">
-  <button type="button" data-command="bold"><strong>B</strong></button>
-  <button type="button" data-command="italic"><em>I</em></button>
-  <button type="button" data-command="underline"><u>U</u></button>
-  <button type="button" data-command="formatBlock" data-value="H2">Überschrift</button>
-  <button type="button" data-command="formatBlock" data-value="P">Absatz</button>
-  <button type="button" data-command="insertUnorderedList">• Liste</button>
-  <button type="button" data-command="insertOrderedList">1. Liste</button>
-  <button type="button" id="newsLinkButton">Link</button>
-</div>
+            <div id="newsImagePreview" class="news-image-preview" hidden>
+              <img id="newsPreviewImg" alt="Vorschau des Beitragsbildes">
+              <button id="removeNewsImage" class="secondary-button"
+                type="button">Bild entfernen</button>
+            </div>
 
-<div
-  id="newsContent"
-  class="rich-editor"
-  contenteditable="true"
-  role="textbox"
-  aria-multiline="true"
-  data-placeholder="Schreibe hier deinen Artikel …">
-</div>
+            <label for="newsImageKey">Bildschlüssel</label>
+            <input id="newsImageKey" type="text" maxlength="500"
+              placeholder="Wird nach dem Upload automatisch eingetragen">
 
-<input id="newsContentRequired" type="text" hidden>
-
-<div class="editor-preview-actions">
-  <button id="toggleNewsPreview" class="secondary-button" type="button">
-    Vorschau anzeigen
-  </button>
-</div>
-
-<div id="newsPreview" class="news-preview" hidden>
-  <div class="preview-label">ARTIKELVORSCHAU</div>
-  <div id="newsPreviewContent" class="preview-article"></div>
-</div>
-
-
-      <label for="newsImageFile">Beitragsbild</label>
-
-<div class="news-upload-area">
-  <input
-    id="newsImageFile"
-    type="file"
-    accept="image/jpeg,image/png,image/webp,image/gif"
-  >
-
-  <button id="uploadNewsImage" class="secondary-button" type="button">
-    Bild hochladen
-  </button>
-
-  <span id="newsUploadStatus" class="muted">
-    JPG, PNG, WEBP oder GIF · maximal 8 MB
-  </span>
-</div>
-
-<div id="newsImagePreview" class="news-image-preview" hidden>
-  <img id="newsPreviewImg" alt="Vorschau des Beitragsbildes">
-  <button id="removeNewsImage" class="secondary-button" type="button">
-    Bild entfernen
-  </button>
-</div>
-
-<input id="newsImageKey" type="hidden">
-
-      <div class="news-editor-actions">
-        <button class="primary-button" type="submit">
-          Entwurf speichern
-        </button>
-        <button id="cancelNewsEditor" class="secondary-button" type="button">
-          Abbrechen
-        </button>
-      </div>
-    </form>
-  </div>
-</section>
+            <div class="news-editor-actions">
+              <button class="primary-button" type="submit">
+                Entwurf speichern
+              </button>
+              <button id="cancelNewsEditor" class="secondary-button"
+                type="button">Abbrechen</button>
+            </div>
+          </form>
+        </div>
+      </section>
 
       <!-- TEAMS -->
       <section class="cms-view" id="view-teams">
@@ -386,8 +344,11 @@
           <p id="permissionUser" class="selected-user"></p>
           <form id="permissionsForm">
             <div id="permissionGroups" class="permission-groups"></div>
-            <button class="primary-button" type="submit">Berechtigungen speichern</button>
-            <button class="secondary-button" id="cancelPermissions" type="button">Abbrechen</button>
+            <button class="primary-button" type="submit">
+              Berechtigungen speichern
+            </button>
+            <button class="secondary-button" id="cancelPermissions"
+              type="button">Abbrechen</button>
           </form>
         </section>
 
