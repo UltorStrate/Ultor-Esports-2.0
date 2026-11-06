@@ -6,8 +6,8 @@
   "dependencies": {
     "better-auth": "1.7.3",
     "better-auth-cloudflare": "0.4.1"
-    "scripts": {
-  "auth:generate": "npx auth generate --config ./src/auth.js"
-}
+  },
+  "scripts": {
+    "auth:generate": "npx auth generate --config ./src/auth.js"
   }
 }
