@@ -515,3 +515,205 @@
     font-size: 26px;
   }
 }
+
+/* =========================================
+   ULTOR ESPORTS – OFFICIAL BRAND THEME
+========================================= */
+
+:root {
+  --accent: #8b35f5;
+  --accent-hover: #a45cff;
+  --text: #f5f1fa;
+  --muted: #aaa2bd;
+  --surface: #13101c;
+  --border: #292338;
+}
+
+body.dashboard-page {
+  background: #09070f !important;
+  color: var(--text) !important;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Typography */
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3,
+.dashboard-page strong,
+.dashboard-page label {
+  color: var(--text);
+}
+
+.dashboard-page h1,
+.dashboard-page .welcome-panel h2 {
+  font-family: Impact, "Arial Narrow", sans-serif;
+  letter-spacing: .3px;
+}
+
+.dashboard-page p,
+.dashboard-page .muted {
+  color: var(--muted);
+}
+
+.dashboard-page .eyebrow,
+.dashboard-page .welcome-label,
+.dashboard-page .topbar-label {
+  color: #a66aff;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+/* Sidebar */
+.dashboard-page .sidebar {
+  background: #0c0a12;
+  border-color: #211b2d;
+}
+
+.dashboard-page .sidebar-brand {
+  color: #f5f1fa;
+}
+
+.dashboard-page .sidebar-brand span {
+  color: var(--accent);
+}
+
+.dashboard-page .sidebar-label {
+  color: #8e7ba9;
+}
+
+.dashboard-page .nav-item {
+  color: #bcb5c9;
+}
+
+.dashboard-page .nav-item:hover {
+  background: #191324;
+  color: white;
+}
+
+.dashboard-page .nav-item.active {
+  background: #241536;
+  border-color: #6330a0;
+  color: #b77cff;
+}
+
+/* Topbar */
+.dashboard-page .cms-topbar {
+  background: #0c0a12ed;
+  border-color: #211b2d;
+}
+
+.dashboard-page #breadcrumbTitle {
+  color: #f5f1fa;
+}
+
+.dashboard-page .role-badge {
+  color: #b77cff;
+  border-color: #6330a0;
+  background: #21152f;
+}
+
+/* Panels and cards */
+.dashboard-page .content-panel,
+.dashboard-page .stat-card {
+  background: #13101c;
+  border-color: #292338;
+}
+
+.dashboard-page .welcome-panel {
+  background:
+    radial-gradient(
+      ellipse at 85% 50%,
+      #6425a544,
+      transparent 55%
+    ),
+    linear-gradient(110deg, #15111e, #100d18);
+  border-color: #39254e;
+}
+
+.dashboard-page .welcome-mark {
+  color: #8b35f52b;
+}
+
+.dashboard-page .stat-card strong {
+  color: #f5f1fa;
+}
+
+/* Quick access */
+.dashboard-page .quick-card {
+  background: #0e0b15;
+  border-color: #292338;
+  color: #f5f1fa;
+}
+
+.dashboard-page .quick-card:hover {
+  background: #1b1328;
+  border-color: #8b35f5;
+}
+
+.dashboard-page .quick-icon,
+.dashboard-page .placeholder-icon {
+  color: #a65cff;
+}
+
+/* Buttons */
+.dashboard-page .primary-button,
+.dashboard-page button.primary-button {
+  background: #8b35f5;
+  border-color: #8b35f5;
+  color: #fff;
+}
+
+.dashboard-page .primary-button:hover {
+  background: #a45cff;
+  border-color: #a45cff;
+}
+
+.dashboard-page .secondary-button,
+.dashboard-page .logout-button {
+  background: transparent;
+  border-color: #393047;
+  color: #d5cce3;
+}
+
+.dashboard-page .logout-button:hover {
+  border-color: #8b35f5;
+  color: #c59aff;
+}
+
+/* Form elements */
+.dashboard-page input,
+.dashboard-page select,
+.dashboard-page textarea {
+  background: #0b0911;
+  border-color: #393047;
+  color: #f5f1fa;
+}
+
+.dashboard-page input:focus,
+.dashboard-page select:focus,
+.dashboard-page textarea:focus {
+  outline: none;
+  border-color: #8b35f5;
+  box-shadow: 0 0 0 2px #8b35f533;
+}
+
+/* User and permission sections */
+.dashboard-page .users-list,
+.dashboard-page .permission-groups {
+  color: #f5f1fa;
+}
+
+.dashboard-page .coming-soon {
+  color: #b77cff;
+  border-color: #6330a0;
+  background: #21152f;
+}
+
+.dashboard-page .website-link {
+  color: #aaa2bd;
+}
+
+.dashboard-page .website-link:hover {
+  color: #b77cff;
+}
+
