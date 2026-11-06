@@ -13,8 +13,12 @@
     <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
 
     <div class="auth-tabs">
-      <button class="tab-button active" id="loginTab" type="button">Anmelden</button>
-      <button class="tab-button" id="registerTab" type="button">Registrieren</button>
+      <button class="tab-button active" id="loginTab" type="button">
+        Anmelden
+      </button>
+      <button class="tab-button" id="registerTab" type="button">
+        Registrieren
+      </button>
     </div>
 
     <form id="loginForm">
@@ -22,33 +26,78 @@
       <p class="muted">Melde dich mit deinem CMS-Konto an.</p>
 
       <label for="loginEmail">E-Mail-Adresse</label>
-      <input id="loginEmail" type="email" autocomplete="email" required>
+      <input
+        id="loginEmail"
+        name="email"
+        type="email"
+        autocomplete="username"
+        required
+      >
 
       <label for="loginPassword">Passwort</label>
-      <input id="loginPassword" type="password" autocomplete="current-password" required>
+      <input
+        id="loginPassword"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        required
+      >
 
-      <button class="primary-button full-width" type="submit">Anmelden</button>
+      <button class="primary-button full-width" type="submit">
+        Anmelden
+      </button>
     </form>
 
     <form id="registerForm" hidden>
       <h1>CMS-Zugang erstellen.</h1>
-      <p class="muted">Neue Konten müssen zunächst vom Owner freigegeben werden.</p>
+      <p class="muted">
+        Neue Konten müssen zunächst vom Owner freigegeben werden.
+      </p>
 
       <label for="registerName">Name</label>
-      <input id="registerName" type="text" autocomplete="name" required maxlength="100">
+      <input
+        id="registerName"
+        name="name"
+        type="text"
+        autocomplete="name"
+        required
+        maxlength="100"
+      >
 
       <label for="registerEmail">E-Mail-Adresse</label>
-      <input id="registerEmail" type="email" autocomplete="email" required>
+      <input
+        id="registerEmail"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+      >
 
       <label for="registerPassword">Passwort</label>
-      <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" required>
+      <input
+        id="registerPassword"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        minlength="8"
+        required
+      >
 
-      <button class="primary-button full-width" type="submit">Konto erstellen</button>
+      <button class="primary-button full-width" type="submit">
+        Konto erstellen
+      </button>
     </form>
 
-    <div id="authMessage" class="message" role="status" aria-live="polite"></div>
+    <div
+      id="authMessage"
+      class="message"
+      role="status"
+      aria-live="polite"
+    ></div>
 
-    <a class="back-link" href="/">← Zurück zur Website</a>
+    <a class="back-link" href="/">
+      ← Zurück zur Website
+    </a>
   </main>
 
   <script src="admin.js" defer></script>
