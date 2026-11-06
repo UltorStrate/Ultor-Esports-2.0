@@ -1,44 +1,83 @@
 
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="description" content="ULTOR Esports – Eine Organisation. Eine Identität. Ein gemeinsames Ziel.">
+    <meta name="description" content="ULTOR Esports – Eine Organisation. Eine Identität. Ein gemeinsames Ziel. Built to Compete.">
+
+    <meta name="theme-color" content="#090810">
 
     <title>ULTOR Esports | Built to Compete</title>
 
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+    <!-- =====================================
+         HEADER & NAVIGATION
+    ====================================== -->
+
     <header class="site-header">
+
         <div class="container">
+
             <a href="index.html" class="logo">
-    <img src="assets/logos/ultor-logo-transparent.jpg" alt="ULTOR Esports">
-    </a>
+                <img
+                    src="assets/logos/ultor-logo-transparent.png"
+                    alt="ULTOR Esports Logo"
+                >
+            </a>
 
             <nav class="main-navigation">
+
                 <a href="index.html">Home</a>
+
                 <a href="about/">About</a>
+
                 <a href="teams/">Teams</a>
+
                 <a href="news/">News</a>
+
                 <a href="partners/">Partners</a>
+
                 <a href="contact/">Contact</a>
-                <a href="shop/" class="shop-link">Official Shop ↗</a>
+
+                <a href="shop/" class="shop-link">
+                    Official Shop ↗
+                </a>
+
             </nav>
+
         </div>
+
     </header>
+
+
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
 
     <main>
 
+        <!-- HERO SECTION -->
+
         <section class="hero" id="home">
-            <div class="container">
+
+            <div class="container hero-layout">
+
+
+                <!-- LEFT: HERO CONTENT -->
+
                 <div class="hero-content">
 
-                    <p class="eyebrow">WELCOME TO ULTOR ESPORTS</p>
+                    <p class="eyebrow">
+                        WELCOME TO ULTOR ESPORTS
+                    </p>
 
                     <h1>
                         BUILT TO<br>
@@ -46,11 +85,17 @@
                     </h1>
 
                     <p class="hero-description">
-                        Wir stehen für Ehrgeiz, Zusammenhalt und den Anspruch,
-                        jeden Tag besser zu werden.
+                        Wir stehen für Ehrgeiz, Zusammenhalt und den
+                        Anspruch, jeden Tag besser zu werden.
+                        Eine Organisation. Eine Identität.
+                        Ein gemeinsames Ziel.
                     </p>
 
+
+                    <!-- HERO BUTTONS -->
+
                     <div class="hero-actions">
+
                         <a href="teams/" class="button button-primary">
                             UNSERE TEAMS
                         </a>
@@ -58,22 +103,64 @@
                         <a href="about/" class="button button-secondary">
                             MEHR ÜBER ULTOR
                         </a>
+
                     </div>
 
                 </div>
+
+
+                <!-- RIGHT: HERO VISUAL -->
+
+                <div class="hero-visual">
+
+                    <div class="hero-logo-glow"></div>
+
+                    <img
+                        src="assets/logos/ultor-logo-transparent.png"
+                        alt="ULTOR Esports Emblem"
+                        class="hero-logo"
+                    >
+
+                    <div class="hero-visual-label">
+
+                        <span>ULTOR ESPORTS</span>
+
+                        <span>BUILT TO COMPETE</span>
+
+                    </div>
+
+                </div>
+
             </div>
+
         </section>
 
     </main>
 
+
+    <!-- =====================================
+         FOOTER
+    ====================================== -->
+
     <footer class="site-footer">
+
         <div class="container">
-            <p>© <span id="current-year"></span> ULTOR ESPORTS. ALL RIGHTS RESERVED.</p>
+
+            <p>
+                © <span id="current-year"></span>
+                ULTOR ESPORTS. ALL RIGHTS RESERVED.
+            </p>
+
         </div>
+
     </footer>
+
+
+    <!-- JAVASCRIPT -->
 
     <script src="script.js"></script>
 
 </body>
+
 </html>
 
