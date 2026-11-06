@@ -453,7 +453,7 @@ document.getElementById("logoutButton")?.addEventListener("click", async () => {
 });
 
 // Start
-loadDashboard();
+
 // =========================================
 // ULTOR CMS – NAVIGATION
 // =========================================
@@ -557,3 +557,4 @@ loadDashboard = async function () {
     console.error("Dashboard profile error:", error);
   }
 };
+loadDashboard();
