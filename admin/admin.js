@@ -557,4 +557,297 @@ loadDashboard = async function () {
     console.error("Dashboard profile error:", error);
   }
 };
+// =========================================
+// ULTOR CMS – NEWS MANAGEMENT
+// =========================================
+
+let newsItems = [];
+let newsPermissions = [];
+let editingNewsId = null;
+
+const newsList = document.getElementById("newsList");
+const newsEditor = document.getElementById("newsEditor");
+const newsForm = document.getElementById("newsForm");
+const newsMessage = document.getElementById("newsMessage");
+
+function newsCan(permission) {
+  return newsPermissions.includes("*") ||
+    newsPermissions.includes(permission);
+}
+
+function newsButton(label, className, callback) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener("click", callback);
+  return button;
+}
+
+function newsStatusLabel(status) {
+  return {
+    draft: "Entwurf",
+    pending: "Ausstehend",
+    published: "Veröffentlicht",
+    archived: "Archiviert"
+  }[status] || status;
+}
+
+function newsDate(value) {
+  if (!value) return "–";
+
+  const date = new Date(value.replace(" ", "T") + "Z");
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+async function loadNews() {
+  if (!newsList) return;
+
+  newsList.replaceChildren(
+    createElement("p", "muted", "Beiträge werden geladen …")
+  );
+
+  try {
+    const filter = document.getElementById("newsStatusFilter")?.value || "";
+    const query = filter ? `?status=${encodeURIComponent(filter)}` : "";
+
+    const data = await apiRequest(`/api/admin/news${query}`);
+    newsItems = data.news || [];
+
+    newsList.replaceChildren();
+
+    if (!newsItems.length) {
+      newsList.append(
+        createElement("p", "muted", "Noch keine Beiträge vorhanden.")
+      );
+      return;
+    }
+
+    for (const item of newsItems) {
+      const card = createElement("article", "news-card");
+      const details = createElement("div", "news-card-details");
+      const title = createElement("h3", "", item.title);
+      const meta = createElement(
+        "p",
+        "news-meta",
+        `${newsStatusLabel(item.status)} · ${item.author_name || "Unbekannt"} · ${newsDate(item.updated_at)}`
+      );
+
+      details.append(title, meta);
+
+      if (item.excerpt) {
+        details.append(createElement("p", "news-excerpt", item.excerpt));
+      }
+
+      const actions = createElement("div", "news-actions");
+
+      if (
+        newsCan("news.edit") &&
+        (item.status === "draft" || item.status === "pending")
+      ) {
+        actions.append(
+          newsButton("Bearbeiten", "secondary-button", () => editNews(item.id))
+        );
+      }
+
+      if (newsCan("news.edit") && item.status === "draft") {
+        actions.append(
+          newsButton("Einreichen", "secondary-button", () =>
+            runNewsAction(item.id, "submit")
+          )
+        );
+      }
+
+      if (
+        newsCan("news.publish") &&
+        (item.status === "pending" || item.status === "draft")
+      ) {
+        actions.append(
+          newsButton("Veröffentlichen", "primary-button", () =>
+            runNewsAction(item.id, "publish")
+          )
+        );
+      }
+
+      if (newsCan("news.publish") && item.status === "published") {
+        actions.append(
+          newsButton("Zurückziehen", "secondary-button", () =>
+            runNewsAction(item.id, "unpublish")
+          ),
+          newsButton("Archivieren", "secondary-button", () =>
+            runNewsAction(item.id, "archive")
+          )
+        );
+      }
+
+      if (newsCan("news.delete")) {
+        actions.append(
+          newsButton("Löschen", "danger-button", () => deleteNews(item.id))
+        );
+      }
+
+      card.append(details, actions);
+      newsList.append(card);
+    }
+  } catch (error) {
+    newsList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
+
+function openNewsEditor(item = null) {
+  editingNewsId = item?.id || null;
+
+  document.getElementById("newsEditorTitle").textContent =
+    item ? "Beitrag bearbeiten" : "Neuen Beitrag erstellen";
+
+  document.getElementById("newsId").value = item?.id || "";
+  document.getElementById("newsTitle").value = item?.title || "";
+  document.getElementById("newsExcerpt").value = item?.excerpt || "";
+  document.getElementById("newsContent").value = item?.content || "";
+  document.getElementById("newsImageKey").value = item?.image_key || "";
+
+  newsEditor.hidden = false;
+  newsEditor.scrollIntoView({ behavior: "smooth" });
+}
+
+function closeNewsEditor() {
+  newsEditor.hidden = true;
+  newsForm.reset();
+  editingNewsId = null;
+}
+
+async function editNews(id) {
+  try {
+    const data = await apiRequest(`/api/admin/news/${encodeURIComponent(id)}`);
+    openNewsEditor(data.news);
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  }
+}
+
+document.getElementById("createNewsButton")?.addEventListener("click", () => {
+  if (!newsCan("news.create")) {
+    showMessage(newsMessage, "Du hast keine Berechtigung, News zu erstellen.", "error");
+    return;
+  }
+
+  openNewsEditor();
+});
+
+document.getElementById("closeNewsEditor")?.addEventListener("click", closeNewsEditor);
+document.getElementById("cancelNewsEditor")?.addEventListener("click", closeNewsEditor);
+
+document.getElementById("newsStatusFilter")?.addEventListener("change", loadNews);
+
+newsForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = newsForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+
+  const body = {
+    title: document.getElementById("newsTitle").value.trim(),
+    excerpt: document.getElementById("newsExcerpt").value.trim(),
+    content: document.getElementById("newsContent").value,
+    image_key: document.getElementById("newsImageKey").value.trim() || null
+  };
+
+  try {
+    if (editingNewsId) {
+      await apiRequest(`/api/admin/news/${encodeURIComponent(editingNewsId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      });
+      showMessage(newsMessage, "Beitrag wurde aktualisiert.", "success");
+    } else {
+      await apiRequest("/api/admin/news", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      showMessage(newsMessage, "Neuer Entwurf wurde gespeichert.", "success");
+    }
+
+    closeNewsEditor();
+    await loadNews();
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  } finally {
+    button.disabled = false;
+  }
+});
+
+async function runNewsAction(id, action) {
+  const labels = {
+    submit: "Diesen Beitrag zur Freigabe einreichen?",
+    publish: "Diesen Beitrag veröffentlichen?",
+    archive: "Diesen Beitrag archivieren?",
+    unpublish: "Diesen Beitrag zurückziehen?"
+  };
+
+  if (!window.confirm(labels[action])) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/news/${encodeURIComponent(id)}/${action}`,
+      {
+        method: "POST",
+        body: "{}"
+      }
+    );
+
+    showMessage(newsMessage, data.message, "success");
+    await loadNews();
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  }
+}
+
+async function deleteNews(id) {
+  if (!window.confirm("Möchtest du diesen Beitrag endgültig löschen?")) return;
+
+  try {
+    const data = await apiRequest(
+      `/api/admin/news/${encodeURIComponent(id)}`,
+      { method: "DELETE" }
+    );
+
+    showMessage(newsMessage, data.message, "success");
+    await loadNews();
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  }
+}
+
+// News beim Öffnen des Bereichs laden
+const previousOpenCmsView = openCmsView;
+
+openCmsView = function(viewName) {
+  previousOpenCmsView(viewName);
+
+  if (viewName === "news") {
+    apiRequest("/api/admin/me")
+      .then(data => {
+        newsPermissions = data.permissions || [];
+
+        const createButton = document.getElementById("createNewsButton");
+        if (createButton) {
+          createButton.hidden = !newsCan("news.create");
+        }
+
+        loadNews();
+      })
+      .catch(error => {
+        showMessage(newsMessage, getErrorMessage(error), "error");
+      });
+  }
+};
 loadDashboard();
