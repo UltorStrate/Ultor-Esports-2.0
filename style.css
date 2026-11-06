@@ -1156,3 +1156,133 @@ a {
 .nav-login:hover {
   color: #ffffff;
 }
+
+/* =========================================
+   HOMEPAGE – DYNAMIC NEWS
+========================================= */
+
+.home-news-status {
+    margin-bottom: 22px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.home-news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.home-news-card {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    transition: .25s ease;
+}
+
+.home-news-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--purple);
+}
+
+.home-news-card-image-link {
+    display: block;
+    overflow: hidden;
+}
+
+.home-news-image,
+.home-news-no-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #171321;
+}
+
+.home-news-image {
+    transition: transform .35s ease;
+}
+
+.home-news-card:hover .home-news-image {
+    transform: scale(1.04);
+}
+
+.home-news-no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle, #8735f533, transparent 65%),
+        var(--panel);
+}
+
+.home-news-no-image span {
+    color: var(--purple-light);
+    font-family: var(--font-heading);
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 4px;
+}
+
+.home-news-card-content {
+    padding: 23px;
+}
+
+.home-news-date {
+    color: var(--purple-light);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.home-news-card h3 {
+    margin: 12px 0;
+    color: var(--white);
+    font-family: var(--font-heading);
+    font-size: 28px;
+    line-height: 1.05;
+}
+
+.home-news-card p {
+    min-height: 45px;
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.home-news-readmore {
+    display: inline-block;
+    margin-top: 20px;
+    color: var(--purple-light);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+}
+
+.home-news-readmore:hover {
+    color: var(--white);
+}
+
+.home-news-footer {
+    margin-top: 35px;
+    text-align: right;
+}
+
+@media (max-width: 850px) {
+    .home-news-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .home-news-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-news-card-content {
+        padding: 20px;
+    }
+}
+
