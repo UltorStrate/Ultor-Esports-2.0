@@ -4,71 +4,299 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>ULTOR ESPORTS – CMS Dashboard</title>
+  <title>ULTOR ESPORTS – CMS</title>
   <link rel="stylesheet" href="admin.css">
 </head>
 <body class="dashboard-page">
-  <header class="topbar">
-    <a class="brand" href="/">ULTOR <span>ESPORTS</span></a>
-    <div class="topbar-right">
-      <span id="currentUser" class="user-label">Lade Benutzer …</span>
-      <button id="logoutButton" class="secondary-button" type="button">Abmelden</button>
+
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar-brand" href="/">
+      ULTOR <span>ESPORTS</span>
+      <small>CONTENT MANAGEMENT</small>
+    </a>
+
+    <div class="sidebar-label">WORKSPACE</div>
+
+    <nav class="sidebar-nav" aria-label="CMS Navigation">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">▦</span> Dashboard
+      </button>
+      <button class="nav-item" data-view="news">
+        <span class="nav-icon">▤</span> News
+      </button>
+      <button class="nav-item" data-view="teams">
+        <span class="nav-icon">♟</span> Teams & Spieler
+      </button>
+      <button class="nav-item" data-view="partners">
+        <span class="nav-icon">◇</span> Partner
+      </button>
+      <button class="nav-item" data-view="media">
+        <span class="nav-icon">▧</span> Medien
+      </button>
+    </nav>
+
+    <div class="sidebar-label">ADMINISTRATION</div>
+
+    <nav class="sidebar-nav" aria-label="Administration">
+      <button class="nav-item" data-view="users">
+        <span class="nav-icon">♙</span> Benutzer & Rechte
+      </button>
+      <button class="nav-item" data-view="activity">
+        <span class="nav-icon">≡</span> Aktivitätsprotokoll
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="avatar" id="userAvatar">U</div>
+        <div class="sidebar-user-info">
+          <strong id="sidebarUserName">ULTOR User</strong>
+          <span id="sidebarUserRole">CMS-Benutzer</span>
+        </div>
+      </div>
+      <button id="logoutButton" class="logout-button" type="button">
+        Abmelden
+      </button>
+      <a href="/" class="website-link">← Zur öffentlichen Website</a>
     </div>
-  </header>
+  </aside>
 
-  <main class="dashboard">
-    <section class="page-heading">
+  <main class="cms-main">
+    <header class="cms-topbar">
+      <button id="mobileMenuButton" class="mobile-menu-button" type="button"
+        aria-label="Navigation öffnen">☰</button>
       <div>
-        <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
-        <h1>Dashboard</h1>
-        <p class="muted">Verwalte Benutzer und Zugriffsrechte von ULTOR ESPORTS.</p>
+        <span class="topbar-label">ULTOR ESPORTS CMS</span>
+        <span class="topbar-separator">/</span>
+        <span id="breadcrumbTitle">Dashboard</span>
       </div>
-      <span id="roleBadge" class="role-badge">Lädt …</span>
-    </section>
-
-    <div id="dashboardMessage" class="message" role="status" aria-live="polite"></div>
-
-    <section id="ownerPanel" hidden>
-      <div class="panel">
-        <div class="panel-heading">
-          <div>
-            <h2>Benutzerverwaltung</h2>
-            <p class="muted">Konten prüfen und Zugänge verwalten.</p>
-          </div>
-          <select id="userStatusFilter" aria-label="Benutzerstatus">
-            <option value="pending">Ausstehend</option>
-            <option value="approved">Freigegeben</option>
-            <option value="rejected">Abgelehnt</option>
-            <option value="suspended">Gesperrt</option>
-          </select>
-        </div>
-        <div id="usersList" class="users-list">
-          <p class="muted">Benutzer werden geladen …</p>
-        </div>
+      <div class="topbar-right">
+        <span id="roleBadge" class="role-badge">Lädt …</span>
       </div>
+    </header>
 
-      <div class="panel" id="permissionPanel" hidden>
-        <div class="panel-heading">
+    <div class="cms-content">
+      <div id="dashboardMessage" class="message" role="status" aria-live="polite"></div>
+
+      <!-- DASHBOARD -->
+      <section class="cms-view active" id="view-dashboard">
+        <div class="page-heading">
           <div>
-            <h2>Berechtigungen</h2>
-            <p class="muted">Wähle die Rechte für den ausgewählten Benutzer.</p>
+            <p class="eyebrow">OVERVIEW</p>
+            <h1>Dashboard</h1>
+            <p class="muted">Willkommen im ULTOR ESPORTS Management-System.</p>
           </div>
         </div>
 
-        <p id="permissionUser" class="selected-user"></p>
-        <form id="permissionsForm">
-          <div id="permissionGroups" class="permission-groups"></div>
-          <button class="primary-button" type="submit">Berechtigungen speichern</button>
-          <button class="secondary-button" id="cancelPermissions" type="button">Abbrechen</button>
-        </form>
-      </div>
-    </section>
+        <div class="welcome-panel">
+          <div>
+            <span class="welcome-label">MANAGEMENT CENTER</span>
+            <h2>Alles im Blick.</h2>
+            <p>Verwalte die Inhalte und Aktivitäten von ULTOR ESPORTS zentral an einem Ort.</p>
+          </div>
+          <div class="welcome-mark">ULTOR</div>
+        </div>
 
-    <section id="standardPanel" class="panel" hidden>
-      <h2>Dein Zugang</h2>
-      <p class="muted">Dein Konto ist freigegeben. Die verfügbaren CMS-Funktionen werden entsprechend deiner Berechtigungen ergänzt.</p>
-      <div id="myPermissions" class="permission-summary"></div>
-    </section>
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-label">BENUTZERSTATUS</span>
+            <strong id="statUserRole">–</strong>
+            <span class="stat-description">Deine Zugriffsrolle</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">BEREICHE</span>
+            <strong>7</strong>
+            <span class="stat-description">CMS-Verwaltungsbereiche</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">BERECHTIGUNGEN</span>
+            <strong id="statPermissionCount">–</strong>
+            <span class="stat-description">Deine zugewiesenen Rechte</span>
+          </article>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Schnellzugriff</h2>
+              <p class="muted">Direkt zu den wichtigsten Verwaltungsbereichen.</p>
+            </div>
+          </div>
+
+          <div class="quick-grid">
+            <button class="quick-card" data-view="news">
+              <span class="quick-icon">▤</span>
+              <strong>News verwalten</strong>
+              <span>Artikel und Beiträge</span>
+            </button>
+            <button class="quick-card" data-view="teams">
+              <span class="quick-icon">♟</span>
+              <strong>Teams verwalten</strong>
+              <span>Kader und Spieler</span>
+            </button>
+            <button class="quick-card" data-view="partners">
+              <span class="quick-icon">◇</span>
+              <strong>Partner verwalten</strong>
+              <span>Sponsoren und Partner</span>
+            </button>
+            <button class="quick-card" data-view="media">
+              <span class="quick-icon">▧</span>
+              <strong>Medien öffnen</strong>
+              <span>Bilder und Dateien</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Dein Benutzerkonto</h2>
+              <p class="muted">Informationen zu deinem Zugang.</p>
+            </div>
+          </div>
+          <div class="account-info">
+            <div><span>Name</span><strong id="accountName">–</strong></div>
+            <div><span>E-Mail</span><strong id="accountEmail">–</strong></div>
+            <div><span>Rolle</span><strong id="accountRole">–</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEWS -->
+      <section class="cms-view" id="view-news">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">CONTENT MANAGEMENT</p>
+            <h1>News</h1>
+            <p class="muted">Erstelle und verwalte Nachrichten und Beiträge.</p>
+          </div>
+        </div>
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">▤</span>
+          <h2>News-Verwaltung</h2>
+          <p>Hier entsteht die Verwaltung für Artikel, Entwürfe, Freigaben und Veröffentlichungen.</p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+      <!-- TEAMS -->
+      <section class="cms-view" id="view-teams">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ROSTER MANAGEMENT</p>
+            <h1>Teams & Spieler</h1>
+            <p class="muted">Verwalte Teams, Spielerprofile und Kaderhistorien.</p>
+          </div>
+        </div>
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">♟</span>
+          <h2>Team- und Spielerverwaltung</h2>
+          <p>Hier entstehen Teamprofile, Spielerkader, Positionen, Ersatzspieler und Wechselhistorien.</p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+      <!-- PARTNER -->
+      <section class="cms-view" id="view-partners">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">BUSINESS MANAGEMENT</p>
+            <h1>Partner</h1>
+            <p class="muted">Verwalte Sponsoren und Kooperationspartner.</p>
+          </div>
+        </div>
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">◇</span>
+          <h2>Partnermanagement</h2>
+          <p>Hier entstehen Partnerprofile, Beschreibungen, Logos und Website-Verknüpfungen.</p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+      <!-- MEDIA -->
+      <section class="cms-view" id="view-media">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ASSET MANAGEMENT</p>
+            <h1>Medien</h1>
+            <p class="muted">Verwalte Bilder und Dateien für deine Website.</p>
+          </div>
+        </div>
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">▧</span>
+          <h2>Medienbibliothek</h2>
+          <p>Hier entsteht die zentrale Medienverwaltung mit Uploads und Dateizuordnung.</p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="cms-view" id="view-users">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ACCESS MANAGEMENT</p>
+            <h1>Benutzer & Rechte</h1>
+            <p class="muted">Verwalte CMS-Zugänge und individuelle Berechtigungen.</p>
+          </div>
+        </div>
+
+        <section id="ownerPanel" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Benutzerverwaltung</h2>
+              <p class="muted">Konten prüfen und Zugänge verwalten.</p>
+            </div>
+            <select id="userStatusFilter" aria-label="Benutzerstatus">
+              <option value="pending">Ausstehend</option>
+              <option value="approved">Freigegeben</option>
+              <option value="rejected">Abgelehnt</option>
+              <option value="suspended">Gesperrt</option>
+            </select>
+          </div>
+          <div id="usersList" class="users-list">
+            <p class="muted">Benutzer werden geladen …</p>
+          </div>
+        </section>
+
+        <section id="permissionPanel" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Berechtigungen</h2>
+              <p class="muted">Wähle die Rechte für den ausgewählten Benutzer.</p>
+            </div>
+          </div>
+          <p id="permissionUser" class="selected-user"></p>
+          <form id="permissionsForm">
+            <div id="permissionGroups" class="permission-groups"></div>
+            <button class="primary-button" type="submit">Berechtigungen speichern</button>
+            <button class="secondary-button" id="cancelPermissions" type="button">Abbrechen</button>
+          </form>
+        </section>
+
+        <section id="standardPanel" class="content-panel" hidden>
+          <h2>Deine Berechtigungen</h2>
+          <p class="muted">Die folgenden Rechte sind deinem Konto zugewiesen.</p>
+          <div id="myPermissions" class="permission-summary"></div>
+        </section>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section class="cms-view" id="view-activity">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">SYSTEM MONITORING</p>
+            <h1>Aktivitätsprotokoll</h1>
+            <p class="muted">Behalte Änderungen und administrative Aktionen im Blick.</p>
+          </div>
+        </div>
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">≡</span>
+          <h2>Audit-Log</h2>
+          <p>Hier entsteht eine chronologische Übersicht aller relevanten CMS-Aktionen.</p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+    </div>
   </main>
 
   <script src="admin.js" defer></script>
