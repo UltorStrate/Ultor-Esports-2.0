@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ULTOR ESPORTS – CMS Dashboard</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="dashboard-page">
+  <header class="topbar">
+    <a class="brand" href="/">ULTOR <span>ESPORTS</span></a>
+    <div class="topbar-right">
+      <span id="currentUser" class="user-label">Lade Benutzer …</span>
+      <button id="logoutButton" class="secondary-button" type="button">Abmelden</button>
+    </div>
+  </header>
 
+  <main class="dashboard">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
+        <h1>Dashboard</h1>
+        <p class="muted">Verwalte Benutzer und Zugriffsrechte von ULTOR ESPORTS.</p>
+      </div>
+      <span id="roleBadge" class="role-badge">Lädt …</span>
+    </section>
+
+    <div id="dashboardMessage" class="message" role="status" aria-live="polite"></div>
+
+    <section id="ownerPanel" hidden>
+      <div class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Benutzerverwaltung</h2>
+            <p class="muted">Konten prüfen und Zugänge verwalten.</p>
+          </div>
+          <select id="userStatusFilter" aria-label="Benutzerstatus">
+            <option value="pending">Ausstehend</option>
+            <option value="approved">Freigegeben</option>
+            <option value="rejected">Abgelehnt</option>
+            <option value="suspended">Gesperrt</option>
+          </select>
+        </div>
+        <div id="usersList" class="users-list">
+          <p class="muted">Benutzer werden geladen …</p>
+        </div>
+      </div>
+
+      <div class="panel" id="permissionPanel" hidden>
+        <div class="panel-heading">
+          <div>
+            <h2>Berechtigungen</h2>
+            <p class="muted">Wähle die Rechte für den ausgewählten Benutzer.</p>
+          </div>
+        </div>
+
+        <p id="permissionUser" class="selected-user"></p>
+        <form id="permissionsForm">
+          <div id="permissionGroups" class="permission-groups"></div>
+          <button class="primary-button" type="submit">Berechtigungen speichern</button>
+          <button class="secondary-button" id="cancelPermissions" type="button">Abbrechen</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="standardPanel" class="panel" hidden>
+      <h2>Dein Zugang</h2>
+      <p class="muted">Dein Konto ist freigegeben. Die verfügbaren CMS-Funktionen werden entsprechend deiner Berechtigungen ergänzt.</p>
+      <div id="myPermissions" class="permission-summary"></div>
+    </section>
+  </main>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>
