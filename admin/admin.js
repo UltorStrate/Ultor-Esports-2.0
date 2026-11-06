@@ -1031,6 +1031,13 @@ openNewsEditor = function(item = null) {
 // =========================================
 // START
 // =========================================
+// =========================================
+// ULTOR CMS – INITIALISIERUNG
+// =========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboard();
+});
 
 loadDashboard();   
 }
