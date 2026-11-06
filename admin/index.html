@@ -1,4 +1,263 @@
-```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ULTOR ESPORTS – CMS</title>
+  <link rel="stylesheet" href="/admin/admin.css?v=20261106">
+</head>
+
+<body class="dashboard-page">
+
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar-brand" href="/">
+      ULTOR <span>ESPORTS</span>
+      <small>CONTENT MANAGEMENT</small>
+    </a>
+
+    <div class="sidebar-label">WORKSPACE</div>
+
+    <nav class="sidebar-nav" aria-label="CMS Navigation">
+      <button class="nav-item active" data-view="dashboard" type="button">
+        <span class="nav-icon">▦</span> Dashboard
+      </button>
+      <button class="nav-item" data-view="news" type="button">
+        <span class="nav-icon">▤</span> News
+      </button>
+      <button class="nav-item" data-view="teams" type="button">
+        <span class="nav-icon">♟</span> Teams & Spieler
+      </button>
+      <button class="nav-item" data-view="partners" type="button">
+        <span class="nav-icon">◇</span> Partner
+      </button>
+      <button class="nav-item" data-view="media" type="button">
+        <span class="nav-icon">▧</span> Medien
+      </button>
+    </nav>
+
+    <div class="sidebar-label">ADMINISTRATION</div>
+
+    <nav class="sidebar-nav" aria-label="Administration">
+      <button class="nav-item" data-view="users" type="button">
+        <span class="nav-icon">♙</span> Benutzer & Rechte
+      </button>
+      <button class="nav-item" data-view="activity" type="button">
+        <span class="nav-icon">≡</span> Aktivitätsprotokoll
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="avatar" id="userAvatar">U</div>
+        <div class="sidebar-user-info">
+          <strong id="sidebarUserName">ULTOR User</strong>
+          <span id="sidebarUserRole">CMS-Benutzer</span>
+        </div>
+      </div>
+
+      <button id="logoutButton" class="logout-button" type="button">
+        Abmelden
+      </button>
+
+      <a href="/" class="website-link">← Zur öffentlichen Website</a>
+    </div>
+  </aside>
+
+  <main class="cms-main">
+
+    <header class="cms-topbar">
+      <span id="currentUser" hidden></span>
+
+      <button id="mobileMenuButton"
+        class="mobile-menu-button"
+        type="button"
+        aria-label="Navigation öffnen">☰</button>
+
+      <div>
+        <span class="topbar-label">ULTOR ESPORTS CMS</span>
+        <span class="topbar-separator">/</span>
+        <span id="breadcrumbTitle">Dashboard</span>
+      </div>
+
+      <div class="topbar-right">
+        <span id="roleBadge" class="role-badge">Lädt …</span>
+      </div>
+    </header>
+
+    <div class="cms-content">
+
+      <div id="dashboardMessage"
+        class="message"
+        role="status"
+        aria-live="polite"></div>
+
+      <!-- =====================================
+           DASHBOARD
+      ====================================== -->
+
+      <section class="cms-view active" id="view-dashboard">
+
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">OVERVIEW</p>
+            <h1>Dashboard</h1>
+            <p class="muted">
+              Willkommen im ULTOR ESPORTS Management-System.
+            </p>
+          </div>
+        </div>
+
+        <div class="welcome-panel">
+          <div>
+            <span class="welcome-label">MANAGEMENT CENTER</span>
+            <h2>Alles im Blick.</h2>
+            <p>
+              Verwalte die Inhalte und Aktivitäten von ULTOR ESPORTS
+              zentral an einem Ort.
+            </p>
+          </div>
+          <div class="welcome-mark">ULTOR</div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-label">BENUTZERSTATUS</span>
+            <strong id="statUserRole">–</strong>
+            <span class="stat-description">Deine Zugriffsrolle</span>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">BEREICHE</span>
+            <strong>7</strong>
+            <span class="stat-description">CMS-Verwaltungsbereiche</span>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">BERECHTIGUNGEN</span>
+            <strong id="statPermissionCount">–</strong>
+            <span class="stat-description">Deine zugewiesenen Rechte</span>
+          </article>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Schnellzugriff</h2>
+              <p class="muted">
+                Direkt zu den wichtigsten Verwaltungsbereichen.
+              </p>
+            </div>
+          </div>
+
+          <div class="quick-grid">
+            <button class="quick-card" data-view="news" type="button">
+              <span class="quick-icon">▤</span>
+              <strong>News verwalten</strong>
+              <span>Artikel und Beiträge</span>
+            </button>
+
+            <button class="quick-card" data-view="teams" type="button">
+              <span class="quick-icon">♟</span>
+              <strong>Teams verwalten</strong>
+              <span>Kader und Spieler</span>
+            </button>
+
+            <button class="quick-card" data-view="partners" type="button">
+              <span class="quick-icon">◇</span>
+              <strong>Partner verwalten</strong>
+              <span>Sponsoren und Partner</span>
+            </button>
+
+            <button class="quick-card" data-view="media" type="button">
+              <span class="quick-icon">▧</span>
+              <strong>Medien öffnen</strong>
+              <span>Bilder und Dateien</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Dein Benutzerkonto</h2>
+              <p class="muted">Informationen zu deinem Zugang.</p>
+            </div>
+          </div>
+
+          <div class="account-info">
+            <div><span>Name</span><strong id="accountName">–</strong></div>
+            <div><span>E-Mail</span><strong id="accountEmail">–</strong></div>
+            <div><span>Rolle</span><strong id="accountRole">–</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================
+           NEWS
+      ====================================== -->
+
+      <section class="cms-view" id="view-news">
+
+        <div class="page-heading news-heading">
+          <div>
+            <p class="eyebrow">CONTENT MANAGEMENT</p>
+            <h1>News</h1>
+            <p class="muted">
+              Erstelle, bearbeite und veröffentliche ULTOR-Beiträge.
+            </p>
+          </div>
+
+          <button id="createNewsButton"
+            class="primary-button"
+            type="button">
+            + Neuer Beitrag
+          </button>
+        </div>
+
+        <div id="newsMessage"
+          class="message"
+          role="status"
+          aria-live="polite"></div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Beiträge</h2>
+              <p class="muted">Alle gespeicherten News-Beiträge.</p>
+            </div>
+
+            <select id="newsStatusFilter" aria-label="News-Status">
+              <option value="">Alle Beiträge</option>
+              <option value="draft">Entwürfe</option>
+              <option value="pending">Ausstehend</option>
+              <option value="published">Veröffentlicht</option>
+              <option value="archived">Archiviert</option>
+            </select>
+          </div>
+
+          <div id="newsList" class="news-list">
+            <p class="muted">News werden geladen …</p>
+          </div>
+        </div>
+
+        <div id="newsEditor" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2 id="newsEditorTitle">Neuen Beitrag erstellen</h2>
+              <p class="muted">
+                Inhalte und Beitragsinformationen bearbeiten.
+              </p>
+            </div>
+
+            <button id="closeNewsEditor"
+              class="secondary-button"
+              type="button">Schließen</button>
+          </div>
+
+          <form id="newsForm">
+            <input id="newsId" type="hidden">
+
             <label for="newsTitle">Überschrift</label>
             <input id="newsTitle" type="text"
               maxlength="180" required
@@ -42,19 +301,12 @@
 
             <label for="newsImageKey">Bildschlüssel</label>
             <input id="newsImageKey" type="text"
-              placeholder="Wird nach dem Upload automatisch gesetzt">
-
-            <label for="newsStatus">Beitragsstatus</label>
-            <select id="newsStatus">
-              <option value="draft">Entwurf</option>
-              <option value="pending">Ausstehend</option>
-              <option value="published">Veröffentlicht</option>
-              <option value="archived">Archiviert</option>
-            </select>
+              maxlength="500"
+              placeholder="Wird nach dem Upload automatisch eingetragen">
 
             <div class="news-editor-actions">
               <button class="primary-button" type="submit">
-                Beitrag speichern
+                Entwurf speichern
               </button>
 
               <button id="cancelNewsEditor"
@@ -64,261 +316,6 @@
           </form>
         </div>
       </section>
-
-      <!-- =====================================
-           TEAMS & SPIELER
-      ====================================== -->
-
-      <section class="cms-view" id="view-teams">
-
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">ROSTER MANAGEMENT</p>
-            <h1>Teams & Spieler</h1>
-            <p class="muted">
-              Verwalte Teams, Kader und Spielerprofile.
-            </p>
-          </div>
-        </div>
-
-        <div id="teamsMessage"
-          class="message"
-          role="status"
-          aria-live="polite"></div>
-
-        <!-- TEAMVERWALTUNG -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Teamverwaltung</h2>
-              <p class="muted">
-                Teams erstellen und bestehende Teams bearbeiten.
-              </p>
-            </div>
-
-            <button id="createTeamButton"
-              class="primary-button"
-              type="button">
-              + Neues Team
-            </button>
-          </div>
-
-          <div id="teamsList" class="news-list">
-            <p class="muted">Teams werden geladen …</p>
-          </div>
-        </div>
-
-        <!-- TEAMEDITOR -->
-
-        <div id="teamEditor" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2 id="teamEditorTitle">Neues Team erstellen</h2>
-              <p class="muted">
-                Teamdaten und Darstellung bearbeiten.
-              </p>
-            </div>
-
-            <button id="closeTeamEditor"
-              class="secondary-button"
-              type="button">Schließen</button>
-          </div>
-
-          <form id="teamForm">
-            <input id="teamId" type="hidden">
-
-            <label for="teamName">Teamname</label>
-            <input id="teamName" type="text"
-              maxlength="120" required
-              placeholder="Name des Teams">
-
-            <label for="teamGame">Spiel</label>
-            <input id="teamGame" type="text"
-              maxlength="100"
-              placeholder="z. B. League of Legends">
-
-            <label for="teamTag">Teamkürzel</label>
-            <input id="teamTag" type="text"
-              maxlength="30"
-              placeholder="z. B. ULTOR">
-
-            <label for="teamDescription">Beschreibung</label>
-            <textarea id="teamDescription" rows="4"
-              placeholder="Kurze Beschreibung des Teams"></textarea>
-
-            <label for="teamLogoFile">Teamlogo</label>
-
-<div class="image-upload-control">
-  <input
-    type="file"
-    id="teamLogoFile"
-    accept="image/png,image/jpeg,image/webp"
-  >
-
-  <button
-    type="button"
-    id="uploadTeamLogo"
-    class="secondary-button"
-  >
-    Teamlogo hochladen
-  </button>
-</div>
-
-<div id="teamLogoPreview" class="image-preview" hidden>
-  <img id="teamLogoPreviewImg" alt="Teamlogo-Vorschau">
-
-  <button
-    type="button"
-    id="removeTeamLogo"
-    class="secondary-button"
-  >
-    Logo entfernen
-  </button>
-</div>
-
-<input id="teamLogoKey" type="hidden">
-
-            <label for="teamStatus">Teamstatus</label>
-            <select id="teamStatus">
-              <option value="active">Aktiv</option>
-              <option value="draft">Entwurf</option>
-              <option value="inactive">Inaktiv</option>
-            </select>
-
-            <div class="news-editor-actions">
-              <button class="primary-button" type="submit">
-                Team speichern
-              </button>
-
-              <button id="cancelTeamEditor"
-                class="secondary-button"
-                type="button">Abbrechen</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- SPIELERVERWALTUNG -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Spielerverwaltung</h2>
-              <p class="muted">
-                Spieler hinzufügen und bestehenden Kadern zuordnen.
-              </p>
-            </div>
-
-            <button id="createPlayerButton"
-              class="primary-button"
-              type="button">
-              + Neuer Spieler
-            </button>
-          </div>
-
-          <div class="news-upload-area">
-            <label for="playerTeamFilter">Team auswählen</label>
-            <select id="playerTeamFilter">
-              <option value="">Alle Teams</option>
-            </select>
-          </div>
-
-          <div id="playersList" class="news-list">
-            <p class="muted">
-              Spieler werden geladen …
-            </p>
-          </div>
-        </div>
-
-        <!-- SPIELEREDITOR -->
-
-        <div id="playerEditor" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2 id="playerEditorTitle">Neuen Spieler hinzufügen</h2>
-              <p class="muted">
-                Spielerprofil und Teamzugehörigkeit bearbeiten.
-              </p>
-            </div>
-
-            <button id="closePlayerEditor"
-              class="secondary-button"
-              type="button">Schließen</button>
-          </div>
-
-          <form id="playerForm">
-            <input id="playerId" type="hidden">
-
-            <label for="playerName">Spielername</label>
-            <input id="playerName"
-              type="text"
-              maxlength="120"
-              required
-              placeholder="Name des Spielers">
-
-            <label for="playerTeam">Team</label>
-            <select id="playerTeam" required>
-              <option value="">Team auswählen</option>
-            </select>
-
-            <label for="playerPosition">Position</label>
-            <select id="playerPosition" required>
-              <option value="">Position auswählen</option>
-              <option value="Top">Top</option>
-              <option value="Jungle">Jungle</option>
-              <option value="Mid">Mid</option>
-              <option value="ADC">ADC</option>
-              <option value="Support">Support</option>
-            </select>
-
-            <label for="playerImageFile">Spielerbild</label>
-
-<div class="image-upload-control">
-  <input
-    type="file"
-    id="playerImageFile"
-    accept="image/png,image/jpeg,image/webp"
-  >
-
-  <button
-    type="button"
-    id="uploadPlayerImage"
-    class="secondary-button"
-  >
-    Spielerbild hochladen
-  </button>
-</div>
-
-<div id="playerImagePreview" class="image-preview" hidden>
-  <img id="playerImagePreviewImg" alt="Spielerbild-Vorschau">
-
-  <button
-    type="button"
-    id="removePlayerImage"
-    class="secondary-button"
-  >
-    Bild entfernen
-  </button>
-</div>
-
-<input id="playerImageKey" type="hidden">
-
-            <label class="permission-option">
-              <input id="playerIsSubstitute" type="checkbox">
-              Ersatzspieler
-            </label>
-
-            <div class="news-editor-actions">
-              <button class="primary-button" type="submit">
-                Spieler speichern
-              </button>
-
-              <button id="cancelPlayerEditor"
-                class="secondary-button"
-                type="button">Abbrechen</button>
-            </div>
-          </form>
-        </div>
       <!-- =====================================
            TEAMS & SPIELER
       ====================================== -->
@@ -595,28 +592,7 @@
         </div>
 
       </section>
-             <!-- KADERHISTORIE -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Kaderhistorie</h2>
-              <p class="muted">
-                Dokumentierte Zu- und Abgänge sowie Teamwechsel.
-              </p>
-            </div>
-          </div>
-
-          <div id="rosterHistoryList" class="news-list">
-            <p class="muted">
-              Kaderhistorie wird geladen …
-            </p>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- =====================================
+           <!-- =====================================
            PARTNER
       ====================================== -->
 
