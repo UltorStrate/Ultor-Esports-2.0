@@ -1,1 +1,227 @@
 
+/* PARTNER PAGE */
+
+.partner-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 130px 0 110px;
+    background: var(--bg-light);
+}
+
+.partner-hero-glow {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    top: -250px;
+    right: 5%;
+    background: rgba(135, 53, 245, .18);
+    filter: blur(120px);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.partner-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+}
+
+.partner-hero h1 {
+    margin: 22px 0;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(64px, 10vw, 112px);
+    line-height: .95;
+    font-weight: 900;
+    color: var(--white);
+}
+
+.partner-hero h1 span,
+.partner-section-heading h2 span,
+.partner-cta h2 span {
+    color: var(--purple-light);
+}
+
+.partner-hero-content > p {
+    max-width: 650px;
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+.partner-directory {
+    padding: 100px 0 120px;
+    background: var(--bg);
+}
+
+.partner-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 40px;
+    margin-bottom: 55px;
+}
+
+.partner-section-heading h2 {
+    margin: 15px 0 0;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 800;
+    color: var(--white);
+}
+
+.partner-section-heading > p {
+    max-width: 420px;
+    color: var(--text);
+    line-height: 1.8;
+}
+
+.partner-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.partner-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 35px 28px;
+    min-height: 300px;
+    text-align: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: transform .25s ease, border-color .25s ease;
+}
+
+.partner-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(135, 53, 245, .65);
+}
+
+.partner-card-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 130px;
+    margin-bottom: 25px;
+    color: var(--purple-light);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.partner-card-logo img {
+    display: block;
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.partner-card-content h3 {
+    margin: 0 0 12px;
+    color: var(--white);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 29px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.partner-card-content p {
+    margin: 0;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.partner-card-link {
+    display: inline-block;
+    margin-top: auto;
+    padding-top: 24px;
+    color: var(--purple-light);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.partner-card-link:hover {
+    color: var(--white);
+}
+
+.partner-message {
+    grid-column: 1 / -1;
+    padding: 35px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+}
+
+.partner-cta {
+    position: relative;
+    padding: 100px 0;
+    overflow: hidden;
+    background: var(--panel);
+    text-align: center;
+}
+
+.partner-cta-content {
+    position: relative;
+    z-index: 1;
+}
+
+.partner-cta h2 {
+    margin: 20px 0;
+    color: var(--white);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(48px, 7vw, 78px);
+    line-height: .98;
+    font-weight: 900;
+}
+
+.partner-cta p {
+    max-width: 600px;
+    margin: 0 auto 30px;
+    color: var(--text);
+    line-height: 1.8;
+}
+
+@media (max-width: 900px) {
+    .partner-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .partner-section-heading {
+        display: block;
+    }
+
+    .partner-section-heading > p {
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .partner-hero {
+        padding: 90px 0 75px;
+    }
+
+    .partner-directory {
+        padding: 70px 0;
+    }
+
+    .partner-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .partner-card {
+        min-height: 270px;
+    }
+
+    .partner-cta {
+        padding: 75px 0;
+    }
+}
+
