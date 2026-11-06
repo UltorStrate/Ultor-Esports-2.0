@@ -4,6 +4,7 @@ import { handleAdminApi } from "./admin-api.js";
 import { handleNewsApi } from "./news-api.js";
 import { handleMediaUpload } from "./media-api.js";
 import { handlePublicNewsApi } from "./public-news-api.js";
+import { handleTeamsApi } from "./teams-api.js";
 
 const BLOCKED_PREFIXES = [
   "/src",
@@ -106,6 +107,30 @@ export default {
     }
 
     // =========================================
+    // GESCHÜTZTE TEAMS-, SPIELER- UND KADER-API
+    // =========================================
+
+    if (
+      normalizedPath === "/api/admin/teams" ||
+      normalizedPath.startsWith("/api/admin/teams/") ||
+      normalizedPath === "/api/admin/players" ||
+      normalizedPath.startsWith("/api/admin/players/") ||
+      normalizedPath === "/api/admin/roster-history"
+    ) {
+      try {
+        const auth = createAuth(env);
+        return await handleTeamsApi(request, env, auth);
+      } catch (error) {
+        console.error("Teams API error:", error);
+
+        return Response.json(
+          { error: "Interner Fehler in der Teamverwaltung." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================================
     // GESCHÜTZTE CMS-API
     // =========================================
 
@@ -180,7 +205,10 @@ export default {
 
         headers.set("ETag", object.httpEtag);
         headers.set("X-Content-Type-Options", "nosniff");
-        headers.set("Cache-Control", "public, max-age=31536000, immutable");
+        headers.set(
+          "Cache-Control",
+          "public, max-age=31536000, immutable"
+        );
 
         return new Response(
           request.method === "HEAD" ? null : object.body,
@@ -225,7 +253,10 @@ export default {
     const headers = new Headers(response.headers);
 
     headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    headers.set(
+      "Referrer-Policy",
+      "strict-origin-when-cross-origin"
+    );
     headers.set("X-Frame-Options", "SAMEORIGIN");
 
     return new Response(response.body, {
