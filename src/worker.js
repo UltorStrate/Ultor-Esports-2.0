@@ -1,6 +1,7 @@
 import { createAuth } from "./auth.js";
 import { handleAdminApi } from "./admin-api.js";
 import { handleNewsApi } from "./news-api.js";
+import { handleMediaUpload } from "./media-api.js";
 
 const BLOCKED_PREFIXES = [
   "/src",
@@ -20,7 +21,6 @@ const BLOCKED_FILES = [
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
     let pathname;
 
     try {
@@ -31,7 +31,6 @@ export default {
 
     const normalizedPath = pathname.toLowerCase();
 
-    // Interne Projektdateien nicht öffentlich ausliefern
     if (
       BLOCKED_PREFIXES.some(prefix =>
         normalizedPath === prefix ||
@@ -48,35 +47,83 @@ export default {
       normalizedPath.startsWith("/api/auth/")
     ) {
       try {
-       const auth = createAuth(env);
+        const auth = createAuth(env);
         return await auth.handler(request);
       } catch (error) {
         console.error("Authentication error:", error);
-
         return Response.json(
           { error: "Authentifizierungsfehler" },
           { status: 500 }
         );
       }
     }
-// Geschützte News-API
-if (
-  normalizedPath === "/api/admin/news" ||
-  normalizedPath.startsWith("/api/admin/news/")
-) {
-  try {
-    const auth = createAuth(env);
-    return await handleNewsApi(request, env, auth);
-  } catch (error) {
-    console.error("News API error:", error);
 
-    return Response.json(
-      { error: "Interner Fehler in der News-Verwaltung." },
-      { status: 500 }
-    );
-  }
-}
-    // Geschützte CMS-API
+    // Medien-Upload
+    if (normalizedPath === "/api/admin/media/upload") {
+      try {
+        const auth = createAuth(env);
+        return await handleMediaUpload(request, env, auth);
+      } catch (error) {
+        console.error("Media API error:", error);
+        return Response.json(
+          { error: "Fehler beim Medien-Upload." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Öffentliche Bildauslieferung aus R2
+    if (normalizedPath.startsWith("/media/")) {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+
+      const key = pathname.slice("/media/".length);
+
+      if (!/^news\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
+        return new Response("Not Found", { status: 404 });
+      }
+
+      if (!env.MEDIA) {
+        return new Response("Media storage unavailable", { status: 503 });
+      }
+
+      const object = await env.MEDIA.get(key);
+
+      if (!object) {
+        return new Response("Not Found", { status: 404 });
+      }
+
+      const headers = new Headers();
+      object.writeHttpMetadata(headers);
+      headers.set("ETag", object.httpEtag);
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+
+      return new Response(
+        request.method === "HEAD" ? null : object.body,
+        { headers }
+      );
+    }
+
+    // News-API
+    if (
+      normalizedPath === "/api/admin/news" ||
+      normalizedPath.startsWith("/api/admin/news/")
+    ) {
+      try {
+        const auth = createAuth(env);
+        return await handleNewsApi(request, env, auth);
+      } catch (error) {
+        console.error("News API error:", error);
+        return Response.json(
+          { error: "Interner Fehler in der News-Verwaltung." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // CMS-API
     if (
       normalizedPath === "/api/admin" ||
       normalizedPath.startsWith("/api/admin/")
@@ -86,7 +133,6 @@ if (
         return await handleAdminApi(request, env, auth);
       } catch (error) {
         console.error("Admin API error:", error);
-
         return Response.json(
           { error: "Interner Serverfehler" },
           { status: 500 }
@@ -94,7 +140,6 @@ if (
       }
     }
 
-    // Andere API-Endpunkte sind noch nicht implementiert
     if (
       normalizedPath === "/api" ||
       normalizedPath.startsWith("/api/")
@@ -105,7 +150,6 @@ if (
       );
     }
 
-    // Bestehende Website ausliefern
     if (!env.ASSETS) {
       return new Response("Assets binding missing", { status: 500 });
     }
