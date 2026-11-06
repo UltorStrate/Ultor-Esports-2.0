@@ -118,7 +118,15 @@ export async function handleMediaUpload(request, env, auth) {
   }
 
   const id = crypto.randomUUID();
-  const key = `news/${id}.${image.extension}`;
+
+const requestedFolder = formData.get("folder") || "news";
+const allowedFolders = ["news", "teams", "players"];
+
+if (!allowedFolders.includes(requestedFolder)) {
+  return json({ error: "Ungültiger Medienordner." }, 400);
+}
+
+const key = `${requestedFolder}/${id}.${image.extension}`;
   const fileName = String(file.name || `image.${image.extension}`)
     .replace(/[^\w.\- ]/g, "_")
     .slice(0, 180);
