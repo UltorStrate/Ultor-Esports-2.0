@@ -269,18 +269,24 @@ export default {
   }
 };
 
-// ==================================================
+// =========================================
 // ÖFFENTLICHE TEAMS-API
-// ==================================================
+// =========================================
 
-function publicJson(data, status = 200) {
-  return Response.json(data, {
-    status,
-    headers: {
-      "Cache-Control": "public, max-age=60, s-maxage=120",
-      "X-Content-Type-Options": "nosniff"
-    }
-  });
+if (
+  normalizedPath === "/api/teams" ||
+  normalizedPath.startsWith("/api/teams/")
+) {
+  try {
+    return await handlePublicTeamsApi(request, env);
+  } catch (error) {
+    console.error("Public Teams API error:", error);
+
+    return Response.json(
+      { error: "Teams konnten nicht geladen werden." },
+      { status: 500 }
+    );
+  }
 }
 
 export async function handlePublicTeamsApi(request, env) {
