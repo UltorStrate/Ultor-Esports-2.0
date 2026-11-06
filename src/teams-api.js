@@ -160,7 +160,7 @@ function validStatus(status) {
 }
 
 // =========================================
-// HAUPT-API
+// GESCHÜTZTE HAUPT-API
 // =========================================
 
 export async function handleTeamsApi(request, env, auth) {
@@ -782,7 +782,11 @@ export async function handleTeamsApi(request, env, auth) {
     error: "Teams-API-Endpunkt nicht gefunden."
   }, 404);
 }
-  
+
+// =========================================
+// ÖFFENTLICHE TEAMS-API
+// =========================================
+
 export async function handlePublicTeamsApi(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
@@ -872,4 +876,3 @@ export async function handlePublicTeamsApi(request, env) {
     error: "Öffentlicher Teams-Endpunkt nicht gefunden."
   }, 404);
 }
-
