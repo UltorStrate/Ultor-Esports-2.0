@@ -1,4 +1,3 @@
-
 /* =========================================
    ULTOR ESPORTS - TEAMS PAGE
    Uses the shared variables from /style.css
@@ -78,17 +77,16 @@
 .teams-hero-meta {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
     margin-top: 65px;
     color: var(--muted);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .teams-section {
-    padding: 105px 0 115px;
-    background: var(--bg-light);
+    padding: 100px 0;
 }
 
 .teams-section-heading {
@@ -100,93 +98,77 @@
 }
 
 .teams-section-heading h2 {
-    margin-top: 12px;
     font-family: var(--font-heading);
-    font-size: clamp(58px, 8vw, 92px);
+    font-size: clamp(45px, 6vw, 70px);
     font-weight: 900;
-    line-height: .9;
-}
-
-.teams-count {
-    padding-bottom: 8px;
-    color: var(--muted);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
+    line-height: .95;
     text-transform: uppercase;
 }
 
-.teams-status {
-    padding: 22px 25px;
+.teams-section-heading p {
+    max-width: 480px;
+    margin-top: 15px;
     color: var(--muted);
-    background: var(--panel);
-    border: 1px solid var(--border);
     font-size: 12px;
+    line-height: 1.8;
 }
 
-.teams-status.is-error {
-    color: #ffaaaa;
-    border-color: rgba(255, 100, 100, .35);
+.team-count {
+    color: var(--purple-light);
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 900;
 }
 
 .team-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 28px;
+    margin-bottom: 25px;
 }
 
 .team-tab {
-    min-height: 48px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 12px;
-    padding: 9px 18px;
+    padding: 12px 17px;
     color: var(--text);
-    background: var(--panel);
+    background: var(--bg-light);
     border: 1px solid var(--border);
-    font: inherit;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
     cursor: pointer;
     transition: .2s ease;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
-.team-tab:hover {
-    color: var(--white);
-    border-color: rgba(135, 53, 245, .65);
-}
-
+.team-tab:hover,
 .team-tab[aria-selected="true"] {
     color: var(--white);
-    background: rgba(135, 53, 245, .15);
     border-color: var(--purple);
-    box-shadow: inset 0 -2px 0 var(--purple);
+    background: rgba(135, 53, 245, .12);
 }
 
 .team-tab img {
-    width: 27px;
-    height: 27px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
 }
 
 .team-tab-mark {
-    width: 27px;
-    height: 27px;
     display: grid;
     place-items: center;
+    width: 30px;
+    height: 30px;
     color: var(--purple-light);
-    background: rgba(135, 53, 245, .13);
     font-family: var(--font-heading);
-    font-size: 17px;
     font-weight: 900;
 }
 
 .team-panel {
-    padding: 35px;
-    background: var(--panel);
+    padding: 40px;
+    background: var(--bg-light);
     border: 1px solid var(--border);
 }
 
@@ -200,49 +182,53 @@
 }
 
 .team-intro-logo-wrap {
-    width: 105px;
-    height: 105px;
     display: grid;
     place-items: center;
-    background:
-        radial-gradient(circle, rgba(135, 53, 245, .18), transparent 72%),
-        var(--bg-light);
-    border: 1px solid rgba(135, 53, 245, .25);
+    width: 105px;
+    height: 105px;
+    background: var(--bg);
+    border: 1px solid rgba(135, 53, 245, .3);
 }
 
-.team-intro-logo {
-    width: 82%;
-    height: 82%;
+.team-intro-logo-wrap img {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
 }
 
 .team-logo-fallback {
     color: var(--purple-light);
     font-family: var(--font-heading);
-    font-size: 48px;
+    font-size: 45px;
     font-weight: 900;
 }
 
+.team-intro-copy > span {
+    color: var(--purple-light);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
 .team-intro-copy h3 {
-    margin-top: 5px;
+    margin-top: 8px;
+    color: var(--white);
     font-family: var(--font-heading);
-    font-size: clamp(34px, 5vw, 52px);
+    font-size: 48px;
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
 }
 
 .team-intro-copy p {
-    max-width: 650px;
     margin-top: 10px;
-    color: var(--text);
+    color: var(--muted);
     font-size: 12px;
     line-height: 1.8;
-    white-space: pre-line;
 }
 
 .team-player-total {
-    min-width: 90px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -251,17 +237,18 @@
 .team-player-total strong {
     color: var(--purple-light);
     font-family: var(--font-heading);
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 900;
     line-height: 1;
 }
 
-.team-player-total span,
-.roster-heading > span {
+.team-player-total span {
+    margin-top: 5px;
     color: var(--muted);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     letter-spacing: 1.5px;
+    text-transform: uppercase;
 }
 
 .roster-heading {
@@ -279,16 +266,32 @@
     line-height: 1;
 }
 
+.roster-heading > span {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+/* =========================================
+   PLAYER GRID
+   FIVE PLAYERS SIDE BY SIDE
+========================================= */
+
 .players-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 17px;
+    align-items: stretch;
+    width: 100%;
 }
 
 .player-card {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    background: var(--bg-light);
+    background: var(--bg);
     border: 1px solid var(--border);
     transition: transform .25s ease, border-color .25s ease;
 }
@@ -298,9 +301,13 @@
     border-color: rgba(135, 53, 245, .65);
 }
 
+/* Einheitliche Bildfläche für alle Spieler */
+
 .player-image-wrap {
     position: relative;
+    width: 100%;
     aspect-ratio: 4 / 5;
+    flex: 0 0 auto;
     overflow: hidden;
     background:
         radial-gradient(circle at 50% 35%, rgba(135, 53, 245, .2), transparent 60%),
@@ -308,11 +315,11 @@
 }
 
 .player-image {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    object-position: center;
-
+    object-position: center center;
 }
 
 .player-image-placeholder {
@@ -330,17 +337,38 @@
     position: absolute;
     left: 10px;
     bottom: 10px;
-    padding: 6px 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 30px;
+    padding: 5px 10px;
     color: var(--white);
-    background: rgba(9, 8, 16, .88);
-    border: 1px solid rgba(181, 138, 255, .3);
+    background: rgba(9, 8, 16, .9);
+    border: 1px solid rgba(181, 138, 255, .4);
     font-size: 8px;
     font-weight: 800;
     letter-spacing: 1.2px;
     text-transform: uppercase;
 }
 
+.player-role-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+}
+
+.player-role-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .player-card-content {
+    flex: 1 0 auto;
+    min-height: 82px;
     padding: 17px 16px 19px;
 }
 
@@ -363,8 +391,12 @@
     text-transform: uppercase;
 }
 
+/* =========================================
+   SUBSTITUTES
+========================================= */
+
 .substitutes-section {
-    margin-top: 15px;
+    margin-top: 35px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
 }
@@ -373,45 +405,34 @@
     color: var(--purple-light);
 }
 
-.teams-empty {
-    position: relative;
-    overflow: hidden;
-    padding: 55px 25px;
-    text-align: center;
-    background: var(--panel);
-    border: 1px dashed rgba(181, 138, 255, .3);
-}
+/* =========================================
+   STATUS AND EMPTY STATES
+========================================= */
 
-.teams-empty-mark {
-    display: block;
-    color: rgba(181, 138, 255, .45);
-    font-family: var(--font-heading);
-    font-size: 68px;
-    font-weight: 900;
-}
-
-.teams-empty h3 {
-    margin-top: 12px;
-    font-family: var(--font-heading);
-    font-size: 30px;
-    font-weight: 900;
-}
-
-.teams-empty p {
-    margin-top: 8px;
+.teams-status {
+    grid-column: 1 / -1;
+    padding: 25px;
     color: var(--muted);
     font-size: 12px;
+    line-height: 1.8;
+}
+
+.teams-status.is-error {
+    color: #ff7777;
+}
+
+.teams-empty {
+    padding: 35px;
+    color: var(--muted);
+    text-align: center;
+    border: 1px solid var(--border);
 }
 
 .teams-join {
-    padding: 95px 0;
-    background: #100b1b;
-    border-top: 1px solid rgba(135, 53, 245, .2);
-    border-bottom: 1px solid rgba(135, 53, 245, .2);
-}
-
-.teams-join-content {
+    padding: 100px 0;
     text-align: center;
+    background: var(--bg-light);
+    border-top: 1px solid var(--border);
 }
 
 .teams-join h2 {
@@ -430,7 +451,12 @@
     line-height: 1.9;
 }
 
-@media (max-width: 900px) {
+/* =========================================
+   RESPONSIVE LAYOUT
+========================================= */
+
+/* Kleine Desktop-Bildschirme und Tablets */
+@media (max-width: 1050px) {
     .players-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -440,6 +466,7 @@
     }
 }
 
+/* Smartphones */
 @media (max-width: 650px) {
     .teams-hero {
         min-height: 330px;
@@ -564,39 +591,3 @@
         font-size: 19px;
     }
 }
-
-/* =========================================
-   PLAYER ROLE ICONS
-========================================= */
-
-.player-role {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 30px;
-    padding: 5px 10px;
-    color: var(--white);
-    background: rgba(9, 8, 16, .9);
-    border: 1px solid rgba(181, 138, 255, .4);
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-}
-
-.player-role-icon {
-    width: 15px;
-    height: 15px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--purple-light);
-    flex-shrink: 0;
-}
-
-.player-role-icon svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
