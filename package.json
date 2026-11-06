@@ -1,1 +1,10 @@
-{}
+
+{
+  "name": "ultor-esports",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "better-auth": "latest",
+    "better-auth-cloudflare": "latest"
+  }
+}
