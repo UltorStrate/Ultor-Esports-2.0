@@ -47,7 +47,7 @@ export default {
       normalizedPath.startsWith("/api/auth/")
     ) {
       try {
-        const auth = createAuth(env, request.cf);
+       const auth = createAuth(env);
         return await auth.handler(request);
       } catch (error) {
         console.error("Authentication error:", error);
