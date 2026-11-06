@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { withCloudflare } from "better-auth-cloudflare";
 
-export function createAuth(env, cf) {
+export function createAuth(env) {
   if (!env.DB) {
     throw new Error("D1 database binding DB is missing");
   }
@@ -14,7 +14,10 @@ export function createAuth(env, cf) {
     ...withCloudflare(
       {
         d1Native: env.DB,
-        cf
+
+        // Für das CMS nicht benötigte Cloudflare-Funktionen deaktivieren
+        geolocationTracking: false,
+        autoDetectIpAddress: false
       },
       {
         baseURL: env.BETTER_AUTH_URL,
@@ -29,8 +32,6 @@ export function createAuth(env, cf) {
           autoSignIn: false
         },
 
-        // Neue Konten werden automatisch als ausstehende
-        // CMS-Benutzer angelegt.
         databaseHooks: {
           user: {
             create: {
@@ -57,8 +58,6 @@ export function createAuth(env, cf) {
             }
           },
 
-          // Verhindert, dass nicht freigegebene Benutzer
-          // eine neue Sitzung erhalten.
           session: {
             create: {
               before: async (session) => {
