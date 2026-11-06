@@ -1,33 +1,24 @@
 function json(data, status = 200) {
   return Response.json(data, {
     status,
-    headers: {
-      "Cache-Control": "no-store"
-    }
+    headers: { "Cache-Control": "no-store" }
   });
 }
 
 async function writeAuditLog(env, userId, action, entityType, entityId, details = null) {
   await env.DB.prepare(`
     INSERT INTO audit_logs (
-      id,
-      user_id,
-      action,
-      entity_type,
-      entity_id,
-      details
+      id, user_id, action, entity_type, entity_id, details
     )
     VALUES (?, ?, ?, ?, ?, ?)
-  `)
-    .bind(
-      crypto.randomUUID(),
-      userId,
-      action,
-      entityType,
-      entityId,
-      details ? JSON.stringify(details) : null
-    )
-    .run();
+  `).bind(
+    crypto.randomUUID(),
+    userId,
+    action,
+    entityType,
+    entityId,
+    details ? JSON.stringify(details) : null
+  ).run();
 }
 
 async function getCurrentUser(request, env, auth) {
@@ -36,52 +27,32 @@ async function getCurrentUser(request, env, auth) {
   });
 
   if (!session?.user) {
-    return {
-      error: json({ error: "Nicht angemeldet" }, 401)
-    };
+    return { error: json({ error: "Nicht angemeldet" }, 401) };
   }
 
   const user = await env.DB.prepare(`
     SELECT id, name, email, status, is_owner
     FROM users
     WHERE id = ?
-  `)
-    .bind(session.user.id)
-    .first();
+  `).bind(session.user.id).first();
 
   if (!user || user.status !== "approved") {
-    return {
-      error: json({ error: "Zugriff nicht freigegeben" }, 403)
-    };
+    return { error: json({ error: "Zugriff nicht freigegeben" }, 403) };
   }
 
-  const permissionsResult = await env.DB.prepare(`
+  const result = await env.DB.prepare(`
     SELECT p.name
     FROM user_permissions up
     JOIN permissions p ON p.id = up.permission_id
     WHERE up.user_id = ?
-  `)
-    .bind(user.id)
-    .all();
+  `).bind(user.id).all();
 
   return {
     user,
     permissions: user.is_owner === 1
       ? ["*"]
-      : permissionsResult.results.map(row => row.name)
+      : result.results.map(row => row.name)
   };
-}
-
-function can(current, permission) {
-  return (
-    current.user.is_owner === 1 ||
-    current.permissions.includes("*") ||
-    current.permissions.includes(permission)
-  );
-}
-
-async function requireOwner(current) {
-  return current.user.is_owner === 1;
 }
 
 export async function handleAdminApi(request, env, auth) {
@@ -95,7 +66,9 @@ export async function handleAdminApi(request, env, auth) {
     return current.error;
   }
 
-  // Eigenes Benutzerprofil und Berechtigungen
+  const isOwner = current.user.is_owner === 1;
+
+  // Eigenes Profil und Berechtigungen
   if (path === "/api/admin/me" && method === "GET") {
     return json({
       success: true,
@@ -104,16 +77,16 @@ export async function handleAdminApi(request, env, auth) {
     });
   }
 
-  // Benutzerliste – nur Owner
+  // Benutzerliste
   if (path === "/api/admin/users" && method === "GET") {
-    if (!(await requireOwner(current))) {
+    if (!isOwner) {
       return json({ error: "Nur der Owner darf Benutzer verwalten" }, 403);
     }
 
     const status = url.searchParams.get("status") || "pending";
-    const allowedStatuses = ["pending", "approved", "rejected", "suspended"];
+    const allowed = ["pending", "approved", "rejected", "suspended"];
 
-    if (!allowedStatuses.includes(status)) {
+    if (!allowed.includes(status)) {
       return json({ error: "Ungültiger Benutzerstatus" }, 400);
     }
 
@@ -122,47 +95,41 @@ export async function handleAdminApi(request, env, auth) {
       FROM users
       WHERE status = ?
       ORDER BY created_at DESC
-    `)
-      .bind(status)
-      .all();
+    `).bind(status).all();
 
-    return json({
-      success: true,
-      users: result.results
-    });
+    return json({ success: true, users: result.results });
   }
 
-  // Benutzer freigeben, ablehnen oder sperren
-  const userActionMatch = path.match(
+  // Benutzer-ID und Aktion aus URL auslesen
+  const actionMatch = path.match(
     /^\/api\/admin\/users\/([^/]+)\/(approve|reject|suspend)$/
   );
 
-  if (userActionMatch && method === "POST") {
-    if (!(await requireOwner(current))) {
+  // Benutzer freigeben, ablehnen oder sperren
+  if (actionMatch && method === "POST") {
+    if (!isOwner) {
       return json({ error: "Nur der Owner darf Benutzer verwalten" }, 403);
     }
 
-    const targetUserId = userActionMatch[1];
-    const action = userActionMatch[2];
+    const targetId = actionMatch[1];
+    const action = actionMatch[2];
 
-    if (targetUserId === current.user.id) {
+    if (targetId === current.user.id) {
       return json({ error: "Diese Aktion ist für das eigene Konto nicht erlaubt" }, 400);
     }
 
-    const targetUser = await env.DB.prepare(`
-      SELECT id, email, status, is_owner
+    const target = await env.DB.prepare(`
+      SELECT id, email, is_owner
       FROM users
       WHERE id = ?
-    `)
-      .bind(targetUserId)
-      .first();
+    `).bind(targetId).first();
 
-    if (!targetUser) {
+    if (!target) {
       return json({ error: "Benutzer nicht gefunden" }, 404);
     }
 
-    if (targetUser.is_owner === 1) {
-      return json({ error: "Der Owner kann nicht über diese Funktion verändert werden" }, 403);
+    if (target.is_owner === 1) {
+      return json({ error: "Der Owner kann hier nicht verändert werden" }, 403);
     }
 
     const newStatus = {
@@ -175,26 +142,30 @@ export async function handleAdminApi(request, env, auth) {
       UPDATE users
       SET
         status = ?,
-        approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END,
-        approved_by = CASE WHEN ? = 'approved' THEN ? ELSE approved_by END
+        approved_at = CASE
+          WHEN ? = 'approved' THEN CURRENT_TIMESTAMP
+          ELSE approved_at
+        END,
+        approved_by = CASE
+          WHEN ? = 'approved' THEN ?
+          ELSE approved_by
+        END
       WHERE id = ?
-    `)
-      .bind(
-        newStatus,
-        newStatus,
-        newStatus,
-        current.user.id,
-        targetUserId
-      )
-      .run();
+    `).bind(
+      newStatus,
+      newStatus,
+      newStatus,
+      current.user.id,
+      targetId
+    ).run();
 
     await writeAuditLog(
       env,
       current.user.id,
       `user.${action}`,
       "user",
-      targetUserId,
-      { email: targetUser.email }
+      targetId,
+      { email: target.email }
     );
 
     return json({
@@ -203,58 +174,55 @@ export async function handleAdminApi(request, env, auth) {
     });
   }
 
-  // Berechtigungen eines Benutzers vollständig ersetzen
+  // Berechtigungen eines Benutzers auslesen
   const permissionsMatch = path.match(
-      // Berechtigungen eines Benutzers auslesen
+    /^\/api\/admin\/users\/([^/]+)\/permissions$/
+  );
+
   if (permissionsMatch && method === "GET") {
-    if (!(await requireOwner(current))) {
+    if (!isOwner) {
       return json({ error: "Nur der Owner darf Berechtigungen einsehen" }, 403);
     }
 
-    const targetUserId = permissionsMatch[1];
+    const targetId = permissionsMatch[1];
 
     const result = await env.DB.prepare(`
       SELECT p.name
       FROM user_permissions up
       JOIN permissions p ON p.id = up.permission_id
       WHERE up.user_id = ?
-    `)
-      .bind(targetUserId)
-      .all();
+    `).bind(targetId).all();
 
     return json({
       success: true,
       permissions: result.results.map(row => row.name)
     });
   }
-    /^\/api\/admin\/users\/([^/]+)\/permissions$/
-  );
 
+  // Berechtigungen eines Benutzers speichern
   if (permissionsMatch && method === "POST") {
-    if (!(await requireOwner(current))) {
+    if (!isOwner) {
       return json({ error: "Nur der Owner darf Berechtigungen vergeben" }, 403);
     }
 
-    const targetUserId = permissionsMatch[1];
+    const targetId = permissionsMatch[1];
 
-    if (targetUserId === current.user.id) {
-      return json({ error: "Die eigenen Berechtigungen können hier nicht verändert werden" }, 400);
+    if (targetId === current.user.id) {
+      return json({ error: "Eigene Berechtigungen können hier nicht verändert werden" }, 400);
     }
 
-    const targetUser = await env.DB.prepare(`
+    const target = await env.DB.prepare(`
       SELECT id, is_owner
       FROM users
       WHERE id = ?
-    `)
-      .bind(targetUserId)
-      .first();
+    `).bind(targetId).first();
 
-    if (!targetUser) {
+    if (!target) {
       return json({ error: "Benutzer nicht gefunden" }, 404);
     }
 
-    if (targetUser.is_owner === 1) {
-      return json({ error: "Die Berechtigungen des Owners können nicht verändert werden" }, 403);
+    if (target.is_owner === 1) {
+      return json({ error: "Owner-Berechtigungen können nicht verändert werden" }, 403);
     }
 
     let body;
@@ -271,47 +239,40 @@ export async function handleAdminApi(request, env, auth) {
 
     const permissionNames = [...new Set(body.permissions)];
 
-    const knownPermissions = await env.DB.prepare(`
-      SELECT id, name
-      FROM permissions
+    const known = await env.DB.prepare(`
+      SELECT id, name FROM permissions
     `).all();
 
     const permissionMap = new Map(
-      knownPermissions.results.map(permission => [
-        permission.name,
-        permission.id
-      ])
+      known.results.map(item => [item.name, item.id])
     );
 
-    const unknownPermissions = permissionNames.filter(
+    const unknown = permissionNames.filter(
       name => !permissionMap.has(name)
     );
 
-    if (unknownPermissions.length > 0) {
+    if (unknown.length) {
       return json({
         error: "Unbekannte Berechtigungen",
-        permissions: unknownPermissions
+        permissions: unknown
       }, 400);
     }
 
     const statements = [
       env.DB.prepare(`
-        DELETE FROM user_permissions
-        WHERE user_id = ?
-      `).bind(targetUserId)
+        DELETE FROM user_permissions WHERE user_id = ?
+      `).bind(targetId)
     ];
 
     for (const name of permissionNames) {
       statements.push(
         env.DB.prepare(`
           INSERT INTO user_permissions (
-            user_id,
-            permission_id,
-            granted_by
+            user_id, permission_id, granted_by
           )
           VALUES (?, ?, ?)
         `).bind(
-          targetUserId,
+          targetId,
           permissionMap.get(name),
           current.user.id
         )
@@ -325,7 +286,7 @@ export async function handleAdminApi(request, env, auth) {
       current.user.id,
       "user.permissions.updated",
       "user",
-      targetUserId,
+      targetId,
       { permissions: permissionNames }
     );
 
