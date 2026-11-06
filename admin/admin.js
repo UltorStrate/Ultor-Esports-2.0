@@ -778,9 +778,19 @@ const newsRichEditor = document.getElementById("newsContent");
 const newsPreviewPanel = document.getElementById("newsPreview");
 const newsPreviewToggle = document.getElementById("toggleNewsPreview");
 
-document.querySelectorAll(".editor-toolbar [data-command]").forEach(button => {
-  button.addEventListener("mousedown", event => event.preventDefault());
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-view]");
 
+  if (!button) return;
+
+  event.preventDefault();
+
+  const viewName = button.dataset.view;
+
+  if (viewName) {
+    openCmsView(viewName);
+  }
+});
   button.addEventListener("click", () => {
     if (!newsRichEditor) return;
 
