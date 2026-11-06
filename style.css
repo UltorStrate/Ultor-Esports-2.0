@@ -92,38 +92,25 @@ textarea {
     gap: 40px;
 }
 
+
 .logo {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-
-    font-size: 17px;
-    font-weight: 900;
-    letter-spacing: 2px;
-
-    white-space: nowrap;
+    flex-shrink: 0;
     transition: var(--transition);
 }
 
-.logo::before {
-    content: "";
-    width: 9px;
-    height: 9px;
-
-    background: var(--color-primary);
-    margin-right: 12px;
-
-    transform: rotate(45deg);
+.logo img {
+    display: block;
+    width: 125px;
+    height: auto;
+    object-fit: contain;
 }
 
 .logo:hover {
-    color: var(--color-primary-light);
+    opacity: 0.85;
 }
 
-.main-navigation {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-}
 
 .main-navigation a {
     color: var(--color-text);
