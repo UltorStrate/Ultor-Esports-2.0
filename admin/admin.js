@@ -757,7 +757,8 @@ newsForm?.addEventListener("submit", async event => {
   const body = {
     title: document.getElementById("newsTitle").value.trim(),
     excerpt: document.getElementById("newsExcerpt").value.trim(),
-    content: document.getElementById("newsContent").value,
+    document.getElementById("newsContent").innerHTML =
+  item?.content || "";
     image_key: document.getElementById("newsImageKey").value.trim() || null
   };
 
