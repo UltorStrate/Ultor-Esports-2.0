@@ -1,9 +1,21 @@
 
 /* =========================================
-   ULTOR ESPORTS – MAIN STYLESHEET
+   ULTOR ESPORTS
+   MAIN DESIGN SYSTEM
 ========================================= */
 
-/* RESET */
+:root {
+    --background: #090810;
+    --background-light: #0d0b14;
+    --panel: #171321;
+    --purple: #8735f5;
+    --purple-light: #b58aff;
+    --white: #f3f0f8;
+    --text: #b8b3c4;
+    --muted: #777183;
+    --border: rgba(255, 255, 255, 0.08);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -16,8 +28,8 @@ html {
 }
 
 body {
-    background: #090810;
-    color: #f3f0f8;
+    background: var(--background);
+    color: var(--white);
     font-family: Arial, Helvetica, sans-serif;
     overflow-x: hidden;
 }
@@ -28,12 +40,13 @@ a {
 }
 
 .container {
-    width: min(1200px, 90%);
+    width: 90%;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 .section-label {
-    color: #b58aff;
+    color: var(--purple-light);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 3px;
@@ -48,7 +61,7 @@ a {
 .site-header {
     height: 88px;
     background: rgba(9, 8, 16, 0.97);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -85,7 +98,7 @@ a {
 }
 
 .main-navigation a {
-    color: #c5c0d0;
+    color: var(--text);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -93,12 +106,12 @@ a {
 }
 
 .main-navigation a:hover {
-    color: #ffffff;
+    color: var(--white);
 }
 
 .main-navigation .shop-link {
-    color: #ffffff;
-    background: #8735f5;
+    color: var(--white);
+    background: var(--purple);
     padding: 13px 18px;
     border-radius: 3px;
 }
@@ -135,15 +148,11 @@ a {
     padding-bottom: 70px;
 }
 
-.hero-content {
-    width: 100%;
-}
-
 .hero-eyebrow {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #c5c0d0;
+    color: var(--text);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 3px;
@@ -153,7 +162,7 @@ a {
 .hero-eyebrow span {
     width: 25px;
     height: 2px;
-    background: #8735f5;
+    background: var(--purple);
 }
 
 .hero-content h1 {
@@ -164,12 +173,12 @@ a {
 }
 
 .hero-content h1 span {
-    color: #8735f5;
+    color: var(--purple);
 }
 
 .hero-description {
     max-width: 470px;
-    color: #b8b3c4;
+    color: var(--text);
     font-size: 15px;
     line-height: 1.8;
     margin-top: 28px;
@@ -193,8 +202,8 @@ a {
 }
 
 .button-primary {
-    background: #8735f5;
-    color: #ffffff;
+    background: var(--purple);
+    color: white;
 }
 
 .button-primary:hover {
@@ -204,16 +213,16 @@ a {
 
 .button-secondary {
     border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
+    color: white;
 }
 
 .button-secondary:hover {
-    border-color: #8735f5;
-    color: #b58aff;
+    border-color: var(--purple);
+    color: var(--purple-light);
 }
 
 
-/* HERO LOGO */
+/* HERO VISUAL */
 
 .hero-visual {
     position: relative;
@@ -228,7 +237,7 @@ a {
     position: absolute;
     width: 350px;
     height: 350px;
-    background: #8735f5;
+    background: var(--purple);
     filter: blur(150px);
     opacity: 0.2;
 }
@@ -247,7 +256,7 @@ a {
     display: flex;
     gap: 25px;
     margin-top: 25px;
-    color: #777183;
+    color: var(--muted);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -260,8 +269,8 @@ a {
 
 .brand-statement {
     padding: 120px 0;
-    background: #0d0b14;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--background-light);
+    border-top: 1px solid var(--border);
 }
 
 .brand-statement-top {
@@ -270,7 +279,7 @@ a {
     align-items: flex-start;
     gap: 20px;
     padding-bottom: 35px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border);
 }
 
 .brand-statement-top .section-label {
@@ -285,7 +294,7 @@ a {
 }
 
 .brand-statement-top h2 span {
-    color: #8735f5;
+    color: var(--purple);
 }
 
 .brand-statement-content {
@@ -301,7 +310,7 @@ a {
 }
 
 .brand-statement-description p {
-    color: #b8b3c4;
+    color: var(--text);
     font-size: 15px;
     line-height: 1.9;
     margin-bottom: 20px;
@@ -314,12 +323,12 @@ a {
 }
 
 .brand-value {
-    border-top: 2px solid #8735f5;
+    border-top: 2px solid var(--purple);
     padding-top: 20px;
 }
 
 .brand-value span {
-    color: #b58aff;
+    color: var(--purple-light);
     font-size: 12px;
     font-weight: 800;
 }
@@ -330,7 +339,7 @@ a {
 }
 
 .brand-value p {
-    color: #777183;
+    color: var(--muted);
     font-size: 13px;
     line-height: 1.7;
 }
@@ -342,8 +351,8 @@ a {
 
 .about-section {
     padding: 130px 0;
-    background: #090810;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--background);
+    border-top: 1px solid var(--border);
 }
 
 .about-header {
@@ -358,7 +367,7 @@ a {
 }
 
 .about-header h2 span {
-    color: #8735f5;
+    color: var(--purple);
 }
 
 .about-content {
@@ -378,7 +387,7 @@ a {
 
 .about-intro p,
 .about-focus p {
-    color: #b8b3c4;
+    color: var(--text);
     font-size: 15px;
     line-height: 1.9;
     margin-bottom: 18px;
@@ -388,13 +397,13 @@ a {
     display: flex;
     gap: 25px;
     padding: 30px;
-    background: #171321;
+    background: var(--panel);
     border: 1px solid rgba(135, 53, 245, 0.25);
     border-radius: 8px;
 }
 
 .focus-number {
-    color: #8735f5;
+    color: var(--purple);
     font-size: 32px;
     font-weight: 900;
 }
@@ -407,11 +416,11 @@ a {
 
 .about-value {
     padding-top: 25px;
-    border-top: 2px solid #8735f5;
+    border-top: 2px solid var(--purple);
 }
 
 .about-value span {
-    color: #b58aff;
+    color: var(--purple-light);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -423,7 +432,7 @@ a {
 }
 
 .about-value p {
-    color: #b8b3c4;
+    color: var(--text);
     font-size: 14px;
     line-height: 1.8;
 }
@@ -435,12 +444,12 @@ a {
 
 .placeholder-section {
     padding: 110px 0;
-    background: #0d0b14;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--background-light);
+    border-top: 1px solid var(--border);
 }
 
 .placeholder-section.alternate {
-    background: #090810;
+    background: var(--background);
 }
 
 .placeholder-section h2 {
@@ -452,12 +461,12 @@ a {
 }
 
 .placeholder-section h2 span {
-    color: #8735f5;
+    color: var(--purple);
 }
 
 .placeholder-section p {
     max-width: 550px;
-    color: #b8b3c4;
+    color: var(--text);
     font-size: 15px;
     line-height: 1.8;
 }
@@ -470,7 +479,7 @@ a {
 .site-footer {
     padding: 65px 0 25px;
     background: #07060c;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
 }
 
 .footer-content {
@@ -488,7 +497,7 @@ a {
 }
 
 .footer-content > p {
-    color: #777183;
+    color: var(--muted);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 3px;
@@ -498,11 +507,11 @@ a {
 .footer-bottom {
     width: 100%;
     padding-top: 25px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    color: #777183;
+    color: var(--muted);
     font-size: 10px;
     letter-spacing: 1px;
 }
@@ -513,10 +522,6 @@ a {
 ========================================= */
 
 @media (max-width: 1000px) {
-
-    .header-content {
-        gap: 25px;
-    }
 
     .main-navigation {
         gap: 15px;
