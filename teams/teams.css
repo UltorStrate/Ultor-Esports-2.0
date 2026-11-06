@@ -353,12 +353,13 @@
 }
 
 .player-role-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    flex: 0 0 14px;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    object-fit: contain;
+    object-position: center;
+}
 }
 
 .player-role-icon svg {
