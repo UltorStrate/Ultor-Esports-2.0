@@ -164,21 +164,82 @@
       </section>
 
       <!-- NEWS -->
-      <section class="cms-view" id="view-news">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">CONTENT MANAGEMENT</p>
-            <h1>News</h1>
-            <p class="muted">Erstelle und verwalte Nachrichten und Beiträge.</p>
-          </div>
-        </div>
-        <div class="content-panel placeholder-panel">
-          <span class="placeholder-icon">▤</span>
-          <h2>News-Verwaltung</h2>
-          <p>Hier entsteht die Verwaltung für Artikel, Entwürfe, Freigaben und Veröffentlichungen.</p>
-          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
-        </div>
-      </section>
+      <!-- NEWS -->
+<section class="cms-view" id="view-news">
+  <div class="page-heading news-heading">
+    <div>
+      <p class="eyebrow">CONTENT MANAGEMENT</p>
+      <h1>News</h1>
+      <p class="muted">Erstelle, bearbeite und veröffentliche ULTOR-Beiträge.</p>
+    </div>
+    <button id="createNewsButton" class="primary-button" type="button">
+      + Neuer Beitrag
+    </button>
+  </div>
+
+  <div id="newsMessage" class="message" role="status" aria-live="polite"></div>
+
+  <div class="content-panel">
+    <div class="section-heading">
+      <div>
+        <h2>Beiträge</h2>
+        <p class="muted">Alle gespeicherten News-Beiträge.</p>
+      </div>
+      <select id="newsStatusFilter" aria-label="News-Status">
+        <option value="">Alle Beiträge</option>
+        <option value="draft">Entwürfe</option>
+        <option value="pending">Ausstehend</option>
+        <option value="published">Veröffentlicht</option>
+        <option value="archived">Archiviert</option>
+      </select>
+    </div>
+
+    <div id="newsList" class="news-list">
+      <p class="muted">News werden geladen …</p>
+    </div>
+  </div>
+
+  <div id="newsEditor" class="content-panel" hidden>
+    <div class="section-heading">
+      <div>
+        <h2 id="newsEditorTitle">Neuen Beitrag erstellen</h2>
+        <p class="muted">Inhalte und Beitragsinformationen bearbeiten.</p>
+      </div>
+      <button id="closeNewsEditor" class="secondary-button" type="button">
+        Schließen
+      </button>
+    </div>
+
+    <form id="newsForm">
+      <input id="newsId" type="hidden">
+
+      <label for="newsTitle">Überschrift</label>
+      <input id="newsTitle" type="text" maxlength="180" required
+        placeholder="Titel des Beitrags">
+
+      <label for="newsExcerpt">Kurzbeschreibung / Teaser</label>
+      <textarea id="newsExcerpt" rows="3" maxlength="500"
+        placeholder="Kurze Zusammenfassung des Beitrags"></textarea>
+
+      <label for="newsContent">Artikelinhalt</label>
+      <textarea id="newsContent" rows="12" required
+        placeholder="Schreibe hier deinen Artikel …"></textarea>
+
+      <label for="newsImageKey">Bildverweis (optional)</label>
+      <input id="newsImageKey" type="text" maxlength="500"
+        placeholder="Dateischlüssel oder Bildpfad">
+
+      <div class="news-editor-actions">
+        <button class="primary-button" type="submit">
+          Entwurf speichern
+        </button>
+        <button id="cancelNewsEditor" class="secondary-button" type="button">
+          Abbrechen
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
 
       <!-- TEAMS -->
       <section class="cms-view" id="view-teams">
