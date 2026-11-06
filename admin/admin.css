@@ -1396,7 +1396,9 @@ body.dashboard-page .coming-soon {
 
 /* Allgemeine Teamverwaltung */
 
-#view-teams {
+/* Allgemeine Teamverwaltung */
+
+#view-teams.active {
   display: flex;
   flex-direction: column;
   gap: 24px;
