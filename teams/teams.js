@@ -1,3 +1,4 @@
+
 (() => {
     "use strict";
 
@@ -139,69 +140,48 @@
             .toLowerCase()
             .replace(/\s*lane$/, "");
     }
-function getRoleInfo(position) {
-    const normalized = String(position || "")
-        .trim()
-        .toLowerCase();
 
-    const aliases = {
-        "top": "top",
-        "top lane": "top",
-        "jungle": "jungle",
-        "jg": "jungle",
-        "jgl": "jungle",
-        "mid": "middle",
-        "mid lane": "middle",
-        "middle": "middle",
-        "adc": "bottom",
-        "bot": "bottom",
-        "bottom": "bottom",
-        "bottom lane": "bottom",
-        "support": "utility",
-        "sup": "utility"
-    };
-
-    const role = aliases[normalized] || "top";
-
-    const roles = {
-        top: {
-            label: "TOP",
-            image: "/assets/icon-position-top.png"
-        },
-        jungle: {
-            label: "JUNGLE",
-            image: "/assets/icon-position-jungle.png"
-        },
-        middle: {
-            label: "MID",
-            image: "/assets/icon-position-middle.png"
-        },
-        bottom: {
-            label: "ADC",
-            image: "/assets/icon-position-bottom.png"
-        },
-        utility: {
-            label: "SUPPORT",
-            image: "/assets/icon-position-utility.png"
-        }
-    };
-
-    return roles[role] || roles.top;
-}
+    function getRoleInfo(position) {
+        const normalized = normalizePosition(position);
 
         const aliases = {
             jgl: "jungle",
             jg: "jungle",
+            middle: "mid",
             bot: "adc",
             bottom: "adc",
-            sup: "support"
+            sup: "support",
+            utility: "support"
         };
 
-        const key = aliases[normalized] || normalized;
+        const role = aliases[normalized] || normalized;
 
-        return roles[key] || {
+        const roles = {
+            top: {
+                label: "TOP",
+                image: "/assets/icon-position-top.png"
+            },
+            jungle: {
+                label: "JUNGLE",
+                image: "/assets/icon-position-jungle.png"
+            },
+            mid: {
+                label: "MID",
+                image: "/assets/icon-position-middle.png"
+            },
+            adc: {
+                label: "ADC",
+                image: "/assets/icon-position-bottom.png"
+            },
+            support: {
+                label: "SUPPORT",
+                image: "/assets/icon-position-utility.png"
+            }
+        };
+
+        return roles[role] || {
             label: position ? String(position).toUpperCase() : "PLAYER",
-            icon: ""
+            image: ""
         };
     }
 
@@ -216,9 +196,11 @@ function getRoleInfo(position) {
         const aliases = {
             jgl: "jungle",
             jg: "jungle",
+            middle: "mid",
             bot: "adc",
             bottom: "adc",
-            sup: "support"
+            sup: "support",
+            utility: "support"
         };
 
         const role = aliases[normalized] || normalized;
@@ -290,14 +272,13 @@ function getRoleInfo(position) {
         role.className = "player-role";
         role.setAttribute("aria-label", `${roleInfo.label} Rolle`);
 
-        const icon = document.createElement("img");
-
-icon.className = "player-role-icon";
-icon.src = roleInfo.image;
-icon.alt = "";
-icon.setAttribute("aria-hidden", "true");
-
-role.appendChild(icon);
+        if (roleInfo.image) {
+            const icon = document.createElement("img");
+            icon.className = "player-role-icon";
+            icon.src = roleInfo.image;
+            icon.alt = "";
+            icon.setAttribute("aria-hidden", "true");
+            role.appendChild(icon);
         }
 
         const roleLabel = document.createElement("span");
