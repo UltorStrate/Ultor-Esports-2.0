@@ -706,8 +706,8 @@ async function loadNews() {
 function openNewsEditor(item = null) {
   editingNewsId = item?.id || null;
 
-  document.getElementById("newsEditorTitle").textContent =
-    item ? "Beitrag bearbeiten" : "Neuen Beitrag erstellen";
+  document.getElementById("newsContent").innerHTML =
+  item?.content || "";
 
   document.getElementById("newsId").value = item?.id || "";
   document.getElementById("newsTitle").value = item?.title || "";
