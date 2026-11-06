@@ -927,7 +927,152 @@ removeNewsImageButton?.addEventListener("click", () => {
   showNewsImagePreview("");
   if (newsUploadStatus) newsUploadStatus.textContent = "Kein Bild ausgewählt.";
 });
+// ==================================================
+// TEAMLOGOS UND SPIELERBILDER – R2 UPLOAD
+// ==================================================
 
+const teamLogoFile = document.getElementById("teamLogoFile");
+const uploadTeamLogoButton = document.getElementById("uploadTeamLogo");
+const teamLogoKeyInput = document.getElementById("teamLogoKey");
+const teamLogoPreview = document.getElementById("teamLogoPreview");
+const teamLogoPreviewImg = document.getElementById("teamLogoPreviewImg");
+const removeTeamLogoButton = document.getElementById("removeTeamLogo");
+
+const playerImageFile = document.getElementById("playerImageFile");
+const uploadPlayerImageButton = document.getElementById("uploadPlayerImage");
+const playerImageKeyInput = document.getElementById("playerImageKey");
+const playerImagePreview = document.getElementById("playerImagePreview");
+const playerImagePreviewImg = document.getElementById("playerImagePreviewImg");
+const removePlayerImageButton = document.getElementById("removePlayerImage");
+
+// Bildvorschau anzeigen
+function showRosterImagePreview(key, preview, image) {
+  if (!preview || !image) return;
+
+  if (!key) {
+    preview.hidden = true;
+    image.removeAttribute("src");
+    return;
+  }
+
+  image.src = `/media/${String(key)
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+
+  preview.hidden = false;
+}
+
+// Gemeinsame Uploadfunktion für Teamlogos und Spielerbilder
+async function uploadRosterImage(fileInput, button, keyInput, preview, image, folder, label) {
+  const file = fileInput?.files?.[0];
+
+  if (!file) {
+    teamMessage(`Bitte wähle zuerst ein ${label} aus.`, "error");
+    return;
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    teamMessage("Das Bild darf maximal 8 MB groß sein.", "error");
+    return;
+  }
+
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+    teamMessage("Erlaubt sind JPG, PNG, WEBP und GIF.", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  button.disabled = true;
+  button.textContent = "Upload läuft …";
+
+  try {
+    const response = await fetch("/api/admin/media/upload", {
+      method: "POST",
+      credentials: "same-origin",
+      body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message ||
+        `Upload fehlgeschlagen (${response.status})`
+      );
+    }
+
+    if (!data.key) {
+      throw new Error("Der Server hat keinen Bildschlüssel zurückgegeben.");
+    }
+
+    keyInput.value = data.key;
+    showRosterImagePreview(data.key, preview, image);
+
+    fileInput.value = "";
+
+    teamMessage(
+      `${label.charAt(0).toUpperCase() + label.slice(1)} erfolgreich hochgeladen. Bitte anschließend speichern.`,
+      "success"
+    );
+
+  } catch (error) {
+    teamMessage(getErrorMessage(error), "error");
+
+  } finally {
+    button.disabled = false;
+    button.textContent = folder === "teams"
+      ? "Teamlogo hochladen"
+      : "Spielerbild hochladen";
+  }
+}
+
+// Teamlogo hochladen
+uploadTeamLogoButton?.addEventListener("click", () => {
+  uploadRosterImage(
+    teamLogoFile,
+    uploadTeamLogoButton,
+    teamLogoKeyInput,
+    teamLogoPreview,
+    teamLogoPreviewImg,
+    "teams",
+    "Teamlogo"
+  );
+});
+
+// Spielerbild hochladen
+uploadPlayerImageButton?.addEventListener("click", () => {
+  uploadRosterImage(
+    playerImageFile,
+    uploadPlayerImageButton,
+    playerImageKeyInput,
+    playerImagePreview,
+    playerImagePreviewImg,
+    "players",
+    "Spielerbild"
+  );
+});
+
+// Teamlogo entfernen
+removeTeamLogoButton?.addEventListener("click", () => {
+  teamLogoKeyInput.value = "";
+  teamLogoFile.value = "";
+  showRosterImagePreview("", teamLogoPreview, teamLogoPreviewImg);
+
+  teamMessage("Teamlogo wurde aus dem Formular entfernt.", "success");
+});
+
+// Spielerbild entfernen
+removePlayerImageButton?.addEventListener("click", () => {
+  playerImageKeyInput.value = "";
+  playerImageFile.value = "";
+  showRosterImagePreview("", playerImagePreview, playerImagePreviewImg);
+
+  teamMessage("Spielerbild wurde aus dem Formular entfernt.", "success");
+});
 // ==================================================
 // ULTOR CMS – TEAMS, SPIELER UND KADERHISTORIE
 // ==================================================
@@ -1093,6 +1238,11 @@ function openTeamEditor(team = null) {
     team?.description || "";
   document.getElementById("teamLogoKey").value =
     team?.logo_key || "";
+  showRosterImagePreview(
+  team?.logo_key || "",
+  teamLogoPreview,
+  teamLogoPreviewImg
+);
   document.getElementById("teamStatus").value =
     team?.status || "active";
 
