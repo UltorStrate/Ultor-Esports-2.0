@@ -850,4 +850,101 @@ openCmsView = function(viewName) {
       });
   }
 };
+// =========================================
+// ULTOR CMS – NEWS IMAGE UPLOAD
+// =========================================
+
+const newsImageFile = document.getElementById("newsImageFile");
+const uploadNewsImage = document.getElementById("uploadNewsImage");
+const newsUploadStatus = document.getElementById("newsUploadStatus");
+const newsImageKey = document.getElementById("newsImageKey");
+const newsImagePreview = document.getElementById("newsImagePreview");
+const newsPreviewImg = document.getElementById("newsPreviewImg");
+const removeNewsImage = document.getElementById("removeNewsImage");
+
+function showNewsImagePreview(key) {
+  if (!key) {
+    newsImagePreview.hidden = true;
+    newsPreviewImg.removeAttribute("src");
+    return;
+  }
+
+  newsPreviewImg.src = `/media/${key}`;
+  newsImagePreview.hidden = false;
+}
+
+uploadNewsImage?.addEventListener("click", async () => {
+  const file = newsImageFile?.files?.[0];
+
+  if (!file) {
+    showMessage(newsMessage, "Bitte wähle zuerst ein Bild aus.", "error");
+    return;
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    showMessage(newsMessage, "Das Bild darf maximal 8 MB groß sein.", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  uploadNewsImage.disabled = true;
+  newsUploadStatus.textContent = "Bild wird hochgeladen …";
+
+  try {
+    const response = await fetch("/api/admin/media/upload", {
+      method: "POST",
+      credentials: "same-origin",
+      body: formData
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || `Upload fehlgeschlagen (${response.status})`);
+    }
+
+    newsImageKey.value = data.key;
+    showNewsImagePreview(data.key);
+
+    newsUploadStatus.textContent = "Upload erfolgreich.";
+    showMessage(newsMessage, "Bild wurde erfolgreich hochgeladen.", "success");
+
+  } catch (error) {
+    newsUploadStatus.textContent = "Upload fehlgeschlagen.";
+    showMessage(newsMessage, getErrorMessage(error), "error");
+
+  } finally {
+    uploadNewsImage.disabled = false;
+  }
+});
+
+removeNewsImage?.addEventListener("click", () => {
+  newsImageKey.value = "";
+  if (newsImageFile) newsImageFile.value = "";
+
+  showNewsImagePreview(null);
+  newsUploadStatus.textContent = "Kein Bild ausgewählt.";
+});
+
+newsImageKey?.addEventListener("change", () => {
+  showNewsImagePreview(newsImageKey.value.trim());
+});
+
+// Vorschau beim Öffnen eines bestehenden Beitrags
+const originalOpenNewsEditor = openNewsEditor;
+
+openNewsEditor = function(item = null) {
+  originalOpenNewsEditor(item);
+
+  if (newsImageFile) newsImageFile.value = "";
+
+  showNewsImagePreview(item?.image_key || "");
+  if (newsUploadStatus) {
+    newsUploadStatus.textContent = item?.image_key
+      ? "Gespeichertes Beitragsbild"
+      : "JPG, PNG, WEBP oder GIF · maximal 8 MB";
+  }
+};
 loadDashboard();
