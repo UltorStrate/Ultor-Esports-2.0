@@ -1,4 +1,3 @@
-
 import { createAuth } from "./auth.js";
 import { handleAdminApi } from "./admin-api.js";
 
@@ -6,6 +5,7 @@ const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
   "/.git",
+  "/.github",
   "/node_modules"
 ];
 
@@ -30,12 +30,11 @@ export default {
 
     const normalizedPath = pathname.toLowerCase();
 
-    // Interne Projektdateien schützen.
+    // Interne Projektdateien nicht öffentlich ausliefern
     if (
-      BLOCKED_PREFIXES.some(
-        prefix =>
-          normalizedPath === prefix ||
-          normalizedPath.startsWith(prefix + "/")
+      BLOCKED_PREFIXES.some(prefix =>
+        normalizedPath === prefix ||
+        normalizedPath.startsWith(prefix + "/")
       ) ||
       BLOCKED_FILES.includes(normalizedPath)
     ) {
@@ -54,57 +53,51 @@ export default {
         console.error("Authentication error:", error);
 
         return Response.json(
-          { error: "Authentication service unavailable" },
+          { error: "Authentifizierungsfehler" },
           { status: 500 }
         );
       }
     }
 
-    // Geschützte Admin-API
+    // Geschützte CMS-API
     if (
       normalizedPath === "/api/admin" ||
       normalizedPath.startsWith("/api/admin/")
     ) {
       try {
         const auth = createAuth(env, request.cf);
-
         return await handleAdminApi(request, env, auth);
       } catch (error) {
         console.error("Admin API error:", error);
 
         return Response.json(
-          { error: "Admin API unavailable" },
+          { error: "Interner Serverfehler" },
           { status: 500 }
         );
       }
     }
 
-    // Sonstige API-Endpunkte sperren.
+    // Andere API-Endpunkte sind noch nicht implementiert
     if (
       normalizedPath === "/api" ||
       normalizedPath.startsWith("/api/")
     ) {
       return Response.json(
-        { error: "API endpoint not implemented" },
+        { error: "API-Endpunkt nicht implementiert" },
         { status: 404 }
       );
     }
 
-    // Bestehende Website ausliefern.
+    // Bestehende Website ausliefern
     if (!env.ASSETS) {
-      return new Response("Assets binding missing", {
-        status: 500
-      });
+      return new Response("Assets binding missing", { status: 500 });
     }
 
     const response = await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
 
     headers.set("X-Content-Type-Options", "nosniff");
-    headers.set(
-      "Referrer-Policy",
-      "strict-origin-when-cross-origin"
-    );
+    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     headers.set("X-Frame-Options", "SAMEORIGIN");
 
     return new Response(response.body, {
