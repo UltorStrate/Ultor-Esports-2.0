@@ -205,6 +205,28 @@ export async function handleAdminApi(request, env, auth) {
 
   // Berechtigungen eines Benutzers vollständig ersetzen
   const permissionsMatch = path.match(
+      // Berechtigungen eines Benutzers auslesen
+  if (permissionsMatch && method === "GET") {
+    if (!(await requireOwner(current))) {
+      return json({ error: "Nur der Owner darf Berechtigungen einsehen" }, 403);
+    }
+
+    const targetUserId = permissionsMatch[1];
+
+    const result = await env.DB.prepare(`
+      SELECT p.name
+      FROM user_permissions up
+      JOIN permissions p ON p.id = up.permission_id
+      WHERE up.user_id = ?
+    `)
+      .bind(targetUserId)
+      .all();
+
+    return json({
+      success: true,
+      permissions: result.results.map(row => row.name)
+    });
+  }
     /^\/api\/admin\/users\/([^/]+)\/permissions$/
   );
 
