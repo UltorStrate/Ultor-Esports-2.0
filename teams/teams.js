@@ -227,7 +227,7 @@ function getRoleInfo(position) {
             imageWrap.appendChild(placeholder);
         }
 
-        c
+        
 const roleInfo = getRoleInfo(player.position);
 
 const role = document.createElement("span");
