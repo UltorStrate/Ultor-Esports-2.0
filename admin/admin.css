@@ -1390,3 +1390,285 @@ body.dashboard-page .coming-soon {
   border-color: #6330a0 !important;
 }
 
+/* ==================================================
+   ULTOR CMS – TEAM MANAGEMENT DESIGN
+================================================== */
+
+/* Allgemeine Teamverwaltung */
+
+#view-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+#view-teams .page-heading {
+  margin-bottom: 0;
+}
+
+#view-teams .content-panel {
+  padding: 28px;
+  border: 1px solid rgba(155, 75, 255, 0.18);
+  border-radius: 14px;
+  background: #12101b;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+#view-teams .section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+#view-teams .section-heading h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+#view-teams .muted {
+  color: #a5a0b5;
+}
+
+/* Formulare */
+
+#teamForm,
+#playerForm {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px 22px;
+  margin-top: 24px;
+}
+
+#teamForm > label,
+#playerForm > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d5d0e2;
+}
+
+#teamForm input:not([type="checkbox"]),
+#teamForm textarea,
+#teamForm select,
+#playerForm input:not([type="checkbox"]),
+#playerForm textarea,
+#playerForm select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#teamForm textarea,
+#playerForm textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+#teamForm input:focus,
+#teamForm textarea:focus,
+#teamForm select:focus,
+#playerForm input:focus,
+#playerForm textarea:focus,
+#playerForm select:focus {
+  border-color: #913cff;
+  box-shadow: 0 0 0 3px rgba(145, 60, 255, 0.13);
+}
+
+#teamForm input::placeholder,
+#teamForm textarea::placeholder,
+#playerForm input::placeholder {
+  color: #777185;
+}
+
+/* Checkbox */
+
+#playerForm .permission-option {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #d5d0e2;
+}
+
+#playerIsSubstitute {
+  width: 17px;
+  height: 17px;
+  accent-color: #913cff;
+}
+
+/* Formular-Aktionen */
+
+#teamForm .news-editor-actions,
+#playerForm .news-editor-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+#view-teams .primary-button,
+#view-teams .secondary-button,
+#view-teams .danger-button {
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+#view-teams .primary-button:hover,
+#view-teams .secondary-button:hover,
+#view-teams .danger-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Team- und Spielerkarten */
+
+#teamsList,
+#playersList,
+#rosterHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#view-teams .news-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border: 1px solid #30283c;
+  border-radius: 10px;
+  background: #0d0b14;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+#view-teams .news-card:hover {
+  border-color: rgba(145, 60, 255, 0.55);
+  background: #15111f;
+}
+
+#view-teams .news-card-details {
+  min-width: 0;
+}
+
+#view-teams .news-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+#view-teams .news-meta {
+  color: #a49bb5;
+  font-size: 12px;
+}
+
+#view-teams .news-excerpt {
+  margin-top: 10px;
+  color: #c7c1d2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#view-teams .news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Filter und Team-Auswahl */
+
+#view-teams select {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #ffffff;
+}
+
+#view-teams .news-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+#view-teams .news-upload-area label {
+  color: #d5d0e2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Versteckte Formulare */
+
+#view-teams [hidden] {
+  display: none !important;
+}
+
+/* Mobile Darstellung */
+
+@media (max-width: 760px) {
+  #view-teams .content-panel {
+    padding: 20px 16px;
+  }
+
+  #teamForm,
+  #playerForm {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  #teamForm > label,
+  #playerForm > label {
+    margin-top: 10px;
+  }
+
+  #teamForm .news-editor-actions,
+  #playerForm .news-editor-actions,
+  #playerForm .permission-option {
+    grid-column: 1;
+  }
+
+  #view-teams .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-teams .news-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-teams .news-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  #view-teams .news-upload-area {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
