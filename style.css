@@ -1,1 +1,462 @@
 
+/* =========================================
+   ULTOR ESPORTS – DESIGN SYSTEM
+========================================= */
+
+:root {
+    --color-background: #090810;
+    --color-background-light: #11101A;
+    --color-panel: #171321;
+
+    --color-primary: #8735F5;
+    --color-primary-light: #B58AFF;
+
+    --color-white: #F3F0F8;
+    --color-text: #B8B3C4;
+    --color-muted: #777183;
+
+    --color-border: rgba(255, 255, 255, 0.09);
+
+    --font-main: Arial, Helvetica, sans-serif;
+
+    --container-width: 1240px;
+    --header-height: 84px;
+
+    --transition: 0.3s ease;
+}
+
+
+/* =========================================
+   RESET & GLOBAL
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-white);
+    font-family: var(--font-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+textarea {
+    font: inherit;
+}
+
+.container {
+    width: min(
+        calc(100% - 48px),
+        var(--container-width)
+    );
+    margin-inline: auto;
+}
+
+
+/* =========================================
+   HEADER & NAVIGATION
+========================================= */
+
+.site-header {
+    width: 100%;
+    height: var(--header-height);
+
+    background: rgba(9, 8, 16, 0.94);
+    border-bottom: 1px solid var(--color-border);
+
+    position: relative;
+    z-index: 100;
+}
+
+.site-header .container {
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 2px;
+
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.logo::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+
+    background: var(--color-primary);
+    margin-right: 12px;
+
+    transform: rotate(45deg);
+}
+
+.logo:hover {
+    color: var(--color-primary-light);
+}
+
+.main-navigation {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.main-navigation a {
+    color: var(--color-text);
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+
+    text-transform: uppercase;
+    transition: var(--transition);
+
+    white-space: nowrap;
+}
+
+.main-navigation a:hover {
+    color: var(--color-white);
+}
+
+.main-navigation .shop-link {
+    color: var(--color-primary-light);
+}
+
+.main-navigation .shop-link:hover {
+    color: var(--color-white);
+}
+
+
+/* =========================================
+   HERO SECTION
+========================================= */
+
+.hero {
+    min-height: 680px;
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at 85% 45%,
+            rgba(135, 53, 245, 0.17),
+            transparent 42%
+        ),
+        linear-gradient(
+            135deg,
+            #090810 0%,
+            #0D0A17 55%,
+            #130D20 100%
+        );
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0px,
+        transparent 48px,
+        rgba(255, 255, 255, 0.025) 49px,
+        transparent 50px
+    );
+
+    pointer-events: none;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+
+    width: 600px;
+    height: 600px;
+
+    right: -180px;
+    top: 50%;
+
+    transform: translateY(-50%) rotate(45deg);
+
+    border: 1px solid rgba(135, 53, 245, 0.17);
+    box-shadow:
+        0 0 100px rgba(135, 53, 245, 0.08),
+        inset 0 0 100px rgba(135, 53, 245, 0.04);
+
+    pointer-events: none;
+}
+
+.hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content {
+    max-width: 780px;
+    padding: 110px 0;
+}
+
+.eyebrow {
+    color: var(--color-primary-light);
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+
+    margin-bottom: 24px;
+}
+
+.hero h1 {
+    color: var(--color-white);
+
+    font-size: clamp(64px, 9vw, 112px);
+    font-weight: 950;
+
+    line-height: 0.88;
+    letter-spacing: -5px;
+
+    margin-bottom: 32px;
+}
+
+.hero-description {
+    max-width: 590px;
+
+    color: var(--color-text);
+
+    font-size: 16px;
+    line-height: 1.8;
+
+    margin-bottom: 36px;
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.button {
+    min-height: 48px;
+    padding: 0 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+
+    transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+.button:hover {
+    transform: translateY(-3px);
+}
+
+.button-primary {
+    color: #FFFFFF;
+    background: var(--color-primary);
+
+    border: 1px solid var(--color-primary);
+}
+
+.button-primary:hover {
+    background: #7025D8;
+    border-color: #7025D8;
+}
+
+.button-secondary {
+    color: var(--color-white);
+    background: transparent;
+
+    border: 1px solid var(--color-border);
+}
+
+.button-secondary:hover {
+    color: var(--color-primary-light);
+    border-color: var(--color-primary);
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.site-footer {
+    padding: 30px 0;
+
+    background: #07060C;
+    border-top: 1px solid var(--color-border);
+}
+
+.site-footer p {
+    color: var(--color-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+
+    text-align: center;
+}
+
+
+/* =========================================
+   RESPONSIVE – TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+
+    .main-navigation {
+        gap: 16px;
+    }
+
+    .main-navigation a {
+        font-size: 10px;
+    }
+
+    .hero {
+        min-height: 600px;
+    }
+
+    .hero h1 {
+        font-size: clamp(62px, 10vw, 90px);
+    }
+
+}
+
+
+/* =========================================
+   RESPONSIVE – MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+    :root {
+        --header-height: auto;
+    }
+
+    .container {
+        width: calc(100% - 36px);
+    }
+
+    .site-header {
+        min-height: 76px;
+        height: auto;
+    }
+
+    .site-header .container {
+        padding: 22px 0;
+
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .main-navigation {
+        width: 100%;
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 20px;
+    }
+
+    .main-navigation a {
+        font-size: 10px;
+    }
+
+    .hero {
+        min-height: 570px;
+    }
+
+    .hero-content {
+        padding: 90px 0;
+    }
+
+    .hero h1 {
+        font-size: clamp(55px, 13vw, 76px);
+        letter-spacing: -3px;
+    }
+
+    .hero-description {
+        font-size: 14px;
+    }
+
+    .hero::after {
+        width: 350px;
+        height: 350px;
+
+        right: -240px;
+    }
+
+    .hero-actions {
+        align-items: stretch;
+        flex-direction: column;
+        max-width: 250px;
+    }
+
+    .button {
+        width: 100%;
+    }
+
+}
+
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 380px) {
+
+    .hero h1 {
+        font-size: 48px;
+    }
+
+    .logo {
+        font-size: 14px;
+    }
+
+    .main-navigation {
+        gap: 12px;
+    }
+
+}
+
