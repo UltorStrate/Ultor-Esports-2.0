@@ -227,12 +227,26 @@ function getRoleInfo(position) {
             imageWrap.appendChild(placeholder);
         }
 
-        const role = document.createElement("span");
+        c
+const roleInfo = getRoleInfo(player.position);
 
-        role.className = "player-role";
-        role.textContent = player.position || "PLAYER";
+const role = document.createElement("span");
+role.className = "player-role";
+role.setAttribute("aria-label", `${roleInfo.label} Rolle`);
 
-        imageWrap.appendChild(role);
+if (roleInfo.icon) {
+    const icon = document.createElement("span");
+    icon.className = "player-role-icon";
+    icon.innerHTML = roleInfo.icon;
+    role.appendChild(icon);
+}
+
+const roleLabel = document.createElement("span");
+roleLabel.textContent = roleInfo.label;
+role.appendChild(roleLabel);
+
+imageWrap.appendChild(role);
+
 
         const content = document.createElement("div");
         content.className = "player-card-content";
