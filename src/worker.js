@@ -266,3 +266,101 @@ export default {
     });
   }
 };
+
+// ==================================================
+// ÖFFENTLICHE TEAMS-API
+// ==================================================
+
+function publicJson(data, status = 200) {
+  return Response.json(data, {
+    status,
+    headers: {
+      "Cache-Control": "public, max-age=60, s-maxage=120",
+      "X-Content-Type-Options": "nosniff"
+    }
+  });
+}
+
+export async function handlePublicTeamsApi(request, env) {
+  if (request.method !== "GET") {
+    return publicJson({ error: "Methode nicht erlaubt." }, 405);
+  }
+
+  const url = new URL(request.url);
+  const path = url.pathname.replace(/\/+$/, "");
+
+  // Alle aktiven Teams
+  if (path === "/api/teams") {
+    const result = await env.DB.prepare(`
+      SELECT
+        t.id,
+        t.name,
+        t.slug,
+        t.description,
+        t.logo_key,
+        t.status,
+        (
+          SELECT COUNT(*)
+          FROM players p
+          WHERE p.team_id = t.id
+        ) AS player_count
+      FROM teams t
+      WHERE t.status = 'active'
+      ORDER BY t.name COLLATE NOCASE ASC
+    `).all();
+
+    return publicJson({
+      success: true,
+      teams: result.results
+    });
+  }
+
+  // Einzelnes Team anhand des Slugs
+  const match = path.match(/^\/api\/teams\/([a-z0-9-]+)$/);
+
+  if (match) {
+    const slug = match[1];
+
+    const team = await env.DB.prepare(`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        logo_key,
+        status
+      FROM teams
+      WHERE slug = ?
+      AND status = 'active'
+    `).bind(slug).first();
+
+    if (!team) {
+      return publicJson({ error: "Team nicht gefunden." }, 404);
+    }
+
+    const players = await env.DB.prepare(`
+      SELECT
+        id,
+        name,
+        position,
+        image_key,
+        is_substitute
+      FROM players
+      WHERE team_id = ?
+      ORDER BY
+        is_substitute ASC,
+        name COLLATE NOCASE ASC
+    `).bind(team.id).all();
+
+    return publicJson({
+      success: true,
+      team,
+      players: players.results
+    });
+  }
+
+  return publicJson({
+    error: "Öffentlicher Teams-Endpunkt nicht gefunden."
+  }, 404);
+}
+
