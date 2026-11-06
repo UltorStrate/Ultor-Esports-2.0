@@ -281,7 +281,6 @@ export default {
       "strict-origin-when-cross-origin"
     );
     headers.set("X-Frame-Options", "SAMEORIGIN");
-
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
