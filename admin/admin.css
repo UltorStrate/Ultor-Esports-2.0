@@ -514,9 +514,7 @@
   .page-heading h1 {
     font-size: 26px;
   }
-}
-
-/* =========================================
+  /* =========================================
    ULTOR ESPORTS – OFFICIAL BRAND THEME
 ========================================= */
 
@@ -716,6 +714,7 @@ body.dashboard-page {
 .dashboard-page .website-link:hover {
   color: #b77cff;
 }
+
 /* =========================================
    NEWS MANAGEMENT
 ========================================= */
@@ -829,6 +828,7 @@ body.dashboard-page {
     width: 100%;
   }
 }
+
 /* =========================================
    NEWS IMAGE UPLOAD
 ========================================= */
@@ -1058,5 +1058,317 @@ body.auth-page {
   .auth-card h1 {
     font-size: 25px;
   }
+} 
+ /* =========================================
+ULTOR CMS – COMMON COMPONENTS
+========================================= */
+
+.dashboard-page button,
+.auth-page button {
+font: inherit;
+cursor: pointer;
 }
 
+.dashboard-page button:disabled,
+.auth-page button:disabled {
+opacity: .55;
+cursor: not-allowed;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 38px;
+padding: 9px 14px;
+border: 1px solid transparent;
+border-radius: 6px;
+font-size: 12px;
+font-weight: 700;
+transition: .18s ease;
+}
+
+.primary-button {
+border-color: var(--accent);
+background: var(--accent);
+color: #fff;
+}
+
+.primary-button:hover {
+border-color: var(--accent-hover);
+background: var(--accent-hover);
+}
+
+.secondary-button {
+border-color: var(--border);
+background: #171321;
+color: var(--text);
+}
+
+.secondary-button:hover {
+border-color: var(--accent);
+color: #c59aff;
+}
+
+.danger-button {
+border-color: #69333f;
+background: #29131b;
+color: #ff9eae;
+}
+
+.danger-button:hover {
+border-color: #a44358;
+background: #3a1823;
+}
+
+.message {
+padding: 11px 13px;
+border: 1px solid var(--border);
+border-radius: 7px;
+font-size: 12px;
+line-height: 1.5;
+}
+
+.message:empty {
+display: none;
+}
+
+.message.success {
+border-color: #285b43;
+background: #10251b;
+color: #8de0ad;
+}
+
+.message.error {
+border-color: #713747;
+background: #2a151d;
+color: #ffabb9;
+}
+
+.muted {
+color: var(--muted);
+font-size: 12px;
+line-height: 1.6;
+}
+
+/* =========================================
+USER MANAGEMENT
+========================================= */
+
+.users-list {
+display: grid;
+gap: 12px;
+}
+
+.user-card {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 20px;
+padding: 17px;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: #0e0b15;
+}
+
+.user-card h3 {
+margin: 0 0 6px;
+font-size: 14px;
+}
+
+.user-card p {
+margin: 3px 0;
+color: var(--muted);
+font-size: 11px;
+}
+
+.user-actions {
+display: flex;
+flex-wrap: wrap;
+justify-content: flex-end;
+gap: 8px;
+}
+
+#userStatusFilter,
+#newsStatusFilter {
+min-height: 38px;
+padding: 8px 12px;
+border: 1px solid var(--border);
+border-radius: 6px;
+background: #0b0911;
+color: var(--text);
+}
+
+/* =========================================
+PERMISSIONS
+========================================= */
+
+.permission-groups {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 14px;
+margin: 20px 0;
+}
+
+.permission-group {
+padding: 17px;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: #0e0b15;
+}
+
+.permission-group h3 {
+margin: 0 0 14px;
+color: #c59aff;
+font-size: 13px;
+}
+
+.permission-option {
+display: flex;
+align-items: center;
+gap: 9px;
+margin: 10px 0;
+color: #d5cce3;
+font-size: 12px;
+cursor: pointer;
+}
+
+.permission-option input {
+width: 16px;
+height: 16px;
+accent-color: var(--accent);
+}
+
+.permission-chip {
+display: inline-flex;
+margin: 4px 5px 4px 0;
+padding: 6px 9px;
+border: 1px solid #6330a0;
+border-radius: 20px;
+background: #21152f;
+color: #c59aff;
+font-size: 10px;
+}
+
+/* =========================================
+NEWS EDITOR
+========================================= */
+
+#newsEditor[hidden],
+#permissionPanel[hidden],
+#ownerPanel[hidden],
+#standardPanel[hidden],
+[hidden] {
+display: none !important;
+}
+
+#newsEditor {
+margin-top: 20px;
+}
+
+#newsEditorTitle {
+margin-bottom: 18px;
+}
+
+#newsMessage,
+#dashboardMessage {
+margin: 12px 0;
+}
+
+#newsContent {
+min-height: 260px;
+}
+
+#newsImageKey {
+font-family: monospace;
+font-size: 12px;
+}
+
+#newsUploadStatus {
+color: var(--muted);
+font-size: 11px;
+}
+
+/* =========================================
+RESPONSIVE COMPONENTS
+========================================= */
+
+@media (max-width: 750px) {
+.user-card {
+align-items: flex-start;
+flex-direction: column;
+}
+
+.user-actions {
+justify-content: flex-start;
+width: 100%;
+}
+
+.user-actions button {
+flex: 1 1 auto;
+}
+
+.permission-groups {
+grid-template-columns: 1fr;
+}
+}
+
+@media (max-width: 480px) {
+.auth-card {
+padding: 25px 19px;
+}
+
+.user-actions {
+display: grid;
+grid-template-columns: 1fr;
+}
+
+.user-actions button {
+width: 100%;
+}
+
+.news-actions {
+display: grid;
+grid-template-columns: 1fr;
+width: 100%;
+}
+
+.news-actions button {
+width: 100%;
+}
+}
+
+/* =========================================
+ACCESSIBILITY & FINISH
+========================================= */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+outline: 2px solid #b77cff;
+outline-offset: 3px;
+}
+
+::selection {
+background: #8b35f5;
+color: #fff;
+}
+
+html {
+scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+*,
+*::before,
+*::after {
+scroll-behavior: auto !important;
+transition-duration: .01ms !important;
+animation-duration: .01ms !important;
+}
+}  
+}
