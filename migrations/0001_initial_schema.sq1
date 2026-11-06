@@ -1,1 +1,202 @@
 
+-- =========================================
+-- ULTOR ESPORTS CMS
+-- INITIAL DATABASE SCHEMA
+-- =========================================
+
+PRAGMA foreign_keys = ON;
+
+-- USERS
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected', 'suspended')),
+
+    is_owner INTEGER NOT NULL DEFAULT 0
+        CHECK (is_owner IN (0, 1)),
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    approved_at TEXT,
+    approved_by TEXT,
+
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+
+-- PERMISSIONS
+CREATE TABLE IF NOT EXISTS permissions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+
+-- INDIVIDUAL USER PERMISSIONS
+CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id TEXT NOT NULL,
+    permission_id TEXT NOT NULL,
+
+    granted_by TEXT,
+    granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (user_id, permission_id),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id)
+);
+
+-- SESSIONS
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- NEWS
+CREATE TABLE IF NOT EXISTS news (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    image_key TEXT,
+
+    status TEXT NOT NULL DEFAULT 'draft'
+        CHECK (status IN ('draft', 'pending', 'published', 'archived')),
+
+    author_id TEXT NOT NULL,
+    published_by TEXT,
+    published_at TEXT,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (author_id) REFERENCES users(id),
+    FOREIGN KEY (published_by) REFERENCES users(id)
+);
+
+-- TEAMS
+CREATE TABLE IF NOT EXISTS teams (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT,
+    logo_key TEXT,
+
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'inactive')),
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- PLAYERS
+CREATE TABLE IF NOT EXISTS players (
+    id TEXT PRIMARY KEY,
+    team_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    position TEXT,
+    image_key TEXT,
+    is_substitute INTEGER NOT NULL DEFAULT 0,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+);
+
+-- ROSTER HISTORY
+CREATE TABLE IF NOT EXISTS roster_history (
+    id TEXT PRIMARY KEY,
+    team_id TEXT NOT NULL,
+    player_id TEXT,
+    action TEXT NOT NULL,
+    description TEXT,
+    changed_by TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (player_id) REFERENCES players(id),
+    FOREIGN KEY (changed_by) REFERENCES users(id)
+);
+
+-- PARTNERS
+CREATE TABLE IF NOT EXISTS partners (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    website_url TEXT,
+    logo_key TEXT,
+
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'inactive')),
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- MEDIA
+CREATE TABLE IF NOT EXISTS media (
+    id TEXT PRIMARY KEY,
+    file_name TEXT NOT NULL,
+    file_key TEXT NOT NULL UNIQUE,
+    mime_type TEXT NOT NULL,
+    uploaded_by TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
+-- AUDIT LOG
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    action TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id TEXT,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- DEFAULT PERMISSIONS
+INSERT OR IGNORE INTO permissions (id, name, description) VALUES
+('p01', 'news.view', 'News ansehen'),
+('p02', 'news.create', 'News erstellen'),
+('p03', 'news.edit', 'News bearbeiten'),
+('p04', 'news.delete', 'News löschen'),
+('p05', 'news.publish', 'News veröffentlichen'),
+
+('p06', 'teams.view', 'Teams ansehen'),
+('p07', 'teams.create', 'Teams erstellen'),
+('p08', 'teams.edit', 'Teams bearbeiten'),
+('p09', 'teams.delete', 'Teams löschen'),
+('p10', 'teams.publish', 'Teams veröffentlichen'),
+
+('p11', 'partners.view', 'Partner ansehen'),
+('p12', 'partners.create', 'Partner erstellen'),
+('p13', 'partners.edit', 'Partner bearbeiten'),
+('p14', 'partners.delete', 'Partner löschen'),
+('p15', 'partners.publish', 'Partner veröffentlichen'),
+
+('p16', 'media.view', 'Medien ansehen'),
+('p17', 'media.upload', 'Medien hochladen'),
+('p18', 'media.delete', 'Medien löschen'),
+
+('p19', 'users.view', 'Benutzer ansehen'),
+('p20', 'users.create', 'Benutzer erstellen'),
+('p21', 'users.edit', 'Benutzer bearbeiten'),
+('p22', 'users.delete', 'Benutzer löschen'),
+
+('p23', 'settings.manage', 'Einstellungen verwalten'),
+('p24', 'audit.view', 'Aktivitätsprotokoll ansehen');
+
