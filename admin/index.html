@@ -592,31 +592,164 @@
         </div>
 
       </section>
-           <!-- =====================================
-           PARTNER
-      ====================================== -->
+         
+<!-- =====================================
+     PARTNER
+====================================== -->
 
-      <section class="cms-view" id="view-partners">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">BUSINESS MANAGEMENT</p>
-            <h1>Partner</h1>
-            <p class="muted">
-              Verwalte Sponsoren und Kooperationspartner.
-            </p>
-          </div>
-        </div>
+<section class="cms-view" id="view-partners">
 
-        <div class="content-panel placeholder-panel">
-          <span class="placeholder-icon">◇</span>
-          <h2>Partnermanagement</h2>
-          <p>
-            Hier entstehen Partnerprofile, Beschreibungen,
-            Logos und Website-Verknüpfungen.
-          </p>
-          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
-        </div>
-      </section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">BUSINESS MANAGEMENT</p>
+      <h1>Partner</h1>
+      <p class="muted">
+        Verwalte Sponsoren und Kooperationspartner von ULTOR ESPORTS.
+      </p>
+    </div>
+
+    <button id="createPartnerButton"
+      class="primary-button"
+      type="button">
+      + Neuer Partner
+    </button>
+  </div>
+
+  <div id="partnersMessage"
+    class="message"
+    role="status"
+    aria-live="polite"></div>
+
+  <!-- PARTNERÜBERSICHT -->
+
+  <div class="content-panel">
+    <div class="section-heading">
+      <div>
+        <h2>Partnerübersicht</h2>
+        <p class="muted">
+          Alle angelegten Sponsoren und Kooperationspartner.
+        </p>
+      </div>
+
+      <select id="partnerStatusFilter"
+        aria-label="Partnerstatus">
+        <option value="">Alle Partner</option>
+        <option value="active">Aktiv</option>
+        <option value="inactive">Inaktiv</option>
+      </select>
+    </div>
+
+    <div id="partnersList" class="news-list">
+      <p class="muted">Partner werden geladen …</p>
+    </div>
+  </div>
+
+  <!-- PARTNEREDITOR -->
+
+  <div id="partnerEditor" class="content-panel" hidden>
+
+    <div class="section-heading">
+      <div>
+        <h2 id="partnerEditorTitle">Neuen Partner erstellen</h2>
+        <p class="muted">
+          Hinterlege die Informationen und das Logo des Partners.
+        </p>
+      </div>
+
+      <button id="closePartnerEditor"
+        class="secondary-button"
+        type="button">
+        Schließen
+      </button>
+    </div>
+
+    <form id="partnerForm">
+
+      <input id="partnerId" type="hidden">
+
+      <label for="partnerName">Partnername</label>
+      <input id="partnerName"
+        type="text"
+        maxlength="180"
+        required
+        placeholder="Name des Unternehmens">
+
+      <label for="partnerDescription">Beschreibung</label>
+      <textarea id="partnerDescription"
+        rows="4"
+        maxlength="5000"
+        placeholder="Kurze Beschreibung des Partners"></textarea>
+
+      <label for="partnerWebsite">Website</label>
+      <input id="partnerWebsite"
+        type="url"
+        maxlength="500"
+        placeholder="https://www.beispiel.de">
+
+      <label for="partnerLogoFile">Partnerlogo</label>
+
+      <div class="image-upload-control">
+        <input
+          type="file"
+          id="partnerLogoFile"
+          accept="image/png,image/jpeg,image/webp,image/gif">
+
+        <button
+          type="button"
+          id="uploadPartnerLogo"
+          class="secondary-button">
+          Partnerlogo hochladen
+        </button>
+      </div>
+
+      <p id="partnerUploadStatus"
+        class="muted"
+        role="status">
+        JPG, PNG, WEBP oder GIF · maximal 8 MB
+      </p>
+
+      <div id="partnerLogoPreview"
+        class="image-preview"
+        hidden>
+
+        <img id="partnerLogoPreviewImg"
+          alt="Partnerlogo-Vorschau">
+
+        <button
+          type="button"
+          id="removePartnerLogo"
+          class="secondary-button">
+          Logo entfernen
+        </button>
+      </div>
+
+      <input id="partnerLogoKey" type="hidden">
+
+      <label for="partnerStatus">Partnerstatus</label>
+      <select id="partnerStatus">
+        <option value="inactive">Inaktiv</option>
+        <option value="active">Aktiv</option>
+      </select>
+
+      <div class="news-editor-actions">
+
+        <button class="primary-button" type="submit">
+          Partner speichern
+        </button>
+
+        <button id="cancelPartnerEditor"
+          class="secondary-button"
+          type="button">
+          Abbrechen
+        </button>
+
+      </div>
+
+    </form>
+  </div>
+
+</section>
+
 
       <!-- =====================================
            MEDIA
