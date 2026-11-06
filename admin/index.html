@@ -401,11 +401,37 @@
               maxlength="5000"
               placeholder="Beschreibung des Teams"></textarea>
 
-            <label for="teamLogoKey">Logo-Schlüssel</label>
-            <input id="teamLogoKey"
-              type="text"
-              maxlength="500"
-              placeholder="R2-Bildschlüssel des Teamlogos">
+            <label for="teamLogoFile">Teamlogo</label>
+
+<div class="image-upload-control">
+  <input
+    type="file"
+    id="teamLogoFile"
+    accept="image/png,image/jpeg,image/webp"
+  >
+
+  <button
+    type="button"
+    id="uploadTeamLogo"
+    class="secondary-button"
+  >
+    Teamlogo hochladen
+  </button>
+</div>
+
+<div id="teamLogoPreview" class="image-preview" hidden>
+  <img id="teamLogoPreviewImg" alt="Teamlogo-Vorschau">
+
+  <button
+    type="button"
+    id="removeTeamLogo"
+    class="secondary-button"
+  >
+    Logo entfernen
+  </button>
+</div>
+
+<input id="teamLogoKey" type="hidden">
 
             <label for="teamStatus">Teamstatus</label>
             <select id="teamStatus">
