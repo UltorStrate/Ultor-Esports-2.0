@@ -1,1 +1,22 @@
 
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ultor-esports-2-0",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-06",
+
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ultor-cms",
+      "database_id": "d1aa2bb9-2514-4ee7-8fff-b7bc51dcca48"
+    }
+  ]
+}
+
