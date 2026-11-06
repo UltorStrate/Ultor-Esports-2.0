@@ -290,11 +290,14 @@ function getRoleInfo(position) {
         role.className = "player-role";
         role.setAttribute("aria-label", `${roleInfo.label} Rolle`);
 
-        if (roleInfo.icon) {
-            const icon = document.createElement("span");
-            icon.className = "player-role-icon";
-            icon.innerHTML = roleInfo.icon;
-            role.appendChild(icon);
+        const icon = document.createElement("img");
+
+icon.className = "player-role-icon";
+icon.src = roleInfo.image;
+icon.alt = "";
+icon.setAttribute("aria-hidden", "true");
+
+role.appendChild(icon);
         }
 
         const roleLabel = document.createElement("span");
