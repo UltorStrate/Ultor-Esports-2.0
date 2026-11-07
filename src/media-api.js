@@ -1,3 +1,4 @@
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -24,20 +25,20 @@ async function getApprovedUser(request, env, auth) {
     return { error: json({ error: "Zugriff nicht freigegeben." }, 403) };
   }
 
-  if (user.is_owner === 1) return { user };
+  return { user };
+}
+
+async function hasPermission(env, user, permissionName) {
+  if (user.is_owner === 1) return true;
 
   const permission = await env.DB.prepare(`
     SELECT 1
     FROM user_permissions up
     JOIN permissions p ON p.id = up.permission_id
-    WHERE up.user_id = ? AND p.name = 'media.upload'
-  `).bind(user.id).first();
+    WHERE up.user_id = ? AND p.name = ?
+  `).bind(user.id, permissionName).first();
 
-  if (!permission) {
-    return { error: json({ error: "Keine Berechtigung zum Hochladen." }, 403) };
-  }
-
-  return { user };
+  return Boolean(permission);
 }
 
 function detectImage(bytes) {
@@ -98,6 +99,32 @@ export async function handleMediaUpload(request, env, auth) {
     return json({ error: "Ungültiger Datei-Upload." }, 400);
   }
 
+  const requestedFolder = formData.get("folder") || "news";
+  const allowedFolders = ["news", "teams", "players", "partners", "shop"];
+
+  if (
+    typeof requestedFolder !== "string" ||
+    !allowedFolders.includes(requestedFolder)
+  ) {
+    return json({ error: "Ungültiger Medienordner." }, 400);
+  }
+
+  const requiredPermission = requestedFolder === "shop"
+    ? "shop.products.edit"
+    : "media.upload";
+
+  const permitted = await hasPermission(
+    env,
+    current.user,
+    requiredPermission
+  );
+
+  if (!permitted) {
+    return json({
+      error: "Keine Berechtigung zum Hochladen."
+    }, 403);
+  }
+
   const file = formData.get("file");
 
   if (!file || typeof file.arrayBuffer !== "function") {
@@ -105,7 +132,9 @@ export async function handleMediaUpload(request, env, auth) {
   }
 
   if (file.size <= 0 || file.size > 8 * 1024 * 1024) {
-    return json({ error: "Die Datei muss zwischen 1 Byte und 8 MB groß sein." }, 400);
+    return json({
+      error: "Die Datei muss zwischen 1 Byte und 8 MB groß sein."
+    }, 400);
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -118,15 +147,8 @@ export async function handleMediaUpload(request, env, auth) {
   }
 
   const id = crypto.randomUUID();
+  const key = `${requestedFolder}/${id}.${image.extension}`;
 
-const requestedFolder = formData.get("folder") || "news";
-const allowedFolders = ["news", "teams", "players", "partners"];
-
-if (!allowedFolders.includes(requestedFolder)) {
-  return json({ error: "Ungültiger Medienordner." }, 400);
-}
-
-const key = `${requestedFolder}/${id}.${image.extension}`;
   const fileName = String(file.name || `image.${image.extension}`)
     .replace(/[^\w.\- ]/g, "_")
     .slice(0, 180);
@@ -169,6 +191,8 @@ const key = `${requestedFolder}/${id}.${image.extension}`;
       await env.MEDIA.delete(key);
     } catch {}
 
-    return json({ error: "Das Bild konnte nicht gespeichert werden." }, 500);
+    return json({
+      error: "Das Bild konnte nicht gespeichert werden."
+    }, 500);
   }
 }
