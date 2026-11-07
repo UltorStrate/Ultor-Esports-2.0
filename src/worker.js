@@ -12,7 +12,10 @@ import {
   handlePartnersApi,
   handlePublicPartnersApi
 } from "./partners-api.js";
-
+import {
+  handleShopApi,
+  handlePublicShopApi
+} from "./shop-api.js";
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
@@ -157,7 +160,26 @@ export default {
         );
       }
     }
+// =========================================
+// GESCHÜTZTE SHOP-VERWALTUNG
+// =========================================
 
+if (
+  normalizedPath === "/api/admin/shop" ||
+  normalizedPath.startsWith("/api/admin/shop/")
+) {
+  try {
+    const auth = createAuth(env);
+    return await handleShopApi(request, env, auth);
+  } catch (error) {
+    console.error("Shop API error:", error);
+
+    return Response.json(
+      { error: "Interner Fehler in der Shop-Verwaltung." },
+      { status: 500 }
+    );
+  }
+}
     // =========================================
     // GESCHÜTZTE CMS-API
     // =========================================
@@ -218,7 +240,25 @@ export default {
         );
       }
     }
+// =========================================
+// ÖFFENTLICHE SHOP-API
+// =========================================
 
+if (
+  normalizedPath === "/api/shop" ||
+  normalizedPath.startsWith("/api/shop/")
+) {
+  try {
+    return await handlePublicShopApi(request, env);
+  } catch (error) {
+    console.error("Public Shop API error:", error);
+
+    return Response.json(
+      { error: "Shop-Produkte konnten nicht geladen werden." },
+      { status: 500 }
+    );
+  }
+}
     // =========================================
     // ÖFFENTLICHE NEWS-API
     // =========================================
@@ -256,7 +296,7 @@ export default {
       const key = pathname.slice("/media/".length);
 
       // Nur gültige Bilder aus den freigegebenen Bereichen ausliefern
-      if (!/^(news|teams|players|partners)\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
+      if (!/^(news|teams|players|partners|shop)\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(key)) {
         return new Response("Not Found", { status: 404 });
       }
 
