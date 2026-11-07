@@ -211,12 +211,16 @@ async function loadDashboard() {
   } catch (error) {
     showMessage(dashboardMessage, getErrorMessage(error), "error");
 
-    if (error.message.includes("Nicht angemeldet") ||
-        error.message.includes("freigegeben")) {
+    if (
+      error.message.includes("Nicht angemeldet") ||
+      error.message.includes("freigegeben")
+    ) {
       window.location.href = "/admin/login.html";
     }
   }
-  function renderMyPermissions(permissions) {
+}
+
+function renderMyPermissions(permissions) {
   const container = document.getElementById("myPermissions");
   if (!container) return;
 
@@ -224,13 +228,19 @@ async function loadDashboard() {
 
   if (!permissions.length) {
     container.append(
-      createElement("p", "muted", "Deinem Konto wurden noch keine Berechtigungen zugewiesen.")
+      createElement(
+        "p",
+        "muted",
+        "Deinem Konto wurden noch keine Berechtigungen zugewiesen."
+      )
     );
     return;
   }
 
   for (const permission of permissions) {
-    container.append(createElement("span", "permission-chip", permission));
+    container.append(
+      createElement("span", "permission-chip", permission)
+    );
   }
 }
 
