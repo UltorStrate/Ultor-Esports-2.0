@@ -476,7 +476,7 @@ async function updateProduct(request, env, current, id) {
       : existing.slug;
 
   try {
-    await env.DB.prepare(`
+        await env.DB.prepare(`
       UPDATE shop_products
       SET
         name = ?,
@@ -486,6 +486,8 @@ async function updateProduct(request, env, current, id) {
         price_cents = ?,
         compare_at_price_cents = ?,
         currency = ?,
+        status = ?,
+        published_at = ?,
         is_featured = ?,
         sort_order = ?,
         updated_by = ?,
@@ -505,6 +507,8 @@ async function updateProduct(request, env, current, id) {
         ? body.compare_at_price_cents
         : existing.compare_at_price_cents,
       body.currency || existing.currency,
+      status,
+      publishedAt,
       body.is_featured !== undefined
         ? (body.is_featured ? 1 : 0)
         : existing.is_featured,
