@@ -148,7 +148,9 @@ CREATE TABLE IF NOT EXISTS shop_product_images (
 
 CREATE INDEX IF NOT EXISTS idx_shop_product_images_product
 ON shop_product_images(product_id);
-
+CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_product_images_primary
+ON shop_product_images(product_id)
+WHERE is_primary = 1;
 
 -- =========================================
 -- PRODUCT VARIANTS
