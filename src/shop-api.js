@@ -773,7 +773,12 @@ function validateVariant(body) {
       !["active", "inactive"].includes(body.status)) {
     return "Ungültiger Variantenstatus.";
   }
-
+  if (
+    body.sort_order !== undefined &&
+    (!Number.isInteger(body.sort_order) || body.sort_order < 0)
+  ) {
+    return "Die Sortierung muss eine positive ganze Zahl sein.";
+  }
   return null;
 }
 
