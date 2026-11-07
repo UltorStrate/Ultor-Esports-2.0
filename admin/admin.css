@@ -760,3 +760,226 @@
 
         <button class="primary-button" type="submit">
           Partner speichern
+        </button>
+
+        <button id="cancelPartnerEditor"
+          class="secondary-button"
+          type="button">
+          Abbrechen
+        </button>
+
+      </div>
+
+    </form>
+  </div>
+
+</section>
+
+
+
+      <!-- =====================================
+           SHOP MANAGEMENT
+      ====================================== -->
+      <section class="cms-view" id="view-shop">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ECOMMERCE MANAGEMENT</p>
+            <h1>Shop</h1>
+            <p class="muted">Verwalte Produkte, Kategorien, Varianten und Veröffentlichungen.</p>
+          </div>
+          <button id="createShopProductButton" class="primary-button" type="button">+ Neues Produkt</button>
+        </div>
+        <div id="shopMessage" class="message" role="status" aria-live="polite"></div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div><h2>Produkte</h2><p class="muted">Alle Produkte deiner ULTOR-Kollektion.</p></div>
+            <select id="shopProductStatusFilter" aria-label="Produktstatus">
+              <option value="">Alle Produkte</option><option value="draft">Entwürfe</option>
+              <option value="published">Veröffentlicht</option><option value="archived">Archiviert</option>
+            </select>
+          </div>
+          <div id="shopProductsList" class="news-list"><p class="muted">Produkte werden geladen …</p></div>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div><h2>Kategorien</h2><p class="muted">Kategorien des offiziellen Shops verwalten.</p></div>
+            <button id="createShopCategoryButton" class="secondary-button" type="button">+ Neue Kategorie</button>
+          </div>
+          <div id="shopCategoriesList" class="news-list"><p class="muted">Kategorien werden geladen …</p></div>
+        </div>
+
+        <div id="shopProductEditor" class="content-panel" hidden>
+          <div class="section-heading"><div><h2 id="shopProductEditorTitle">Neues Produkt</h2><p class="muted">Produktinformationen und Verkaufspreise.</p></div>
+            <button id="closeShopProductEditor" class="secondary-button" type="button">Schließen</button></div>
+          <form id="shopProductForm">
+            <input id="shopProductId" type="hidden">
+            <label for="shopProductName">Produktname</label><input id="shopProductName" maxlength="180" required placeholder="z. B. ULTOR Official Jersey">
+            <label for="shopProductShortDescription">Kurzbeschreibung</label><textarea id="shopProductShortDescription" rows="2" maxlength="500"></textarea>
+            <label for="shopProductDescription">Produktbeschreibung</label><textarea id="shopProductDescription" rows="5" maxlength="10000"></textarea>
+            <div class="shop-form-grid">
+              <div><label for="shopProductPrice">Preis in Euro</label><input id="shopProductPrice" type="number" min="0" step="0.01" placeholder="49.99"></div>
+              <div><label for="shopProductComparePrice">Vergleichspreis in Euro</label><input id="shopProductComparePrice" type="number" min="0" step="0.01" placeholder="59.99"></div>
+              <div><label for="shopProductSortOrder">Sortierung</label><input id="shopProductSortOrder" type="number" min="0" step="1" value="0"></div>
+            </div>
+            <label>Kategorien</label><div id="shopProductCategoryChoices" class="shop-category-choices"></div>
+            <label class="permission-option"><input id="shopProductFeatured" type="checkbox"> Als hervorgehobenes Produkt markieren</label>
+            <div class="news-editor-actions"><button class="primary-button" type="submit">Produkt speichern</button><button id="cancelShopProductEditor" class="secondary-button" type="button">Abbrechen</button></div>
+          </form>
+          <div id="shopVariantEditor" class="shop-variant-editor" hidden>
+            <h3>Produktvarianten</h3><p class="muted">Varianten können nach dem erstmaligen Speichern angelegt werden.</p>
+            <form id="shopVariantForm">
+              <div class="shop-form-grid">
+                <div><label for="shopVariantName">Variantenname</label><input id="shopVariantName" required maxlength="120" placeholder="z. B. Größe M"></div>
+                <div><label for="shopVariantSku">SKU</label><input id="shopVariantSku" maxlength="100" placeholder="ULT-JER-M"></div>
+                <div><label for="shopVariantStock">Lagerbestand</label><input id="shopVariantStock" type="number" min="0" step="1" value="0"></div>
+              </div>
+              <label class="permission-option"><input id="shopVariantTrackInventory" type="checkbox" checked> Lagerbestand verfolgen</label>
+              <button class="secondary-button" type="submit">Variante hinzufügen</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="shopCategoryEditor" class="content-panel" hidden>
+          <div class="section-heading"><div><h2 id="shopCategoryEditorTitle">Neue Kategorie</h2></div><button id="closeShopCategoryEditor" class="secondary-button" type="button">Schließen</button></div>
+          <form id="shopCategoryForm">
+            <input id="shopCategoryId" type="hidden">
+            <label for="shopCategoryName">Kategoriename</label><input id="shopCategoryName" maxlength="120" required placeholder="z. B. Teamwear">
+            <label for="shopCategoryDescription">Beschreibung</label><textarea id="shopCategoryDescription" rows="3" maxlength="2000"></textarea>
+            <label for="shopCategorySortOrder">Sortierung</label><input id="shopCategorySortOrder" type="number" min="0" step="1" value="0">
+            <div class="news-editor-actions"><button class="primary-button" type="submit">Kategorie speichern</button><button id="cancelShopCategoryEditor" class="secondary-button" type="button">Abbrechen</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================
+           MEDIA
+      ====================================== -->
+
+      <section class="cms-view" id="view-media">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ASSET MANAGEMENT</p>
+            <h1>Medien</h1>
+            <p class="muted">
+              Verwalte Bilder und Dateien für deine Website.
+            </p>
+          </div>
+        </div>
+
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">▧</span>
+          <h2>Medienbibliothek</h2>
+          <p>
+            Hier entsteht die zentrale Medienverwaltung
+            mit Uploads und Dateizuordnung.
+          </p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+      <!-- =====================================
+           USERS
+      ====================================== -->
+
+      <section class="cms-view" id="view-users">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">ACCESS MANAGEMENT</p>
+            <h1>Benutzer & Rechte</h1>
+            <p class="muted">
+              Verwalte CMS-Zugänge und individuelle Berechtigungen.
+            </p>
+          </div>
+        </div>
+
+        <section id="ownerPanel" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Benutzerverwaltung</h2>
+              <p class="muted">
+                Konten prüfen und Zugänge verwalten.
+              </p>
+            </div>
+
+            <select id="userStatusFilter" aria-label="Benutzerstatus">
+              <option value="pending">Ausstehend</option>
+              <option value="approved">Freigegeben</option>
+              <option value="rejected">Abgelehnt</option>
+              <option value="suspended">Gesperrt</option>
+            </select>
+          </div>
+
+          <div id="usersList" class="users-list">
+            <p class="muted">Benutzer werden geladen …</p>
+          </div>
+        </section>
+
+        <section id="permissionPanel" class="content-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Berechtigungen</h2>
+              <p class="muted">
+                Wähle die Rechte für den ausgewählten Benutzer.
+              </p>
+            </div>
+          </div>
+
+          <p id="permissionUser" class="selected-user"></p>
+
+          <form id="permissionsForm">
+            <div id="permissionGroups" class="permission-groups"></div>
+
+            <button class="primary-button" type="submit">
+              Berechtigungen speichern
+            </button>
+
+            <button class="secondary-button"
+              id="cancelPermissions"
+              type="button">Abbrechen</button>
+          </form>
+        </section>
+
+        <section id="standardPanel" class="content-panel" hidden>
+          <h2>Deine Berechtigungen</h2>
+          <p class="muted">
+            Die folgenden Rechte sind deinem Konto zugewiesen.
+          </p>
+          <div id="myPermissions" class="permission-summary"></div>
+        </section>
+      </section>
+
+      <!-- =====================================
+           ACTIVITY
+      ====================================== -->
+
+      <section class="cms-view" id="view-activity">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">SYSTEM MONITORING</p>
+            <h1>Aktivitätsprotokoll</h1>
+            <p class="muted">
+              Behalte Änderungen und administrative Aktionen im Blick.
+            </p>
+          </div>
+        </div>
+
+        <div class="content-panel placeholder-panel">
+          <span class="placeholder-icon">≡</span>
+          <h2>Audit-Log</h2>
+          <p>
+            Hier entsteht eine chronologische Übersicht
+            aller relevanten CMS-Aktionen.
+          </p>
+          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="/admin/admin.js?v=20261108-shop" defer></script>
+
+</body>
+</html>
