@@ -453,7 +453,21 @@ async function updateProduct(request, env, current, id) {
   `).bind(id).first();
 
   if (!existing) return json({ error: "Produkt nicht gefunden." }, 404);
+  if (
+    body.status !== undefined &&
+    body.status !== existing.status &&
+    !can(current, "shop.products.publish")
+  ) {
+    return json({
+      error: "Keine Berechtigung zum Ändern des Produktstatus."
+    }, 403);
+  }
 
+  const status = body.status ?? existing.status;
+
+  const publishedAt = status === "published"
+    ? (existing.published_at || new Date().toISOString())
+    : null;
   const name = body.name !== undefined ? body.name.trim() : existing.name;
   const slug = body.slug !== undefined
     ? slugify(body.slug)
