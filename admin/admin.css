@@ -1,985 +1,2082 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>ULTOR ESPORTS – CMS</title>
-  <link rel="stylesheet" href="/admin/admin.css?v=20261108-shop">
-</head>
-
-<body class="dashboard-page">
-
-  <aside class="sidebar" id="sidebar">
-    <a class="sidebar-brand" href="/">
-      ULTOR <span>ESPORTS</span>
-      <small>CONTENT MANAGEMENT</small>
-    </a>
-
-    <div class="sidebar-label">WORKSPACE</div>
-
-    <nav class="sidebar-nav" aria-label="CMS Navigation">
-      <button class="nav-item active" data-view="dashboard" type="button">
-        <span class="nav-icon">▦</span> Dashboard
-      </button>
-      <button class="nav-item" data-view="news" type="button">
-        <span class="nav-icon">▤</span> News
-      </button>
-      <button class="nav-item" data-view="teams" type="button">
-        <span class="nav-icon">♟</span> Teams & Spieler
-      </button>
-      <button class="nav-item" data-view="partners" type="button">
-        <span class="nav-icon">◇</span> Partner
-      </button>
-      <button class="nav-item" data-view="shop" type="button">
-        <span class="nav-icon">▣</span> Shop
-      </button>
-      <button class="nav-item" data-view="media" type="button">
-        <span class="nav-icon">▧</span> Medien
-      </button>
-    </nav>
-
-    <div class="sidebar-label">ADMINISTRATION</div>
-
-    <nav class="sidebar-nav" aria-label="Administration">
-      <button class="nav-item" data-view="users" type="button">
-        <span class="nav-icon">♙</span> Benutzer & Rechte
-      </button>
-      <button class="nav-item" data-view="activity" type="button">
-        <span class="nav-icon">≡</span> Aktivitätsprotokoll
-      </button>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <div class="sidebar-user">
-        <div class="avatar" id="userAvatar">U</div>
-        <div class="sidebar-user-info">
-          <strong id="sidebarUserName">ULTOR User</strong>
-          <span id="sidebarUserRole">CMS-Benutzer</span>
-        </div>
-      </div>
-
-      <button id="logoutButton" class="logout-button" type="button">
-        Abmelden
-      </button>
-
-      <a href="/" class="website-link">← Zur öffentlichen Website</a>
-    </div>
-  </aside>
-
-  <main class="cms-main">
-
-    <header class="cms-topbar">
-      <span id="currentUser" hidden></span>
-
-      <button id="mobileMenuButton"
-        class="mobile-menu-button"
-        type="button"
-        aria-label="Navigation öffnen">☰</button>
-
-      <div>
-        <span class="topbar-label">ULTOR ESPORTS CMS</span>
-        <span class="topbar-separator">/</span>
-        <span id="breadcrumbTitle">Dashboard</span>
-      </div>
-
-      <div class="topbar-right">
-        <span id="roleBadge" class="role-badge">Lädt …</span>
-      </div>
-    </header>
-
-    <div class="cms-content">
-
-      <div id="dashboardMessage"
-        class="message"
-        role="status"
-        aria-live="polite"></div>
-
-      <!-- =====================================
-           DASHBOARD
-      ====================================== -->
-
-      <section class="cms-view active" id="view-dashboard">
-
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">OVERVIEW</p>
-            <h1>Dashboard</h1>
-            <p class="muted">
-              Willkommen im ULTOR ESPORTS Management-System.
-            </p>
-          </div>
-        </div>
-
-        <div class="welcome-panel">
-          <div>
-            <span class="welcome-label">MANAGEMENT CENTER</span>
-            <h2>Alles im Blick.</h2>
-            <p>
-              Verwalte die Inhalte und Aktivitäten von ULTOR ESPORTS
-              zentral an einem Ort.
-            </p>
-          </div>
-          <div class="welcome-mark">ULTOR</div>
-        </div>
-
-        <div class="stats-grid">
-          <article class="stat-card">
-            <span class="stat-label">BENUTZERSTATUS</span>
-            <strong id="statUserRole">–</strong>
-            <span class="stat-description">Deine Zugriffsrolle</span>
-          </article>
-
-          <article class="stat-card">
-            <span class="stat-label">BEREICHE</span>
-            <strong>7</strong>
-            <span class="stat-description">CMS-Verwaltungsbereiche</span>
-          </article>
-
-          <article class="stat-card">
-            <span class="stat-label">BERECHTIGUNGEN</span>
-            <strong id="statPermissionCount">–</strong>
-            <span class="stat-description">Deine zugewiesenen Rechte</span>
-          </article>
-        </div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Schnellzugriff</h2>
-              <p class="muted">
-                Direkt zu den wichtigsten Verwaltungsbereichen.
-              </p>
-            </div>
-          </div>
-
-          <div class="quick-grid">
-            <button class="quick-card" data-view="news" type="button">
-              <span class="quick-icon">▤</span>
-              <strong>News verwalten</strong>
-              <span>Artikel und Beiträge</span>
-            </button>
-
-            <button class="quick-card" data-view="teams" type="button">
-              <span class="quick-icon">♟</span>
-              <strong>Teams verwalten</strong>
-              <span>Kader und Spieler</span>
-            </button>
-
-            <button class="quick-card" data-view="partners" type="button">
-              <span class="quick-icon">◇</span>
-              <strong>Partner verwalten</strong>
-              <span>Sponsoren und Partner</span>
-            </button>
-
-            <button class="quick-card" data-view="media" type="button">
-              <span class="quick-icon">▧</span>
-              <strong>Medien öffnen</strong>
-              <span>Bilder und Dateien</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Dein Benutzerkonto</h2>
-              <p class="muted">Informationen zu deinem Zugang.</p>
-            </div>
-          </div>
-
-          <div class="account-info">
-            <div><span>Name</span><strong id="accountName">–</strong></div>
-            <div><span>E-Mail</span><strong id="accountEmail">–</strong></div>
-            <div><span>Rolle</span><strong id="accountRole">–</strong></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- =====================================
-           NEWS
-      ====================================== -->
-
-      <section class="cms-view" id="view-news">
-
-        <div class="page-heading news-heading">
-          <div>
-            <p class="eyebrow">CONTENT MANAGEMENT</p>
-            <h1>News</h1>
-            <p class="muted">
-              Erstelle, bearbeite und veröffentliche ULTOR-Beiträge.
-            </p>
-          </div>
-
-          <button id="createNewsButton"
-            class="primary-button"
-            type="button">
-            + Neuer Beitrag
-          </button>
-        </div>
-
-        <div id="newsMessage"
-          class="message"
-          role="status"
-          aria-live="polite"></div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Beiträge</h2>
-              <p class="muted">Alle gespeicherten News-Beiträge.</p>
-            </div>
-
-            <select id="newsStatusFilter" aria-label="News-Status">
-              <option value="">Alle Beiträge</option>
-              <option value="draft">Entwürfe</option>
-              <option value="pending">Ausstehend</option>
-              <option value="published">Veröffentlicht</option>
-              <option value="archived">Archiviert</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="newsMessage"
-          class="message"
-          role="status"
-          aria-live="polite"></div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Beiträge</h2>
-              <p class="muted">Alle gespeicherten News-Beiträge.</p>
-            </div>
-
-            <select id="newsStatusFilter" aria-label="News-Status">
-              <option value="">Alle Beiträge</option>
-              <option value="draft">Entwürfe</option>
-              <option value="pending">Ausstehend</option>
-              <option value="published">Veröffentlicht</option>
-              <option value="archived">Archiviert</option>
-            </select>
-          </div>
-
-          <div id="newsList" class="news-list">
-            <p class="muted">News werden geladen …</p>
-          </div>
-        </div>
-
-        <div id="newsEditor" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2 id="newsEditorTitle">Neuen Beitrag erstellen</h2>
-              <p class="muted">
-                Inhalte und Beitragsinformationen bearbeiten.
-              </p>
-            </div>
-
-            <button id="closeNewsEditor"
-              class="secondary-button"
-              type="button">Schließen</button>
-          </div>
-
-          <form id="newsForm">
-            <input id="newsId" type="hidden">
-
-            <label for="newsTitle">Überschrift</label>
-            <input id="newsTitle" type="text"
-              maxlength="180" required
-              placeholder="Titel des Beitrags">
-
-            <label for="newsExcerpt">Kurzbeschreibung / Teaser</label>
-            <textarea id="newsExcerpt" rows="3"
-              maxlength="500"
-              placeholder="Kurze Zusammenfassung des Beitrags"></textarea>
-
-            <label for="newsContent">Artikelinhalt</label>
-            <textarea id="newsContent" rows="12" required
-              placeholder="Schreibe hier deinen Artikel …"></textarea>
-
-            <label for="newsImageFile">
-              Beitragsbild hochladen (optional)
-            </label>
-
-            <div class="news-upload-area">
-              <input id="newsImageFile" type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif">
-
-              <button id="uploadNewsImage"
-                class="secondary-button"
-                type="button">Bild hochladen</button>
-            </div>
-
-            <p id="newsUploadStatus" class="muted" role="status">
-              JPG, PNG, WEBP oder GIF · maximal 8 MB
-            </p>
-
-            <div id="newsImagePreview"
-              class="news-image-preview" hidden>
-              <img id="newsPreviewImg"
-                alt="Vorschau des Beitragsbildes">
-
-              <button id="removeNewsImage"
-                class="secondary-button"
-                type="button">Bild entfernen</button>
-            </div>
-
-            <label for="newsImageKey">Bildschlüssel</label>
-            <input id="newsImageKey" type="text"
-              maxlength="500"
-              placeholder="Wird nach dem Upload automatisch eingetragen">
-
-            <div class="news-editor-actions">
-              <button class="primary-button" type="submit">
-                Entwurf speichern
-              </button>
-
-              <button id="cancelNewsEditor"
-                class="secondary-button"
-                type="button">Abbrechen</button>
-            </div>
-          </form>
-        </div>
-      </section>
-      <!-- =====================================
-           TEAMS & SPIELER
-      ====================================== -->
-
-      <section class="cms-view" id="view-teams">
-
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">ROSTER MANAGEMENT</p>
-            <h1>Teams & Spieler</h1>
-            <p class="muted">
-              Verwalte Teams, Spielerprofile und Kaderhistorien.
-            </p>
-          </div>
-
-          <button id="createTeamButton"
-            class="primary-button"
-            type="button">
-            + Neues Team
-          </button>
-        </div>
-
-        <div id="teamsMessage"
-          class="message"
-          role="status"
-          aria-live="polite"></div>
-
-        <!-- TEAMÜBERSICHT -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Teamübersicht</h2>
-              <p class="muted">
-                Alle angelegten ULTOR-Teams.
-              </p>
-            </div>
-
-            <select id="teamStatusFilter" aria-label="Teamstatus">
-              <option value="">Alle Teams</option>
-              <option value="active">Aktiv</option>
-              <option value="draft">Entwurf</option>
-              <option value="inactive">Inaktiv</option>
-            </select>
-          </div>
-
-          <div id="teamsList" class="news-list">
-            <p class="muted">Teams werden geladen …</p>
-          </div>
-        </div>
-
-        <!-- TEAMEDITOR -->
-
-        <div id="teamEditor" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2 id="teamEditorTitle">Neues Team erstellen</h2>
-              <p class="muted">
-                Teamdaten und Darstellung festlegen.
-              </p>
-            </div>
-
-            <button id="closeTeamEditor"
-              class="secondary-button"
-              type="button">Schließen</button>
-          </div>
-
-          <form id="teamForm">
-            <input id="teamId" type="hidden">
-
-            <label for="teamName">Teamname</label>
-            <input id="teamName"
-              type="text"
-              maxlength="120"
-              required
-              placeholder="z. B. ULTOR Main Team">
-
-            <label for="teamDescription">Beschreibung</label>
-            <textarea id="teamDescription"
-              rows="4"
-              maxlength="5000"
-              placeholder="Beschreibung des Teams"></textarea>
-
-            <label for="teamLogoFile">Teamlogo</label>
-
-            <div class="image-upload-control">
-              <input
-                type="file"
-                id="teamLogoFile"
-                accept="image/png,image/jpeg,image/webp"
-              >
-
-              <button
-                type="button"
-                id="uploadTeamLogo"
-                class="secondary-button"
-              >
-                Teamlogo hochladen
-              </button>
-            </div>
-
-            <div id="teamLogoPreview" class="image-preview" hidden>
-              <img id="teamLogoPreviewImg" alt="Teamlogo-Vorschau">
-
-              <button
-                type="button"
-                id="removeTeamLogo"
-                class="secondary-button"
-              >
-                Logo entfernen
-              </button>
-            </div>
-
-            <input id="teamLogoKey" type="hidden">
-
-            <label for="teamStatus">Teamstatus</label>
-            <select id="teamStatus">
-              <option value="active">Aktiv</option>
-              <option value="draft">Entwurf</option>
-              <option value="inactive">Inaktiv</option>
-            </select>
-
-            <div class="news-editor-actions">
-              <button class="primary-button" type="submit">
-                Team speichern
-              </button>
-
-              <button id="cancelTeamEditor"
-                class="secondary-button"
-                type="button">Abbrechen</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- SPIELERVERWALTUNG -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Spielerverwaltung</h2>
-              <p class="muted">
-                Spieler hinzufügen und bestehenden Kadern zuordnen.
-              </p>
-            </div>
-
-            <button id="createPlayerButton"
-              class="primary-button"
-              type="button">
-              + Neuer Spieler
-            </button>
-          </div>
-
-          <div class="news-upload-area">
-            <label for="playerTeamFilter">Team auswählen</label>
-            <select id="playerTeamFilter">
-              <option value="">Alle Teams</option>
-            </select>
-          </div>
-
-          <div id="playersList" class="news-list">
-            <p class="muted">
-              Spieler werden geladen …
-            </p>
-          </div>
-        </div>
-
-        <!-- SPIELEREDITOR -->
-
-        <div id="playerEditor" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2 id="playerEditorTitle">Neuen Spieler hinzufügen</h2>
-              <p class="muted">
-                Spielerprofil und Teamzugehörigkeit bearbeiten.
-              </p>
-            </div>
-
-            <button id="closePlayerEditor"
-              class="secondary-button"
-              type="button">Schließen</button>
-          </div>
-
-          <form id="playerForm">
-            <input id="playerId" type="hidden">
-
-            <label for="playerName">Spielername</label>
-            <input id="playerName"
-              type="text"
-              maxlength="120"
-              required
-              placeholder="Name des Spielers">
-
-            <label for="playerTeam">Team</label>
-            <select id="playerTeam" required>
-              <option value="">Team auswählen</option>
-            </select>
-
-            <label for="playerPosition">Position</label>
-            <select id="playerPosition" required>
-              <option value="">Position auswählen</option>
-              <option value="Top">Top</option>
-              <option value="Jungle">Jungle</option>
-              <option value="Mid">Mid</option>
-              <option value="ADC">ADC</option>
-              <option value="Support">Support</option>
-            </select>
-
-            <label for="playerImageFile">Spielerbild</label>
-
-            <div class="image-upload-control">
-              <input
-                type="file"
-                id="playerImageFile"
-                accept="image/png,image/jpeg,image/webp"
-              >
-
-              <button
-                type="button"
-                id="uploadPlayerImage"
-                class="secondary-button"
-              >
-                Spielerbild hochladen
-              </button>
-            </div>
-
-            <div id="playerImagePreview" class="image-preview" hidden>
-              <img id="playerImagePreviewImg" alt="Spielerbild-Vorschau">
-
-              <button
-                type="button"
-                id="removePlayerImage"
-                class="secondary-button"
-              >
-                Bild entfernen
-              </button>
-            </div>
-
-            <input id="playerImageKey" type="hidden">
-
-            <label class="permission-option">
-              <input id="playerIsSubstitute" type="checkbox">
-              Ersatzspieler
-            </label>
-
-            <div class="news-editor-actions">
-              <button class="primary-button" type="submit">
-                Spieler speichern
-              </button>
-
-              <button id="cancelPlayerEditor"
-                class="secondary-button"
-                type="button">Abbrechen</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- KADERHISTORIE -->
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Kaderhistorie</h2>
-              <p class="muted">
-                Dokumentierte Zu- und Abgänge sowie Teamwechsel.
-              </p>
-            </div>
-          </div>
-
-          <div id="rosterHistoryList" class="news-list">
-            <p class="muted">
-              Kaderhistorie wird geladen …
-            </p>
-          </div>
-        </div>
-
-      </section>
-
-<!-- =====================================
-     PARTNER
-====================================== -->
-
-<section class="cms-view" id="view-partners">
-
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">BUSINESS MANAGEMENT</p>
-      <h1>Partner</h1>
-      <p class="muted">
-        Verwalte Sponsoren und Kooperationspartner von ULTOR ESPORTS.
-      </p>
-    </div>
-
-    <button id="createPartnerButton"
-      class="primary-button"
-      type="button">
-      + Neuer Partner
-    </button>
-  </div>
-
-  <div id="partnersMessage"
-    class="message"
-    role="status"
-    aria-live="polite"></div>
-
-  <!-- PARTNERÜBERSICHT -->
-
-  <div class="content-panel">
-    <div class="section-heading">
-      <div>
-        <h2>Partnerübersicht</h2>
-        <p class="muted">
-          Alle angelegten Sponsoren und Kooperationspartner.
-        </p>
-      </div>
-
-      <select id="partnerStatusFilter"
-        aria-label="Partnerstatus">
-        <option value="">Alle Partner</option>
-        <option value="active">Aktiv</option>
-        <option value="inactive">Inaktiv</option>
-      </select>
-    </div>
-
-    <div id="partnersList" class="news-list">
-      <p class="muted">Partner werden geladen …</p>
-    </div>
-  </div>
-
-  <!-- PARTNEREDITOR -->
-
-  <div id="partnerEditor" class="content-panel" hidden>
-
-    <div class="section-heading">
-      <div>
-        <h2 id="partnerEditorTitle">Neuen Partner erstellen</h2>
-        <p class="muted">
-          Hinterlege die Informationen und das Logo des Partners.
-        </p>
-      </div>
-
-      <button id="closePartnerEditor"
-        class="secondary-button"
-        type="button">
-        Schließen
-      </button>
-    </div>
-
-    <form id="partnerForm">
-
-      <input id="partnerId" type="hidden">
-
-      <label for="partnerName">Partnername</label>
-      <input id="partnerName"
-        type="text"
-        maxlength="180"
-        required
-        placeholder="Name des Unternehmens">
-
-      <label for="partnerDescription">Beschreibung</label>
-      <textarea id="partnerDescription"
-        rows="4"
-        maxlength="5000"
-        placeholder="Kurze Beschreibung des Partners"></textarea>
-
-      <label for="partnerWebsite">Website</label>
-      <input id="partnerWebsite"
-        type="url"
-        maxlength="500"
-        placeholder="https://www.beispiel.de">
-
-      <label for="partnerLogoFile">Partnerlogo</label>
-
-      <div class="image-upload-control">
-        <input
-          type="file"
-          id="partnerLogoFile"
-          accept="image/png,image/jpeg,image/webp,image/gif">
-
-        <button
-          type="button"
-          id="uploadPartnerLogo"
-          class="secondary-button">
-          Partnerlogo hochladen
-        </button>
-      </div>
-
-      <p id="partnerUploadStatus"
-        class="muted"
-        role="status">
-        JPG, PNG, WEBP oder GIF · maximal 8 MB
-      </p>
-
-      <div id="partnerLogoPreview"
-        class="image-preview"
-        hidden>
-
-        <img id="partnerLogoPreviewImg"
-          alt="Partnerlogo-Vorschau">
-
-        <button
-          type="button"
-          id="removePartnerLogo"
-          class="secondary-button">
-          Logo entfernen
-        </button>
-      </div>
-
-      <input id="partnerLogoKey" type="hidden">
-
-      <label for="partnerStatus">Partnerstatus</label>
-      <select id="partnerStatus">
-        <option value="inactive">Inaktiv</option>
-        <option value="active">Aktiv</option>
-      </select>
-
-      <div class="news-editor-actions">
-
-        <button class="primary-button" type="submit">
-          Partner speichern
-        </button>
-
-        <button id="cancelPartnerEditor"
-          class="secondary-button"
-          type="button">
-          Abbrechen
-        </button>
-
-      </div>
-
-    </form>
-  </div>
-
-</section>
-
-
-
-      <!-- =====================================
-           SHOP MANAGEMENT
-      ====================================== -->
-      <section class="cms-view" id="view-shop">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">ECOMMERCE MANAGEMENT</p>
-            <h1>Shop</h1>
-            <p class="muted">Verwalte Produkte, Kategorien, Varianten und Veröffentlichungen.</p>
-          </div>
-          <button id="createShopProductButton" class="primary-button" type="button">+ Neues Produkt</button>
-        </div>
-        <div id="shopMessage" class="message" role="status" aria-live="polite"></div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div><h2>Produkte</h2><p class="muted">Alle Produkte deiner ULTOR-Kollektion.</p></div>
-            <select id="shopProductStatusFilter" aria-label="Produktstatus">
-              <option value="">Alle Produkte</option><option value="draft">Entwürfe</option>
-              <option value="published">Veröffentlicht</option><option value="archived">Archiviert</option>
-            </select>
-          </div>
-          <div id="shopProductsList" class="news-list"><p class="muted">Produkte werden geladen …</p></div>
-        </div>
-
-        <div class="content-panel">
-          <div class="section-heading">
-            <div><h2>Kategorien</h2><p class="muted">Kategorien des offiziellen Shops verwalten.</p></div>
-            <button id="createShopCategoryButton" class="secondary-button" type="button">+ Neue Kategorie</button>
-          </div>
-          <div id="shopCategoriesList" class="news-list"><p class="muted">Kategorien werden geladen …</p></div>
-        </div>
-
-        <div id="shopProductEditor" class="content-panel" hidden>
-          <div class="section-heading"><div><h2 id="shopProductEditorTitle">Neues Produkt</h2><p class="muted">Produktinformationen und Verkaufspreise.</p></div>
-            <button id="closeShopProductEditor" class="secondary-button" type="button">Schließen</button></div>
-          <form id="shopProductForm">
-            <input id="shopProductId" type="hidden">
-            <label for="shopProductName">Produktname</label><input id="shopProductName" maxlength="180" required placeholder="z. B. ULTOR Official Jersey">
-            <label for="shopProductShortDescription">Kurzbeschreibung</label><textarea id="shopProductShortDescription" rows="2" maxlength="500"></textarea>
-            <label for="shopProductDescription">Produktbeschreibung</label><textarea id="shopProductDescription" rows="5" maxlength="10000"></textarea>
-            <div class="shop-form-grid">
-              <div><label for="shopProductPrice">Preis in Euro</label><input id="shopProductPrice" type="number" min="0" step="0.01" placeholder="49.99"></div>
-              <div><label for="shopProductComparePrice">Vergleichspreis in Euro</label><input id="shopProductComparePrice" type="number" min="0" step="0.01" placeholder="59.99"></div>
-              <div><label for="shopProductSortOrder">Sortierung</label><input id="shopProductSortOrder" type="number" min="0" step="1" value="0"></div>
-            </div>
-            <label>Kategorien</label><div id="shopProductCategoryChoices" class="shop-category-choices"></div>
-            <label class="permission-option"><input id="shopProductFeatured" type="checkbox"> Als hervorgehobenes Produkt markieren</label>
-            <div class="news-editor-actions"><button class="primary-button" type="submit">Produkt speichern</button><button id="cancelShopProductEditor" class="secondary-button" type="button">Abbrechen</button></div>
-          </form>
-          <div id="shopVariantEditor" class="shop-variant-editor" hidden>
-            <h3>Produktvarianten</h3><p class="muted">Varianten können nach dem erstmaligen Speichern angelegt werden.</p>
-            <form id="shopVariantForm">
-              <div class="shop-form-grid">
-                <div><label for="shopVariantName">Variantenname</label><input id="shopVariantName" required maxlength="120" placeholder="z. B. Größe M"></div>
-                <div><label for="shopVariantSku">SKU</label><input id="shopVariantSku" maxlength="100" placeholder="ULT-JER-M"></div>
-                <div><label for="shopVariantStock">Lagerbestand</label><input id="shopVariantStock" type="number" min="0" step="1" value="0"></div>
-              </div>
-              <label class="permission-option"><input id="shopVariantTrackInventory" type="checkbox" checked> Lagerbestand verfolgen</label>
-              <button class="secondary-button" type="submit">Variante hinzufügen</button>
-            </form>
-          </div>
-        </div>
-
-        <div id="shopCategoryEditor" class="content-panel" hidden>
-          <div class="section-heading"><div><h2 id="shopCategoryEditorTitle">Neue Kategorie</h2></div><button id="closeShopCategoryEditor" class="secondary-button" type="button">Schließen</button></div>
-          <form id="shopCategoryForm">
-            <input id="shopCategoryId" type="hidden">
-            <label for="shopCategoryName">Kategoriename</label><input id="shopCategoryName" maxlength="120" required placeholder="z. B. Teamwear">
-            <label for="shopCategoryDescription">Beschreibung</label><textarea id="shopCategoryDescription" rows="3" maxlength="2000"></textarea>
-            <label for="shopCategorySortOrder">Sortierung</label><input id="shopCategorySortOrder" type="number" min="0" step="1" value="0">
-            <div class="news-editor-actions"><button class="primary-button" type="submit">Kategorie speichern</button><button id="cancelShopCategoryEditor" class="secondary-button" type="button">Abbrechen</button></div>
-          </form>
-        </div>
-      </section>
-
-      <!-- =====================================
-           MEDIA
-      ====================================== -->
-
-      <section class="cms-view" id="view-media">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">ASSET MANAGEMENT</p>
-            <h1>Medien</h1>
-            <p class="muted">
-              Verwalte Bilder und Dateien für deine Website.
-            </p>
-          </div>
-        </div>
-
-        <div class="content-panel placeholder-panel">
-          <span class="placeholder-icon">▧</span>
-          <h2>Medienbibliothek</h2>
-          <p>
-            Hier entsteht die zentrale Medienverwaltung
-            mit Uploads und Dateizuordnung.
-          </p>
-          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
-        </div>
-      </section>
-
-      <!-- =====================================
-           USERS
-      ====================================== -->
-
-      <section class="cms-view" id="view-users">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">ACCESS MANAGEMENT</p>
-            <h1>Benutzer & Rechte</h1>
-            <p class="muted">
-              Verwalte CMS-Zugänge und individuelle Berechtigungen.
-            </p>
-          </div>
-        </div>
-
-        <section id="ownerPanel" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2>Benutzerverwaltung</h2>
-              <p class="muted">
-                Konten prüfen und Zugänge verwalten.
-              </p>
-            </div>
-
-            <select id="userStatusFilter" aria-label="Benutzerstatus">
-              <option value="pending">Ausstehend</option>
-              <option value="approved">Freigegeben</option>
-              <option value="rejected">Abgelehnt</option>
-              <option value="suspended">Gesperrt</option>
-            </select>
-          </div>
-
-          <div id="usersList" class="users-list">
-            <p class="muted">Benutzer werden geladen …</p>
-          </div>
-        </section>
-
-        <section id="permissionPanel" class="content-panel" hidden>
-          <div class="section-heading">
-            <div>
-              <h2>Berechtigungen</h2>
-              <p class="muted">
-                Wähle die Rechte für den ausgewählten Benutzer.
-              </p>
-            </div>
-          </div>
-
-          <p id="permissionUser" class="selected-user"></p>
-
-          <form id="permissionsForm">
-            <div id="permissionGroups" class="permission-groups"></div>
-
-            <button class="primary-button" type="submit">
-              Berechtigungen speichern
-            </button>
-
-            <button class="secondary-button"
-              id="cancelPermissions"
-              type="button">Abbrechen</button>
-          </form>
-        </section>
-
-        <section id="standardPanel" class="content-panel" hidden>
-          <h2>Deine Berechtigungen</h2>
-          <p class="muted">
-            Die folgenden Rechte sind deinem Konto zugewiesen.
-          </p>
-          <div id="myPermissions" class="permission-summary"></div>
-        </section>
-      </section>
-
-      <!-- =====================================
-           ACTIVITY
-      ====================================== -->
-
-      <section class="cms-view" id="view-activity">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">SYSTEM MONITORING</p>
-            <h1>Aktivitätsprotokoll</h1>
-            <p class="muted">
-              Behalte Änderungen und administrative Aktionen im Blick.
-            </p>
-          </div>
-        </div>
-
-        <div class="content-panel placeholder-panel">
-          <span class="placeholder-icon">≡</span>
-          <h2>Audit-Log</h2>
-          <p>
-            Hier entsteht eine chronologische Übersicht
-            aller relevanten CMS-Aktionen.
-          </p>
-          <span class="coming-soon">MODUL IN VORBEREITUNG</span>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <script src="/admin/admin.js?v=20261108-shop" defer></script>
-
-</body>
-</html>
+**Teil 2/7 – Zeilen 301–600**
+
+```css
+**Teil 3/7 – Zeilen 601–900**
+
+```css
+  border-radius: 9px;
+  background: #17121f;
+  color: var(--text);
+  text-align: left;
+  transition: .18s ease;
+}
+
+.quick-card:hover {
+  transform: translateY(-2px);
+  border-color: #68458b;
+  background: #21172d;
+}
+
+.quick-card .quick-icon {
+  color: #b77cff;
+  font-size: 22px;
+}
+
+.quick-card strong {
+  font-size: 12px;
+}
+
+.quick-card span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.empty-state {
+  padding: 35px 20px;
+  border: 1px dashed #493b5c;
+  border-radius: 9px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #e5d9f2;
+  font-size: 14px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table th {
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--border);
+  color: #93889f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 13px;
+  border-bottom: 1px solid #282131;
+  color: #d8d0e1;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table tbody tr:hover {
+  background: #191421;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid #3b3446;
+  border-radius: 20px;
+  background: #1b1722;
+  color: #c9bfd5;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-badge.active,
+.status-badge.published {
+  border-color: #285b43;
+  background: #10251b;
+  color: #8de0ad;
+}
+
+.status-badge.pending,
+.status-badge.draft {
+  border-color: #65502a;
+  background: #282012;
+  color: #e5c27e;
+}
+
+.status-badge.inactive,
+.status-badge.archived {
+  border-color: #713747;
+  background: #2a151d;
+  color: #ffabb9;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.action-button {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #17121f;
+  color: #d8cfe4;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.action-button:hover {
+  border-color: #68458b;
+  color: #fff;
+}
+
+.action-button.danger {
+  border-color: #633044;
+  color: #ff9daf;
+}
+
+.action-button.danger:hover {
+  background: #2a151d;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 10px 15px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  transition: .18s ease;
+}
+
+.primary-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-button:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.secondary-button {
+  border-color: var(--border);
+  background: #17121f;
+  color: #d8cfe4;
+}
+
+.secondary-button:hover {
+  border-color: #68458b;
+  background: #21172d;
+  color: #fff;
+}
+
+.danger-button {
+  border-color: #713747;
+  background: #2a151d;
+  color: #ffabb9;
+}
+
+.danger-button:hover {
+  border-color: #a34761;
+  background: #3b1a28;
+}
+
+.message {
+  margin: 12px 0;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.message:empty {
+  display: none;
+}
+
+.message.success {
+  border-color: #285b43;
+  background: #10251b;
+  color: var(--success);
+}
+
+.message.error {
+  border-color: #713747;
+  background: #2a151d;
+  color: #ffabb9;
+}
+
+.message.info {
+  border-color: #49305f;
+  background: #1b1427;
+  color: #c59aff;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.content-panel label {
+  display: block;
+  margin: 16px 0 7px;
+  color: #e8e0f1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.content-panel input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.content-panel select,
+.content-panel textarea {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #393047;
+  border-radius: 7px;
+  outline: none;
+  background: #0b0911;
+  color: #fff;
+  font-size: 13px;
+}
+
+.content-panel textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.content-panel input:focus,
+.content-panel select:focus,
+.content-panel textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 53, 245, .16);
+}
+
+.content-panel input::placeholder,
+.content-panel textarea::placeholder {
+  color: #70677e;
+}
+
+.content-panel input[type="checkbox"],
+.content-panel input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 23px;
+}
+  padding: 11px;
+  border: 1px solid #713747;
+  border-radius: 7px;
+  background: #2a151d;
+  color: #ffabb9;
+}
+
+.auth-card .back-link {
+  display: inline-block;
+  margin-top: 25px;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.auth-card .back-link:hover {
+  color: #c59aff;
+}
+
+/* =========================================
+   DASHBOARD LAYOUT
+========================================= */
+
+.dashboard-page {
+  display: flex;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: 255px;
+  padding: 27px 17px 18px;
+  border-right: 1px solid var(--border);
+  background: #0c0a12;
+}
+
+.sidebar-brand {
+  display: block;
+  padding: 0 12px 30px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-decoration: none;
+}
+
+.sidebar-brand span {
+  color: var(--accent);
+}
+
+.sidebar-brand small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.sidebar-label {
+  margin: 17px 12px 9px;
+  color: #8e7ba9;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #bcb5c9;
+  text-align: left;
+  font-size: 13px;
+  transition: .18s ease;
+}
+
+.nav-item:hover {
+  background: #191324;
+  color: #fff;
+}
+
+.nav-item.active {
+  border-color: #6330a0;
+  background: #241536;
+  color: #b77cff;
+}
+
+.nav-icon {
+  width: 19px;
+  font-size: 18px;
+  text-align: center;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px;
+}
+
+.avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #30203f;
+  color: #c59aff;
+  font-weight: 800;
+}
+
+.sidebar-user-info {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.sidebar-user-info strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-info span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.logout-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: #c5ccd6;
+  text-align: left;
+}
+
+.logout-button:hover {
+  border-color: #713747;
+  color: #ffabb9;
+}
+
+.website-link {
+  display: block;
+  padding: 13px 8px 3px;
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.website-link:hover {
+  color: #c59aff;
+}
+
+.cms-main {
+  width: calc(100% - 255px);
+  min-height: 100vh;
+  margin-left: 255px;
+}
+
+.cms-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 67px;
+  padding: 0 4%;
+  border-bottom: 1px solid var(--border);
+  background: rgba(12, 10, 18, .93);
+  backdrop-filter: blur(14px);
+}
+
+.topbar-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+#breadcrumbTitle {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.cms-content {
+  width: min(1200px, 92%);
+  margin: 0 auto;
+  padding: 42px 0 70px;
+}
+
+.cms-view {
+  display: none;
+}
+
+.cms-view.active {
+  display: block;
+}
+
+.page-heading {
+  margin-bottom: 27px;
+}
+
+.page-heading h1 {
+  margin-bottom: 7px;
+  font-size: 31px;
+}
+
+.page-heading .eyebrow {
+  margin-bottom: 8px;
+  color: #b77cff;
+}
+
+.welcome-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 190px;
+  margin-bottom: 22px;
+  padding: 30px 34px;
+  border: 1px solid #49305f;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at 85% 50%, #6425a544, transparent 55%),
+    linear-gradient(110deg, #191222, #100d18);
+}
+
+.welcome-panel h2 {
+  margin: 9px 0;
+  font-size: 28px;
+}
+
+.welcome-panel p {
+  max-width: 480px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.welcome-label {
+  color: #b77cff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.welcome-mark {
+  color: #8b35f52b;
+  font-size: clamp(35px, 7vw, 90px);
+  font-weight: 1000;
+  letter-spacing: 5px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  display: grid;
+  gap: 9px;
+  min-height: 120px;
+  padding: 19px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+}
+
+.stat-card strong {
+  color: var(--text);
+  font-size: 25px;
+}
+
+.stat-description {
+  color: #8f879b;
+  font-size: 11px;
+}
+
+.content-panel {
+  margin-bottom: 22px;
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.section-heading h2 {
+  margin-bottom: 5px;
+}
+
+.section-heading p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 125px;
+  padding: 17px;
+  border: 1px solid var(--border);
+   border-radius: 8px;
+  background: #0e0b15;
+  color: var(--text);
+  text-align: left;
+  transition: .18s ease;
+}
+
+.quick-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  background: #1b1328;
+}
+
+.quick-icon,
+.placeholder-icon {
+  color: #b77cff;
+  font-size: 23px;
+}
+
+.quick-card strong {
+  font-size: 13px;
+}
+
+.quick-card span:last-child {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.account-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.account-info div {
+  display: grid;
+  gap: 6px;
+}
+
+.account-info span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.account-info strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.placeholder-panel {
+  display: flex;
+  min-height: 310px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.placeholder-panel p {
+  max-width: 500px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.coming-soon {
+  padding: 7px 11px;
+  border: 1px solid #6330a0;
+  border-radius: 20px;
+  background: #21152f;
+  color: #c59aff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* =========================================
+   BUTTONS / FORMS / MESSAGES
+========================================= */
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: .18s ease;
+}
+
+.primary-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-button:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.secondary-button {
+  border-color: var(--border);
+  background: #171321;
+  color: var(--text);
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  color: #c59aff;
+}
+
+.danger-button {
+  border-color: #69333f;
+  background: #29131b;
+  color: #ff9eae;
+}
+
+.danger-button:hover {
+  border-color: #a44358;
+  background: #3a1823;
+}
+
+.message {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.message:empty {
+  display: none;
+}
+
+.message.success {
+  border-color: #285b43;
+  background: #10251b;
+  color: var(--success);
+}
+
+.message.error {
+  border-color: #713747;
+  background: #2a151d;
+  color: #ffabb9;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dashboard-page input,
+.dashboard-page select,
+.dashboard-page textarea {
+  background: #0b0911;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+}
+
+.dashboard-page input:focus,
+.dashboard-page select:focus,
+.dashboard-page textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139, 53, 245, .2);
+}
+
+/* =========================================
+   NEWS
+========================================= */
+
+.news-list {
+  display: grid;
+  gap: 12px;
+}
+
+.news-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0e0b15;
+}
+
+.news-card-details {
+  min-width: 0;
+}
+
+.news-card h3 {
+  margin: 0 0 7px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.news-meta {
+  margin: 0 0 7px;
+  color: #b77cff;
+  font-size: 11px;
+}
+
+.news-excerpt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#newsEditor {
+  margin-top: 20px;
+}
+
+#newsEditor label {
+  display: block;
+  margin: 18px 0 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#newsEditor input,
+#newsEditor textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #0b0911;
+  color: var(--text);
+}
+
+#newsContent {
+  min-height: 260px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.news-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* News image upload */
+
+.news-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.news-upload-area input[type="file"] {
+  max-width: 100%;
+  padding: 9px;
+}
+
+#newsUploadStatus {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.news-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.news-image-preview img {
+  display: block;
+  width: min(100%, 520px);
+  max-height: 300px;
+  object-fit: contain;
+  object-position: left;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0b0911;
+}
+
+/* =========================================
+   USERS / PERMISSIONS
+========================================= */
+.users-list {
+  display: grid;
+  gap: 12px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0e0b15;
+}
+
+.user-card h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.user-card p {
+  margin: 3px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.permission-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.permission-group {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0e0b15;
+}
+
+.permission-group h3 {
+  margin: 0 0 14px;
+  color: #c59aff;
+  font-size: 13px;
+}
+
+.permission-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 10px 0;
+  color: #d5cce3;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.permission-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.permission-chip {
+  display: inline-flex;
+  margin: 4px 5px 4px 0;
+  padding: 6px 9px;
+  border: 1px solid #6330a0;
+  border-radius: 20px;
+  background: #21152f;
+  color: #c59aff;
+  font-size: 10px;
+}
+
+/* =========================================
+   FILTERS / RESPONSIVE
+========================================= */
+
+#userStatusFilter,
+#newsStatusFilter {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+#newsEditor[hidden],
+#permissionPanel[hidden],
+#ownerPanel[hidden],
+#standardPanel[hidden],
+[hidden] {
+  display: none !important;
+}
+
+.mobile-menu-button {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 22px;
+}
+
+@media (max-width: 1050px) {
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 750px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 15px 0 40px rgba(0, 0, 0, .5);
+  }
+
+  .cms-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .mobile-menu-button {
+    display: block;
+  }
+
+  .cms-topbar {
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .cms-content {
+    width: 92%;
+    padding-top: 28px;
+  }
+
+  .stats-grid,
+  .account-info,
+  .permission-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-mark {
+    display: none;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-heading select {
+    width: 100%;
+  }
+
+  .user-card,
+  .news-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-actions,
+  .news-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .news-upload-area {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .news-upload-area button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 500px) {
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  .auth-card h1 {
+    font-size: 25px;
+  }
+
+  .quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-panel {
+    padding: 18px;
+  }
+
+  .page-heading h1 {
+    font-size: 26px;
+  }
+
+  .user-actions,
+  .news-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .user-actions button,
+  .news-actions button {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #b77cff;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
+/* =========================================
+   ULTOR CMS – FINAL DASHBOARD OVERRIDES
+   Erzwingt Farben und Typografie im Admin
+========================================= */
+
+body.dashboard-page,
+body.dashboard-page * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+body.dashboard-page {
+  background: #09070f !important;
+  color: #f5f1fa !important;
+}
+
+/* Überschriften */
+body.dashboard-page h1,
+body.dashboard-page h2,
+body.dashboard-page h3,
+body.dashboard-page h4,
+body.dashboard-page strong,
+body.dashboard-page b {
+  color: #f5f1fa !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Allgemeine Texte */
+body.dashboard-page p,
+body.dashboard-page span,
+body.dashboard-page label,
+body.dashboard-page small {
+  color: #aaa2bd;
+}
+
+/* Sidebar */
+body.dashboard-page .sidebar {
+  background: #0c0a12 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .sidebar-brand,
+body.dashboard-page .sidebar-brand small {
+  color: #f5f1fa !important;
+}
+
+body.dashboard-page .sidebar-brand span {
+  color: #a45cff !important;
+}
+
+body.dashboard-page .sidebar-label {
+  color: #a45cff !important;
+}
+
+body.dashboard-page .nav-item {
+    color: #c8bfd6 !important;
+  background: transparent !important;
+}
+
+body.dashboard-page .nav-item:hover {
+  color: #ffffff !important;
+  background: #1b1527 !important;
+}
+
+body.dashboard-page .nav-item.active {
+  color: #c59aff !important;
+  background: #29183c !important;
+  border-color: #6330a0 !important;
+}
+
+/* Topbar */
+body.dashboard-page .cms-topbar {
+  background: #0c0a12 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .topbar-label {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page #breadcrumbTitle {
+  color: #f5f1fa !important;
+}
+
+/* Dashboard-Inhalte */
+body.dashboard-page .cms-content {
+  color: #f5f1fa !important;
+}
+
+body.dashboard-page .page-heading h1 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .page-heading p {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .eyebrow,
+body.dashboard-page .welcome-label {
+  color: #b77cff !important;
+}
+
+/* Willkommen-Panel */
+body.dashboard-page .welcome-panel {
+  background:
+    radial-gradient(
+      ellipse at 85% 50%,
+      rgba(139, 53, 245, .18),
+      transparent 55%
+    ),
+    linear-gradient(110deg, #191222, #100d18) !important;
+  border-color: #49305f !important;
+}
+
+body.dashboard-page .welcome-panel h2 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .welcome-panel p {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .welcome-mark {
+  color: rgba(139, 53, 245, .17) !important;
+}
+
+/* Statistik-Karten */
+body.dashboard-page .stat-card,
+body.dashboard-page .content-panel {
+  background: #13101c !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .stat-label {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .stat-card strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .stat-description {
+  color: #aaa2bd !important;
+}
+
+/* Schnellzugriff */
+body.dashboard-page .quick-card {
+  background: #0e0b15 !important;
+  border-color: #30263e !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page .quick-card:hover {
+  background: #21152f !important;
+  border-color: #8b35f5 !important;
+}
+
+body.dashboard-page .quick-card strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .quick-card span {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .quick-icon,
+body.dashboard-page .placeholder-icon {
+  color: #b77cff !important;
+}
+
+/* Benutzerkonto */
+body.dashboard-page .account-info strong {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .account-info span {
+  color: #aaa2bd !important;
+}
+
+/* News und Benutzerkarten */
+body.dashboard-page .news-card,
+body.dashboard-page .user-card,
+body.dashboard-page .permission-group {
+  background: #0e0b15 !important;
+  border-color: #30263e !important;
+}
+
+body.dashboard-page .news-card h3,
+body.dashboard-page .user-card h3,
+body.dashboard-page .permission-group h3 {
+  color: #ffffff !important;
+}
+
+body.dashboard-page .news-meta {
+  color: #b77cff !important;
+}
+
+body.dashboard-page .news-excerpt,
+body.dashboard-page .user-card p {
+  color: #aaa2bd !important;
+}
+
+/* Buttons */
+body.dashboard-page .primary-button {
+  background: #8b35f5 !important;
+  border-color: #8b35f5 !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page .secondary-button {
+  background: #21152f !important;
+  border-color: #49305f !important;
+  color: #e7d8fa !important;
+}
+
+body.dashboard-page .danger-button {
+  background: #29131b !important;
+  border-color: #69333f !important;
+  color: #ff9eae !important;
+}
+
+/* Formulare */
+body.dashboard-page input,
+body.dashboard-page select,
+body.dashboard-page textarea {
+  background: #0b0911 !important;
+  border-color: #393047 !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-page input::placeholder,
+body.dashboard-page textarea::placeholder {
+  color: #70677e !important;
+}
+
+/* Hilfstexte */
+body.dashboard-page .muted,
+body.dashboard-page .stat-description {
+  color: #aaa2bd !important;
+}
+
+body.dashboard-page .coming-soon {
+  color: #c59aff !important;
+  background: #21152f !important;
+  border-color: #6330a0 !important;
+}
+
+/* ==================================================
+   ULTOR CMS – TEAM MANAGEMENT DESIGN
+================================================== */
+
+/* Allgemeine Teamverwaltung */
+
+/* Allgemeine Teamverwaltung */
+
+#view-teams.active {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+/* CMS-Reiter korrekt ein- und ausblenden */
+
+.cms-view:not(.active) {
+  display: none !important;
+}
+
+.cms-view.active {
+  display: block;
+}
+
+#view-teams.active {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+#view-teams .page-heading {
+  margin-bottom: 0;
+}
+
+#view-teams .content-panel {
+  padding: 28px;
+  border: 1px solid rgba(155, 75, 255, 0.18);
+  border-radius: 14px;
+  background: #12101b;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+#view-teams .section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+#view-teams .section-heading h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+#view-teams .muted {
+  color: #a5a0b5;
+}
+
+/* Formulare */
+
+#teamForm,
+#playerForm {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px 22px;
+  margin-top: 24px;
+}
+
+#teamForm > label,
+#playerForm > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d5d0e2;
+}
+
+#teamForm input:not([type="checkbox"]),
+#teamForm textarea,
+#teamForm select,
+#playerForm input:not([type="checkbox"]),
+#playerForm textarea,
+#playerForm select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#teamForm textarea,
+#playerForm textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+#teamForm input:focus,
+#teamForm textarea:focus,
+#teamForm select:focus,
+#playerForm input:focus,
+#playerForm textarea:focus,
+#playerForm select:focus {
+    border-color: #913cff;
+  box-shadow: 0 0 0 3px rgba(145, 60, 255, 0.13);
+}
+
+#teamForm input::placeholder,
+#teamForm textarea::placeholder,
+#playerForm input::placeholder {
+  color: #777185;
+}
+
+/* Checkbox */
+
+#playerForm .permission-option {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #d5d0e2;
+}
+
+#playerIsSubstitute {
+  width: 17px;
+  height: 17px;
+  accent-color: #913cff;
+}
+
+/* Formular-Aktionen */
+
+#teamForm .news-editor-actions,
+#playerForm .news-editor-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+#view-teams .primary-button,
+#view-teams .secondary-button,
+#view-teams .danger-button {
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+#view-teams .primary-button:hover,
+#view-teams .secondary-button:hover,
+#view-teams .danger-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Team- und Spielerkarten */
+
+#teamsList,
+#playersList,
+#rosterHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#view-teams .news-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border: 1px solid #30283c;
+  border-radius: 10px;
+  background: #0d0b14;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+#view-teams .news-card:hover {
+  border-color: rgba(145, 60, 255, 0.55);
+  background: #15111f;
+}
+
+#view-teams .news-card-details {
+  min-width: 0;
+}
+
+#view-teams .news-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+#view-teams .news-meta {
+  color: #a49bb5;
+  font-size: 12px;
+}
+
+#view-teams .news-excerpt {
+  margin-top: 10px;
+  color: #c7c1d2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#view-teams .news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Filter und Team-Auswahl */
+
+#view-teams select {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+  color: #ffffff;
+}
+
+#view-teams .news-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+#view-teams .news-upload-area label {
+  color: #d5d0e2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Versteckte Formulare */
+
+#view-teams [hidden] {
+  display: none !important;
+}
+
+/* Mobile Darstellung */
+
+@media (max-width: 760px) {
+  #view-teams .content-panel {
+    padding: 20px 16px;
+  }
+
+  #teamForm,
+  #playerForm {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  #teamForm > label,
+  #playerForm > label {
+    margin-top: 10px;
+  }
+
+  #teamForm .news-editor-actions,
+  #playerForm .news-editor-actions,
+  #playerForm .permission-option {
+    grid-column: 1;
+  }
+
+  #view-teams .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-teams .news-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-teams .news-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  #view-teams .news-upload-area {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.image-upload-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.image-upload-control input[type="file"] {
+  max-width: 100%;
+  color: #b9b2c9;
+  font-size: 13px;
+}
+
+.image-preview {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.image-preview img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  padding: 8px;
+  border: 1px solid #383047;
+  border-radius: 10px;
+  background: #0c0a12;
+}
+
+#view-teams .image-preview[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .image-preview {
+    grid-column: 1;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================
+   ULTOR CMS – PARTNER VERWALTUNG
+========================================= */
+
+#view-partners .partners-list {
+  display: grid;
+  gap: 12px;
+}
+
+#view-partners .news-card {
+  align-items: center;
+}
+
+#view-partners .news-card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+#view-partners .news-card h3 {
+  overflow-wrap: anywhere;
+}
+
+#view-partners .news-meta {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+#partnerEditor {
+  margin-top: 20px;
+}
+
+#partnerEditor label {
+  display: block;
+  margin: 18px 0 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#partnerEditor input:not([type="file"]),
+#partnerEditor textarea,
+#partnerEditor select {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #0b0911;
+  color: var(--text);
+}
+
+#partnerEditor textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+#partnerEditor input:focus,
+#partnerEditor textarea:focus,
+#partnerEditor select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139, 53, 245, .2);
+}
+
+#partnerEditor input[type="file"] {
+  max-width: 100%;
+  padding: 9px;
+    border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #0b0911;
+  color: var(--muted);
+}
+
+#partnerEditor .image-upload-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+#partnerEditor .image-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0e0b15;
+}
+
+#partnerEditor .image-preview img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  padding: 8px;
+  border: 1px solid #383047;
+  border-radius: 8px;
+  background: #0c0a12;
+}
+
+#partnerEditor .news-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+#view-partners .news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  #view-partners .news-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-partners .news-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  #partnerEditor .image-preview {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* =========================================
+   ULTOR CMS – SHOP MANAGEMENT
+========================================= */
+
+#view-shop .shop-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+#view-shop .shop-tab {
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#view-shop .shop-tab.active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: #c59aff;
+}
+
+#view-shop .shop-panel {
+  display: none;
+}
+
+#view-shop .shop-panel.active {
+  display: block;
+}
+
+#view-shop .shop-product-grid,
+#view-shop .shop-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+#view-shop .shop-item-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0e0b15;
+}
+
+#view-shop .shop-item-card h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 14px;
+}
+
+#view-shop .shop-item-card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#view-shop .shop-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+#view-shop .shop-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#view-shop .shop-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+#view-shop .shop-form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+#view-shop .shop-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 15px 0;
+  color: #d5cce3;
+  font-size: 12px;
+}
+
+#view-shop .shop-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+#view-shop .shop-variant-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+#view-shop .shop-variant-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0e0b15;
+}
+
+#view-shop .shop-image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+#view-shop .shop-image-item {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0b0911;
+}
+
+#view-shop .shop-image-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+#view-shop .shop-image-item button {
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  background: #21152f;
+  color: #ffabb9;
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  #view-shop .shop-product-grid,
+  #view-shop .shop-category-grid,
+  #view-shop .shop-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #view-shop .shop-form-grid .full-width {
+    grid-column: 1;
+  }
+
+  #view-shop .shop-variant-row {
+    grid-template-columns: 1fr;
+  }
+}
