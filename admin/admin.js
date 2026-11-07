@@ -211,10 +211,8 @@ async function loadDashboard() {
   } catch (error) {
     showMessage(dashboardMessage, getErrorMessage(error), "error");
 
-    if (
-      error.message.includes("Nicht angemeldet") ||
-      error.message.includes("freigegeben")
-    ) {
+    if (error.message.includes("Nicht angemeldet") ||
+        error.message.includes("freigegeben")) {
       window.location.href = "/admin/login.html";
     }
   }
@@ -228,19 +226,13 @@ function renderMyPermissions(permissions) {
 
   if (!permissions.length) {
     container.append(
-      createElement(
-        "p",
-        "muted",
-        "Deinem Konto wurden noch keine Berechtigungen zugewiesen."
-      )
+      createElement("p", "muted", "Deinem Konto wurden noch keine Berechtigungen zugewiesen.")
     );
     return;
   }
 
   for (const permission of permissions) {
-    container.append(
-      createElement("span", "permission-chip", permission)
-    );
+    container.append(createElement("span", "permission-chip", permission));
   }
 }
 
@@ -445,7 +437,8 @@ permissionsForm?.addEventListener("submit", async event => {
     showMessage(dashboardMessage, getErrorMessage(error), "error");
   }
 });
- document.getElementById("cancelPermissions")?.addEventListener("click", () => {
+
+document.getElementById("cancelPermissions")?.addEventListener("click", () => {
   permissionPanel.hidden = true;
   selectedUserId = null;
 });
@@ -456,62 +449,33 @@ permissionsForm?.addEventListener("submit", async event => {
 
 document.getElementById("logoutButton")?.addEventListener("click", async () => {
   try {
-    await apiRequest(`${API_AUTH}/sign-out`, {
-      method: "POST",
-      body: "{}"
-    });
+    await apiRequest(`${API_AUTH}/sign-out`, { method: "POST" });
+  } catch (error) {
+    console.warn("Logout request failed:", error);
   } finally {
-    window.location.href = "/admin/login.html";
+    window.location.replace("/admin/login.html");
   }
 });
 
-// Start
-
-// =========================================
-// ULTOR CMS – NAVIGATION
-// =========================================
-
-const VIEW_TITLES = {
-  dashboard: "Dashboard",
-  news: "News",
-  teams: "Teams & Spieler",
-  partners: "Partner",
-  shop: "Shop",
-  media: "Medien",
-  users: "Benutzer & Rechte",
-  activity: "Aktivitätsprotokoll"
-};
+// --------------------------------------------------
+// NAVIGATION
+// --------------------------------------------------
 
 function openCmsView(viewName) {
-  const target = document.getElementById(`view-${viewName}`);
-
-  if (!target) return;
-
   document.querySelectorAll(".cms-view").forEach(view => {
-    view.classList.remove("active");
+    view.classList.toggle("active", view.id === `view-${viewName}`);
   });
 
-  target.classList.add("active");
-
-  document.querySelectorAll(".nav-item").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.view === viewName
-    );
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === viewName);
   });
 
-  const breadcrumb = document.getElementById("breadcrumbTitle");
+  const title = document.getElementById("pageTitle");
+  const activeButton = document.querySelector(`[data-view="${viewName}"]`);
 
-  if (breadcrumb) {
-    breadcrumb.textContent = VIEW_TITLES[viewName] || "Dashboard";
+  if (title && activeButton) {
+    title.textContent = activeButton.textContent.trim();
   }
-
-  document.getElementById("sidebar")?.classList.remove("open");
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
 }
 
 document.querySelectorAll("[data-view]").forEach(button => {
@@ -520,55 +484,86 @@ document.querySelectorAll("[data-view]").forEach(button => {
   });
 });
 
+loadDashboard();
 // Mobile Navigation
-document.getElementById("mobileMenuButton")?.addEventListener("click", () => {
-  document.getElementById("sidebar")?.classList.toggle("open");
+
+const sidebarToggle = document.getElementById("sidebarToggle");
+const sidebar = document.querySelector(".sidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+sidebarToggle?.addEventListener("click", () => {
+  sidebar?.classList.toggle("open");
+  sidebarOverlay?.classList.toggle("active");
+});
+
+sidebarOverlay?.addEventListener("click", () => {
+  sidebar?.classList.remove("open");
+  sidebarOverlay?.classList.remove("active");
+});
+
+document.querySelectorAll(".nav-item").forEach(button => {
+  button.addEventListener("click", () => {
+    openCmsView(button.dataset.view);
+    sidebar?.classList.remove("open");
+    sidebarOverlay?.classList.remove("active");
+  });
 });
 
 // Benutzerinformationen im neuen Dashboard anzeigen
-const originalLoadDashboard = loadDashboard;
 
 loadDashboard = async function () {
-  await originalLoadDashboard();
-
-  const userLabel = document.getElementById("currentUser");
-
-  if (!userLabel) return;
+  if (!document.getElementById("currentUser")) return;
 
   try {
     const data = await apiRequest(`${API_ADMIN}/me`);
-    const user = data.user;
-    const isOwner = user.is_owner === 1;
+    const user = data.user || {};
 
-    const sidebarName = document.getElementById("sidebarUserName");
-    const sidebarRole = document.getElementById("sidebarUserRole");
-    const avatar = document.getElementById("userAvatar");
+    const isOwner =
+      user.is_owner === 1 ||
+      user.is_owner === true ||
+      user.is_owner === "1";
 
-    if (sidebarName) sidebarName.textContent = user.name;
-    if (sidebarRole) sidebarRole.textContent = isOwner ? "Owner" : "CMS-Benutzer";
-    if (avatar) avatar.textContent = (user.name || "U").charAt(0).toUpperCase();
+    const currentUser = document.getElementById("currentUser");
+    const roleBadge = document.getElementById("roleBadge");
+    const sidebarUserName = document.getElementById("sidebarUserName");
+    const sidebarUserRole = document.getElementById("sidebarUserRole");
+    const userAvatar = document.getElementById("userAvatar");
 
-    const roleText = isOwner ? "OWNER" : "BENUTZER";
-    const statRole = document.getElementById("statUserRole");
-    const statPermissions = document.getElementById("statPermissionCount");
-
-    if (statRole) statRole.textContent = roleText;
-    if (statPermissions) {
-      statPermissions.textContent = isOwner
-        ? "Alle"
-        : String(data.permissions.length);
+    if (currentUser) {
+      currentUser.textContent = `${user.name || "Unbekannt"} (${user.email || ""})`;
     }
 
-    const accountName = document.getElementById("accountName");
-    const accountEmail = document.getElementById("accountEmail");
-    const accountRole = document.getElementById("accountRole");
+    if (roleBadge) {
+      roleBadge.textContent = isOwner ? "OWNER" : "CMS-BENUTZER";
+    }
 
-    if (accountName) accountName.textContent = user.name;
-    if (accountEmail) accountEmail.textContent = user.email;
-    if (accountRole) accountRole.textContent = roleText;
+    if (sidebarUserName) {
+      sidebarUserName.textContent = user.name || "Unbekannt";
+    }
+
+    if (sidebarUserRole) {
+      sidebarUserRole.textContent = isOwner ? "Owner" : "CMS-Benutzer";
+    }
+
+    if (userAvatar) {
+      userAvatar.textContent = (user.name || "U").charAt(0).toUpperCase();
+    }
+
+    if (ownerPanel) ownerPanel.hidden = !isOwner;
+    if (standardPanel) standardPanel.hidden = isOwner;
+
+    if (isOwner) {
+      await loadUsers();
+    } else {
+      renderMyPermissions(data.permissions || []);
+    }
 
   } catch (error) {
-    console.error("Dashboard profile error:", error);
+    showMessage(dashboardMessage, getErrorMessage(error), "error");
+
+    if (/Nicht angemeldet|freigegeben|Zugriff verweigert/i.test(error.message)) {
+      window.location.href = "/admin/login.html";
+    }
   }
 };
 
@@ -577,8 +572,8 @@ loadDashboard = async function () {
 // =========================================
 
 let newsItems = [];
-let newsPermissions = [];
 let editingNewsId = null;
+let newsPermissions = [];
 
 const newsList = document.getElementById("newsList");
 const newsEditor = document.getElementById("newsEditor");
@@ -590,6 +585,16 @@ function newsCan(permission) {
     newsPermissions.includes(permission);
 }
 
+function newsStatusLabel(status) {
+  const labels = {
+    draft: "Entwurf",
+    published: "Veröffentlicht",
+    archived: "Archiviert"
+  };
+
+  return labels[status] || status;
+}
+
 function newsButton(label, className, callback) {
   const button = document.createElement("button");
   button.type = "button";
@@ -599,34 +604,11 @@ function newsButton(label, className, callback) {
   return button;
 }
 
-function newsStatusLabel(status) {
-  return {
-    draft: "Entwurf",
-    pending: "Ausstehend",
-    published: "Veröffentlicht",
-    archived: "Archiviert"
-  }[status] || status;
-}
-
-function newsDate(value) {
-  if (!value) return "–";
-
-  const date = new Date(value.replace(" ", "T") + "Z");
-
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  });
-}
-
 async function loadNews() {
   if (!newsList) return;
 
   newsList.replaceChildren(
-    createElement("p", "muted", "Beiträge werden geladen …")
+    createElement("p", "muted", "News werden geladen …")
   );
 
   try {
@@ -634,8 +616,8 @@ async function loadNews() {
     const query = filter ? `?status=${encodeURIComponent(filter)}` : "";
 
     const data = await apiRequest(`/api/admin/news${query}`);
-    newsItems = data.news || [];
 
+    newsItems = data.news || [];
     newsList.replaceChildren();
 
     if (!newsItems.length) {
@@ -648,75 +630,61 @@ async function loadNews() {
     for (const item of newsItems) {
       const card = createElement("article", "news-card");
       const details = createElement("div", "news-card-details");
-      const title = createElement("h3", "", item.title);
-      const meta = createElement(
-        "p",
-        "news-meta",
-        `${newsStatusLabel(item.status)} · ${item.author_name || "Unbekannt"} · ${newsDate(item.updated_at)}`
+
+      details.append(
+        createElement("h3", "", item.title),
+        createElement(
+          "p",
+          "news-meta",
+          `${newsStatusLabel(item.status)} · ${item.category || "Allgemein"} · ${item.created_at || ""}`
+        )
       );
 
-      details.append(title, meta);
-
       if (item.excerpt) {
-        details.append(createElement("p", "news-excerpt", item.excerpt));
+        details.append(
+          createElement("p", "news-excerpt", item.excerpt)
+        );
       }
 
       const actions = createElement("div", "news-actions");
 
-      if (
-        newsCan("news.edit") &&
-        (item.status === "draft" || item.status === "pending")
-      ) {
+      if (newsCan("news.edit")) {
         actions.append(
-          newsButton("Bearbeiten", "secondary-button", () => editNews(item.id))
-        );
-      }
-
-      if (newsCan("news.edit") && item.status === "draft") {
-        actions.append(
-          newsButton("Einreichen", "secondary-button", () =>
-            runNewsAction(item.id, "submit")
+          newsButton(
+            "Bearbeiten",
+            "secondary-button",
+            () => openNewsEditor(item)
           )
         );
       }
 
-      if (
-        newsCan("news.publish") &&
-        (item.status === "pending" || item.status === "draft")
-      ) {
+      if (newsCan("news.publish") && item.status !== "published") {
         actions.append(
-          newsButton("Veröffentlichen", "primary-button", () =>
-            runNewsAction(item.id, "publish")
+          newsButton(
+            "Veröffentlichen",
+            "primary-button",
+            () => changeNewsStatus(item.id, "publish")
           )
         );
       }
 
       if (newsCan("news.publish") && item.status === "published") {
         actions.append(
-          newsButton("Zurückziehen", "secondary-button", () =>
-            runNewsAction(item.id, "unpublish")
-          ),
-          newsButton("Archivieren", "secondary-button", () =>
-            runNewsAction(item.id, "archive")
+          newsButton(
+            "Archivieren",
+            "secondary-button",
+            () => changeNewsStatus(item.id, "archive")
           )
         );
       }
 
       if (newsCan("news.delete")) {
         actions.append(
-          newsButton("Löschen", "danger-button", () => deleteNews(item.id))
-        );
-      }
-
-      card.append(details, actions);
-      newsList.append(card);
-    }
-  } catch (error) {
-    newsList.replaceChildren(
-      createElement("p", "message error", getErrorMessage(error))
-    );
-  }
-}
+          newsButton(
+            "Löschen",
+            "danger-button",
+            () => deleteNews(item.id)
+          )
         );
       }
 
@@ -738,9 +706,14 @@ function openNewsEditor(item = null) {
 
   document.getElementById("newsId").value = item?.id || "";
   document.getElementById("newsTitle").value = item?.title || "";
+  document.getElementById("newsSlug").value = item?.slug || "";
   document.getElementById("newsExcerpt").value = item?.excerpt || "";
   document.getElementById("newsContent").value = item?.content || "";
+  document.getElementById("newsCategory").value = item?.category || "";
   document.getElementById("newsImageKey").value = item?.image_key || "";
+  document.getElementById("newsStatus").value = item?.status || "draft";
+
+  showNewsImagePreview(item?.image_key || "");
 
   newsEditor.hidden = false;
   newsEditor.scrollIntoView({ behavior: "smooth" });
@@ -750,12 +723,86 @@ function closeNewsEditor() {
   newsEditor.hidden = true;
   newsForm.reset();
   editingNewsId = null;
+  showNewsImagePreview("");
 }
 
-async function editNews(id) {
+newsForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const submitButton = newsForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+
+  const body = {
+    title: document.getElementById("newsTitle").value.trim(),
+    slug: document.getElementById("newsSlug").value.trim(),
+    excerpt: document.getElementById("newsExcerpt").value.trim(),
+    content: document.getElementById("newsContent").value.trim(),
+    category: document.getElementById("newsCategory").value.trim(),
+    image_key: document.getElementById("newsImageKey").value.trim() || null,
+    status: document.getElementById("newsStatus").value
+  };
+
   try {
-    const data = await apiRequest(`/api/admin/news/${encodeURIComponent(id)}`);
-    openNewsEditor(data.news);
+    if (editingNewsId) {
+      await apiRequest(`/api/admin/news/${encodeURIComponent(editingNewsId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      });
+
+      showMessage(newsMessage, "Beitrag wurde aktualisiert.", "success");
+    } else {
+      await apiRequest("/api/admin/news", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+
+      showMessage(newsMessage, "Beitrag wurde erstellt.", "success");
+    }
+
+    closeNewsEditor();
+    await loadNews();
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+async function changeNewsStatus(id, action) {
+  const labels = {
+    publish: "veröffentlichen",
+    archive: "archivieren"
+  };
+
+  if (!window.confirm(`Möchtest du diesen Beitrag ${labels[action]}?`)) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/api/admin/news/${encodeURIComponent(id)}/${action}`, {
+      method: "POST",
+      body: "{}"
+    });
+
+    showMessage(newsMessage, `Beitrag wurde ${labels[action]}.`, "success");
+    await loadNews();
+  } catch (error) {
+    showMessage(newsMessage, getErrorMessage(error), "error");
+  }
+}
+
+async function deleteNews(id) {
+  if (!window.confirm("Möchtest du diesen Beitrag endgültig löschen?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/api/admin/news/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    });
+
+    showMessage(newsMessage, "Beitrag wurde gelöscht.", "success");
+    await loadNews();
   } catch (error) {
     showMessage(newsMessage, getErrorMessage(error), "error");
   }
@@ -772,89 +819,10 @@ document.getElementById("createNewsButton")?.addEventListener("click", () => {
 
 document.getElementById("closeNewsEditor")?.addEventListener("click", closeNewsEditor);
 document.getElementById("cancelNewsEditor")?.addEventListener("click", closeNewsEditor);
-
 document.getElementById("newsStatusFilter")?.addEventListener("change", loadNews);
 
-newsForm?.addEventListener("submit", async event => {
-  event.preventDefault();
-
-  const button = newsForm.querySelector('button[type="submit"]');
-  button.disabled = true;
-
-  const body = {
-    title: document.getElementById("newsTitle").value.trim(),
-    excerpt: document.getElementById("newsExcerpt").value.trim(),
-    content: document.getElementById("newsContent").value,
-    image_key: document.getElementById("newsImageKey").value.trim() || null
-  };
-
-  try {
-    if (editingNewsId) {
-      await apiRequest(`/api/admin/news/${encodeURIComponent(editingNewsId)}`, {
-        method: "PATCH",
-        body: JSON.stringify(body)
-      });
-      showMessage(newsMessage, "Beitrag wurde aktualisiert.", "success");
-    } else {
-      await apiRequest("/api/admin/news", {
-        method: "POST",
-        body: JSON.stringify(body)
-      });
-      showMessage(newsMessage, "Neuer Entwurf wurde gespeichert.", "success");
-    }
-
-    closeNewsEditor();
-    await loadNews();
-  } catch (error) {
-    showMessage(newsMessage, getErrorMessage(error), "error");
-  } finally {
-    button.disabled = false;
-  }
-});
-
-async function runNewsAction(id, action) {
-  const labels = {
-    submit: "Diesen Beitrag zur Freigabe einreichen?",
-    publish: "Diesen Beitrag veröffentlichen?",
-    archive: "Diesen Beitrag archivieren?",
-    unpublish: "Diesen Beitrag zurückziehen?"
-  };
-
-  if (!window.confirm(labels[action])) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/news/${encodeURIComponent(id)}/${action}`,
-      {
-        method: "POST",
-        body: "{}"
-      }
-    );
-
-    showMessage(newsMessage, data.message, "success");
-    await loadNews();
-  } catch (error) {
-    showMessage(newsMessage, getErrorMessage(error), "error");
-  }
-}
-
-async function deleteNews(id) {
-  if (!window.confirm("Möchtest du diesen Beitrag endgültig löschen?")) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/news/${encodeURIComponent(id)}`,
-      { method: "DELETE" }
-    );
-
-    showMessage(newsMessage, data.message, "success");
-    await loadNews();
-  } catch (error) {
-    showMessage(newsMessage, getErrorMessage(error), "error");
-  }
-}
-
 // News beim Öffnen des Bereichs laden
+
 const previousOpenCmsView = openCmsView;
 
 openCmsView = function(viewName) {
@@ -866,6 +834,7 @@ openCmsView = function(viewName) {
         newsPermissions = data.permissions || [];
 
         const createButton = document.getElementById("createNewsButton");
+
         if (createButton) {
           createButton.hidden = !newsCan("news.create");
         }
@@ -886,33 +855,39 @@ loadDashboard();
 
 const newsImageFile = document.getElementById("newsImageFile");
 const uploadNewsImageButton = document.getElementById("uploadNewsImage");
-const newsUploadStatus = document.getElementById("newsUploadStatus");
 const newsImageKeyInput = document.getElementById("newsImageKey");
 const newsImagePreview = document.getElementById("newsImagePreview");
-const newsPreviewImg = document.getElementById("newsPreviewImg");
-const removeNewsImageButton = document.getElementById("removeNewsImage");
+const newsImagePreviewImg = document.getElementById("newsImagePreviewImg");
+const newsUploadStatus = document.getElementById("newsUploadStatus");
 
 function showNewsImagePreview(key) {
-  if (!newsImagePreview || !newsPreviewImg) return;
+  if (!newsImagePreview || !newsImagePreviewImg) return;
+
   if (!key) {
     newsImagePreview.hidden = true;
-    newsPreviewImg.removeAttribute("src");
+    newsImagePreviewImg.removeAttribute("src");
     return;
   }
-  newsPreviewImg.src = `/media/${String(key).split("/").map(encodeURIComponent).join("/")}`;
+
+  newsImagePreviewImg.src =
+    `/media/${String(key).split("/").map(encodeURIComponent).join("/")}`;
+
   newsImagePreview.hidden = false;
 }
 
 uploadNewsImageButton?.addEventListener("click", async () => {
   const file = newsImageFile?.files?.[0];
+
   if (!file) {
     showMessage(newsMessage, "Bitte wähle zuerst ein Bild aus.", "error");
     return;
   }
+
   if (file.size > 8 * 1024 * 1024) {
     showMessage(newsMessage, "Das Bild darf maximal 8 MB groß sein.", "error");
     return;
   }
+
   if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
     showMessage(newsMessage, "Erlaubt sind JPG, PNG, WEBP und GIF.", "error");
     return;
@@ -920,102 +895,13 @@ uploadNewsImageButton?.addEventListener("click", async () => {
 
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("folder", "news");
+
   uploadNewsImageButton.disabled = true;
-  if (newsUploadStatus) newsUploadStatus.textContent = "Bild wird hochgeladen …";
 
-  try {
-    const response = await fetch("/api/admin/media/upload", {
-      method: "POST",
-      credentials: "same-origin",
-      body: formData
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `Upload fehlgeschlagen (${response.status})`);
-    }
-    if (!data.key) {
-      throw new Error("Der Server hat keinen Bildschlüssel zurückgegeben.");
-    }
-
-    if (newsImageKeyInput) newsImageKeyInput.value = data.key;
-    showNewsImagePreview(data.key);
-    if (newsUploadStatus) newsUploadStatus.textContent = "Upload erfolgreich.";
-    showMessage(newsMessage, "Bild wurde hochgeladen. Speichere anschließend den Beitrag.", "success");
-  } catch (error) {
-    if (newsUploadStatus) newsUploadStatus.textContent = "Upload fehlgeschlagen.";
-    showMessage(newsMessage, getErrorMessage(error), "error");
-  } finally {
-    uploadNewsImageButton.disabled = false;
+  if (newsUploadStatus) {
+    newsUploadStatus.textContent = "Bild wird hochgeladen …";
   }
-});
-
-removeNewsImageButton?.addEventListener("click", () => {
-  if (newsImageKeyInput) newsImageKeyInput.value = "";
-  if (newsImageFile) newsImageFile.value = "";
-  showNewsImagePreview("");
-  if (newsUploadStatus) newsUploadStatus.textContent = "Kein Bild ausgewählt.";
-});
-
-// ==================================================
-// TEAMLOGOS UND SPIELERBILDER – R2 UPLOAD
-// ==================================================
-
-const teamLogoFile = document.getElementById("teamLogoFile");
-const uploadTeamLogoButton = document.getElementById("uploadTeamLogo");
-const teamLogoKeyInput = document.getElementById("teamLogoKey");
-const teamLogoPreview = document.getElementById("teamLogoPreview");
-const teamLogoPreviewImg = document.getElementById("teamLogoPreviewImg");
-const removeTeamLogoButton = document.getElementById("removeTeamLogo");
-
-const playerImageFile = document.getElementById("playerImageFile");
-const uploadPlayerImageButton = document.getElementById("uploadPlayerImage");
-const playerImageKeyInput = document.getElementById("playerImageKey");
-const playerImagePreview = document.getElementById("playerImagePreview");
-const playerImagePreviewImg = document.getElementById("playerImagePreviewImg");
-const removePlayerImageButton = document.getElementById("removePlayerImage");
-
-// Bildvorschau anzeigen
-function showRosterImagePreview(key, preview, image) {
-  if (!preview || !image) return;  
-    if (!key) {
-    preview.hidden = true;
-    image.removeAttribute("src");
-    return;
-  }
-
-  image.src = `/media/${String(key)
-    .split("/")
-    .map(encodeURIComponent)
-    .join("/")}`;
-
-  preview.hidden = false;
-}
-
-// Gemeinsame Uploadfunktion für Teamlogos und Spielerbilder
-async function uploadRosterImage(fileInput, button, keyInput, preview, image, folder, label) {
-  const file = fileInput?.files?.[0];
-
-  if (!file) {
-    teamMessage(`Bitte wähle zuerst ein ${label} aus.`, "error");
-    return;
-  }
-
-  if (file.size > 8 * 1024 * 1024) {
-    teamMessage("Das Bild darf maximal 8 MB groß sein.", "error");
-    return;
-  }
-
-  if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
-    teamMessage("Erlaubt sind JPG, PNG, WEBP und GIF.", "error");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("folder", folder);
-
-  button.disabled = true;
-  button.textContent = "Upload läuft …";
 
   try {
     const response = await fetch("/api/admin/media/upload", {
@@ -1037,988 +923,45 @@ async function uploadRosterImage(fileInput, button, keyInput, preview, image, fo
       throw new Error("Der Server hat keinen Bildschlüssel zurückgegeben.");
     }
 
-    keyInput.value = data.key;
-    showRosterImagePreview(data.key, preview, image);
+    newsImageKeyInput.value = data.key;
+    showNewsImagePreview(data.key);
 
-    fileInput.value = "";
-
-    teamMessage(
-      `${label.charAt(0).toUpperCase() + label.slice(1)} erfolgreich hochgeladen. Bitte anschließend speichern.`,
-      "success"
-    );
-
-  } catch (error) {
-    teamMessage(getErrorMessage(error), "error");
-
-  } finally {
-    button.disabled = false;
-    button.textContent = folder === "teams"
-      ? "Teamlogo hochladen"
-      : "Spielerbild hochladen";
-  }
-}
-
-// Teamlogo hochladen
-uploadTeamLogoButton?.addEventListener("click", () => {
-  uploadRosterImage(
-    teamLogoFile,
-    uploadTeamLogoButton,
-    teamLogoKeyInput,
-    teamLogoPreview,
-    teamLogoPreviewImg,
-    "teams",
-    "Teamlogo"
-  );
-});
-
-// Spielerbild hochladen
-uploadPlayerImageButton?.addEventListener("click", () => {
-  uploadRosterImage(
-    playerImageFile,
-    uploadPlayerImageButton,
-    playerImageKeyInput,
-    playerImagePreview,
-    playerImagePreviewImg,
-    "players",
-    "Spielerbild"
-  );
-});
-
-// Teamlogo entfernen
-removeTeamLogoButton?.addEventListener("click", () => {
-  teamLogoKeyInput.value = "";
-  teamLogoFile.value = "";
-  showRosterImagePreview("", teamLogoPreview, teamLogoPreviewImg);
-
-  teamMessage("Teamlogo wurde aus dem Formular entfernt.", "success");
-});
-
-// Spielerbild entfernen
-removePlayerImageButton?.addEventListener("click", () => {
-  playerImageKeyInput.value = "";
-  playerImageFile.value = "";
-  showRosterImagePreview("", playerImagePreview, playerImagePreviewImg);
-
-  teamMessage("Spielerbild wurde aus dem Formular entfernt.", "success");
-});
-
-// ==================================================
-// ULTOR CMS – TEAMS, SPIELER UND KADERHISTORIE
-// ==================================================
-
-let teamPermissions = [];
-let teamItems = [];
-let playerItems = [];
-
-const teamsList = document.getElementById("teamsList");
-const teamsMessage = document.getElementById("teamsMessage");
-const teamForm = document.getElementById("teamForm");
-const teamEditor = document.getElementById("teamEditor");
-
-const playersList = document.getElementById("playersList");
-const playerForm = document.getElementById("playerForm");
-const playerEditor = document.getElementById("playerEditor");
-
-const rosterHistoryList = document.getElementById("rosterHistoryList");
-
-let editingTeamId = null;
-let editingPlayerId = null;
-
-function teamCan(permission) {
-  return teamPermissions.includes("*") ||
-    teamPermissions.includes(permission);
-}
-
-function teamActionButton(label, className, callback) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.textContent = label;
-  button.addEventListener("click", callback);
-  return button;
-}
-
-function teamStatusLabel(status) {
-  return {
-    active: "Aktiv",
-    inactive: "Inaktiv",
-    draft: "Entwurf"
-  }[status] || status;
-}
-
-function teamMessage(message, type = "") {
-  showMessage(teamsMessage, message, type);
-}
-
-function closeTeamEditor() {
-  if (!teamEditor || !teamForm) return;
-
-  teamEditor.hidden = true;
-  teamForm.reset();
-  editingTeamId = null;
-}
-
-function closePlayerEditor() {
-  if (!playerEditor || !playerForm) return;
-
-  playerEditor.hidden = true;
-  playerForm.reset();
-  editingPlayerId = null;
-}
-
-// ==================================================
-// TEAMS LADEN
-// ==================================================
-
-async function loadTeams() {
-  if (!teamsList) return;
-
-  teamsList.replaceChildren(
-    createElement("p", "muted", "Teams werden geladen …")
-  );
-
-  try {
-    const data = await apiRequest("/api/admin/teams");
-    teamItems = data.teams || [];
-
-    const filter = document.getElementById("teamStatusFilter")?.value || "";
-
-    const visibleTeams = filter
-      ? teamItems.filter(team => team.status === filter)
-      : teamItems;
-
-    teamsList.replaceChildren();
-
-    if (!visibleTeams.length) {
-      teamsList.append(
-        createElement("p", "muted", "Noch keine Teams vorhanden.")
-      );
+    if (newsUploadStatus) {
+      newsUploadStatus.textContent = "Upload erfolgreich.";
     }
 
-    for (const team of visibleTeams) {
-      const card = createElement("article", "news-card");
-      const details = createElement("div", "news-card-details");
-
-      details.append(
-        createElement("h3", "", team.name),
-        createElement(
-          "p",
-          "news-meta",
-          `${teamStatusLabel(team.status)} · ${team.player_count || 0} Spieler`
-        )
-      );
-
-      if (team.description) {
-        details.append(
-          createElement("p", "news-excerpt", team.description)
-        );
-      }
-
-      const actions = createElement("div", "news-actions");
-
-      if (teamCan("teams.edit")) {
-        actions.append(
-          teamActionButton(
-            "Bearbeiten",
-            "secondary-button",
-            () => openTeamEditor(team)
-          )
-        );
-      }
-
-      if (teamCan("teams.delete")) {
-        actions.append(
-          teamActionButton(
-            "Löschen / Deaktivieren",
-            "danger-button",
-            () => deleteTeam(team)
-          )
-        );
-      }
-
-      card.append(details, actions);
-      teamsList.append(card);
-          }
-
-    updateTeamSelects();
+    showMessage(newsMessage, "Bild hochgeladen. Speichere anschließend den Beitrag.", "success");
 
   } catch (error) {
-    teamsList.replaceChildren(
-      createElement("p", "message error", getErrorMessage(error))
-    );
+    if (newsUploadStatus) {
+      newsUploadStatus.textContent = "Upload fehlgeschlagen.";
+    }
+
+    showMessage(newsMessage, getErrorMessage(error), "error");
+
+  } finally {
+    uploadNewsImageButton.disabled = false;
   }
-}
+});
 
-// ==================================================
-// TEAM ERSTELLEN / BEARBEITEN
-// ==================================================
+removeNewsImageButton?.addEventListener("click", () => {
+  newsImageKeyInput.value = "";
 
-function openTeamEditor(team = null) {
-  if (!teamForm || !teamEditor) return;
-
-  editingTeamId = team?.id || null;
-
-  document.getElementById("teamEditorTitle").textContent =
-    team ? "Team bearbeiten" : "Neues Team erstellen";
-
-  document.getElementById("teamId").value = team?.id || "";
-  document.getElementById("teamName").value = team?.name || "";
-  document.getElementById("teamDescription").value =
-    team?.description || "";
-  document.getElementById("teamLogoKey").value =
-    team?.logo_key || "";
-  showRosterImagePreview(
-    team?.logo_key || "",
-    teamLogoPreview,
-    teamLogoPreviewImg
-  );
-  document.getElementById("teamStatus").value =
-    team?.status || "active";
-
-  teamEditor.hidden = false;
-  teamEditor.scrollIntoView({ behavior: "smooth" });
-}
-
-async function deleteTeam(team) {
-  if (!window.confirm(
-    `Möchtest du das Team "${team.name}" löschen bzw. deaktivieren?`
-  )) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/teams/${encodeURIComponent(team.id)}`,
-      { method: "DELETE" }
-    );
-
-    teamMessage(data.message || "Team wurde bearbeitet.", "success");
-
-    await loadTeams();
-    await loadPlayers();
-    await loadRosterHistory();
-
-  } catch (error) {
-    teamMessage(getErrorMessage(error), "error");
+  if (newsImageFile) {
+    newsImageFile.value = "";
   }
-}
 
-teamForm?.addEventListener("submit", async event => {
-  event.preventDefault();
+  showNewsImagePreview("");
 
-  const button = teamForm.querySelector('button[type="submit"]');
-  if (button) button.disabled = true;
+  if (newsUploadStatus) {
+    newsUploadStatus.textContent = "Kein Bild ausgewählt.";
+  }
+});
 
-  const body = {
-    name: document.getElementById("teamName").value.trim(),
-    description: document.getElementById("teamDescription").value.trim(),
-    logo_key: document.getElementById("teamLogoKey").value.trim(),
-    status: document.getElementById("teamStatus").value
-  };
-
-  try {
-    if (editingTeamId) {
-      await apiRequest(
-        `/api/admin/teams/${encodeURIComponent(editingTeamId)}`,
-        {
-          method: "PATCH",
+newsImageKeyInput?.addEventListener("input", () => {
+  showNewsImagePreview(newsImageKeyInput.value.trim());
+});
           body: JSON.stringify(body)
-        }
-      );
-
-      teamMessage("Team wurde aktualisiert.", "success");
-
-    } else {
-      await apiRequest("/api/admin/teams", {
-        method: "POST",
-        body: JSON.stringify(body)
-      });
-
-      teamMessage("Team wurde erstellt.", "success");
-    }
-
-    closeTeamEditor();
-
-    await loadTeams();
-    await loadPlayers();
-
-  } catch (error) {
-    teamMessage(getErrorMessage(error), "error");
-
-  } finally {
-    if (button) button.disabled = false;
-  }
-});
-
-// ==================================================
-// SPIELER – TEAM-AUSWAHLEN
-// ==================================================
-
-function updateTeamSelects() {
-  const selects = [
-    document.getElementById("playerTeam"),
-    document.getElementById("playerTeamFilter")
-  ];
-
-  for (const select of selects) {
-    if (!select) continue;
-
-    const previousValue = select.value;
-    const isFilter = select.id === "playerTeamFilter";
-
-    select.replaceChildren();
-
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = isFilter
-      ? "Alle Teams"
-      : "Team auswählen";
-
-    select.append(defaultOption);
-
-    for (const team of teamItems) {
-      if (team.status === "inactive") continue;
-
-      const option = document.createElement("option");
-      option.value = team.id;
-      option.textContent = team.name;
-
-      select.append(option);
-    }
-
-    if (
-      previousValue &&
-      Array.from(select.options).some(option =>
-        option.value === previousValue
-      )
-    ) {
-      select.value = previousValue;
-    }
-  }
-}
-
-// ==================================================
-// SPIELER LADEN
-// ==================================================
-
-async function loadPlayers() {
-  if (!playersList) return;
-
-  playersList.replaceChildren(
-    createElement("p", "muted", "Spieler werden geladen …")
-  );
-
-  try {
-    const teamFilter =
-      document.getElementById("playerTeamFilter")?.value || "";
-
-    const query = teamFilter
-      ? `?team_id=${encodeURIComponent(teamFilter)}`
-      : "";
-
-    const data = await apiRequest(`/api/admin/players${query}`);
-    playerItems = data.players || [];
-
-    playersList.replaceChildren();
-
-    if (!playerItems.length) {
-      playersList.append(
-        createElement("p", "muted", "Noch keine Spieler vorhanden.")
-      );
-      return;
-    }
-
-    for (const player of playerItems) {
-      const card = createElement("article", "news-card");
-      const details = createElement("div", "news-card-details");
-
-      details.append(
-        createElement("h3", "", player.name),
-        createElement(
-          "p",
-          "news-meta",
-          `${player.team_name || "Kein Team"} · ${player.position || "Keine Position"}${player.is_substitute ? " · Ersatzspieler" : ""}`
-        )
-      );
-
-      const actions = createElement("div", "news-actions");
-
-      if (teamCan("teams.edit")) {
-        actions.append(
-          teamActionButton(
-            "Bearbeiten",
-            "secondary-button",
-            () => openPlayerEditor(player)
-          ),
-          teamActionButton(
-            "Entfernen",
-            "danger-button",
-            () => deletePlayer(player)
-          )
-        );
-      }
-
-      card.append(details, actions);
-      playersList.append(card);
-    }
-
-  } catch (error) {
-    playersList.replaceChildren(
-      createElement("p", "message error", getErrorMessage(error))
-    );
-  }
-}
-
-// ==================================================
-// SPIELER ERSTELLEN / BEARBEITEN
-// ==================================================
-
-function openPlayerEditor(player = null) {
-  if (!playerForm || !playerEditor) return;
-
-  editingPlayerId = player?.id || null;
-
-  document.getElementById("playerEditorTitle").textContent =
-    player ? "Spieler bearbeiten" : "Neuen Spieler hinzufügen";
-
-  document.getElementById("playerId").value = player?.id || "";
-  document.getElementById("playerName").value = player?.name || "";
-  document.getElementById("playerPosition").value =
-    player?.position || "";
-  document.getElementById("playerImageKey").value =
-    player?.image_key || "";
-  document.getElementById("playerIsSubstitute").checked =
-    Boolean(player?.is_substitute);
-
-  updateTeamSelects();
-
-  document.getElementById("playerTeam").value =
-    player?.team_id || "";
-
-  playerEditor.hidden = false;
-  playerEditor.scrollIntoView({ behavior: "smooth" });
-}
-
-async function deletePlayer(player) {
-    if (!window.confirm(
-    `Möchtest du "${player.name}" aus dem Team entfernen?`
-  )) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/players/${encodeURIComponent(player.id)}`,
-      { method: "DELETE" }
-    );
-
-    teamMessage(data.message || "Spieler wurde entfernt.", "success");
-
-    await loadPlayers();
-    await loadTeams();
-    await loadRosterHistory();
-
-  } catch (error) {
-    teamMessage(getErrorMessage(error), "error");
-  }
-}
-
-playerForm?.addEventListener("submit", async event => {
-  event.preventDefault();
-
-  const button = playerForm.querySelector('button[type="submit"]');
-  if (button) button.disabled = true;
-
-  const body = {
-    name: document.getElementById("playerName").value.trim(),
-    team_id: document.getElementById("playerTeam").value,
-    position: document.getElementById("playerPosition").value.trim(),
-    image_key: document.getElementById("playerImageKey").value.trim(),
-    is_substitute: document.getElementById("playerIsSubstitute").checked
-  };
-
-  try {
-    if (editingPlayerId) {
-      await apiRequest(
-        `/api/admin/players/${encodeURIComponent(editingPlayerId)}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(body)
-        }
-      );
-
-      teamMessage("Spieler wurde aktualisiert.", "success");
-
-    } else {
-      await apiRequest("/api/admin/players", {
-        method: "POST",
-        body: JSON.stringify(body)
-      });
-
-      teamMessage("Spieler wurde hinzugefügt.", "success");
-    }
-
-    closePlayerEditor();
-
-    await loadPlayers();
-    await loadTeams();
-    await loadRosterHistory();
-
-  } catch (error) {
-    teamMessage(getErrorMessage(error), "error");
-
-  } finally {
-    if (button) button.disabled = false;
-  }
-});
-
-// ==================================================
-// KADERHISTORIE
-// ==================================================
-
-async function loadRosterHistory() {
-  if (!rosterHistoryList) return;
-
-  rosterHistoryList.replaceChildren(
-    createElement("p", "muted", "Kaderhistorie wird geladen …")
-  );
-
-  try {
-    const data = await apiRequest("/api/admin/roster-history");
-    const history = data.history || [];
-
-    rosterHistoryList.replaceChildren();
-
-    if (!history.length) {
-      rosterHistoryList.append(
-        createElement("p", "muted", "Noch keine Kaderbewegungen vorhanden.")
-      );
-      return;
-    }
-
-    const labels = {
-      joined: "Beigetreten",
-      left: "Ausgetreten",
-      transferred: "Teamwechsel"
-    };
-
-    for (const entry of history) {
-      const card = createElement("article", "news-card");
-      const details = createElement("div", "news-card-details");
-
-      details.append(
-        createElement(
-          "h3",
-          "",
-          labels[entry.action] || entry.action
-        ),
-        createElement(
-          "p",
-          "news-meta",
-          `${entry.team_name || "Unbekanntes Team"} · ${entry.changed_by_name || "Unbekannt"} · ${entry.created_at || ""}`
-        ),
-        createElement(
-          "p",
-          "news-excerpt",
-          entry.description || ""
-        )
-      );
-
-      card.append(details);
-      rosterHistoryList.append(card);
-    }
-
-  } catch (error) {
-    rosterHistoryList.replaceChildren(
-      createElement("p", "message error", getErrorMessage(error))
-    );
-  }
-}
-
-// ==================================================
-// BUTTONS UND FILTER
-// ==================================================
-
-document.getElementById("createTeamButton")
-  ?.addEventListener("click", () => {
-    if (!teamCan("teams.create")) {
-      teamMessage("Du hast keine Berechtigung, Teams zu erstellen.", "error");
-      return;
-    }
-
-    openTeamEditor();
-  });
-
-document.getElementById("closeTeamEditor")
-  ?.addEventListener("click", closeTeamEditor);
-
-document.getElementById("cancelTeamEditor")
-  ?.addEventListener("click", closeTeamEditor);
-
-document.getElementById("createPlayerButton")
-  ?.addEventListener("click", () => {
-    if (!teamCan("teams.edit")) {
-      teamMessage("Du hast keine Berechtigung, Spieler zu verwalten.", "error");
-      return;
-    }
-
-    if (!teamItems.some(team => team.status !== "inactive")) {
-      teamMessage("Erstelle zuerst ein aktives Team.", "error");
-      return;
-    }
-
-    openPlayerEditor();
-  });
-
-document.getElementById("closePlayerEditor")
-  ?.addEventListener("click", closePlayerEditor);
-
-document.getElementById("cancelPlayerEditor")
-  ?.addEventListener("click", closePlayerEditor);
-
-document.getElementById("teamStatusFilter")
-  ?.addEventListener("change", loadTeams);
-
-document.getElementById("playerTeamFilter")
-  ?.addEventListener("change", loadPlayers);
-
-// ==================================================
-// BERECHTIGUNGEN UND NAVIGATION
-// ==================================================
-
-const previousTeamsOpenCmsView = openCmsView;
-
-openCmsView = function(viewName) {
-  previousTeamsOpenCmsView(viewName);
-
-  if (viewName !== "teams") return;
-
-  apiRequest("/api/admin/me")
-    .then(data => {
-      teamPermissions = data.permissions || [];
-
-      const canView = teamCan("teams.view");
-
-      if (!canView) {
-        teamMessage(
-          "Du hast keine Berechtigung, die Teamverwaltung aufzurufen.",
-          "error"
-        );
-
-        teamsList?.replaceChildren();
-        playersList?.replaceChildren();
-        rosterHistoryList?.replaceChildren();
-
-        return;
-      }
-
-      const createTeamButton =
-        document.getElementById("createTeamButton");
-
-      const createPlayerButton =
-        document.getElementById("createPlayerButton");
-
-      if (createTeamButton) {
-        createTeamButton.hidden = !teamCan("teams.create");
-      }
-
-      if (createPlayerButton) {
-        createPlayerButton.hidden = !teamCan("teams.edit");
-      }
-
-      loadTeams().then(() => {
-        loadPlayers();
-        loadRosterHistory();
-      });
-    })
-    .catch(error => {
-      teamMessage(getErrorMessage(error), "error");
-    });
-};
-
-newsImageKeyInput?.addEventListener("input", () =>
-  showNewsImagePreview(newsImageKeyInput.value.trim())
-);
-
-// ==================================================
-// ULTOR CMS – PARTNER VERWALTUNG
-// ==================================================
-
-let partnerPermissions = [];
-let partnerItems = [];
-let editingPartnerId = null;
-
-const partnersList = document.getElementById("partnersList");
-const partnersMessage = document.getElementById("partnersMessage");
-const partnerEditor = document.getElementById("partnerEditor");
-const partnerForm = document.getElementById("partnerForm");
-
-const partnerLogoFile = document.getElementById("partnerLogoFile");
-const uploadPartnerLogoButton = document.getElementById("uploadPartnerLogo");
-const partnerUploadStatus = document.getElementById("partnerUploadStatus");
-const partnerLogoPreview = document.getElementById("partnerLogoPreview");
-const partnerLogoPreviewImg = document.getElementById("partnerLogoPreviewImg");
-const partnerLogoKeyInput = document.getElementById("partnerLogoKey");
-const removePartnerLogoButton = document.getElementById("removePartnerLogo");
-
-function partnerCan(permission) {
-    return partnerPermissions.includes("*") ||
-    partnerPermissions.includes(permission);
-}
-
-function partnerMessage(message, type = "") {
-  showMessage(partnersMessage, message, type);
-}
-
-function partnerButton(label, className, callback) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.textContent = label;
-  button.addEventListener("click", callback);
-  return button;
-}
-
-function partnerStatusLabel(status) {
-  return status === "active" ? "Aktiv" : "Inaktiv";
-}
-
-function showPartnerLogoPreview(key) {
-  if (!partnerLogoPreview || !partnerLogoPreviewImg) return;
-
-  if (!key) {
-    partnerLogoPreview.hidden = true;
-    partnerLogoPreviewImg.removeAttribute("src");
-    return;
-  }
-
-  partnerLogoPreviewImg.src = `/media/${String(key)
-    .split("/")
-    .map(encodeURIComponent)
-    .join("/")}`;
-
-  partnerLogoPreview.hidden = false;
-}
-
-function closePartnerEditor() {
-  if (!partnerEditor || !partnerForm) return;
-
-  partnerEditor.hidden = true;
-  partnerForm.reset();
-  editingPartnerId = null;
-
-  if (partnerLogoPreview) {
-    partnerLogoPreview.hidden = true;
-  }
-
-  if (partnerLogoPreviewImg) {
-    partnerLogoPreviewImg.removeAttribute("src");
-  }
-
-  if (partnerUploadStatus) {
-    partnerUploadStatus.textContent = "";
-  }
-}
-
-function openPartnerEditor(partner = null) {
-  if (!partnerEditor || !partnerForm) return;
-
-  editingPartnerId = partner?.id || null;
-
-  document.getElementById("partnerEditorTitle").textContent =
-    partner ? "Partner bearbeiten" : "Neuen Partner erstellen";
-
-  document.getElementById("partnerId").value = partner?.id || "";
-  document.getElementById("partnerName").value = partner?.name || "";
-  document.getElementById("partnerDescription").value =
-    partner?.description || "";
-  document.getElementById("partnerWebsite").value =
-    partner?.website_url || "";
-  document.getElementById("partnerLogoKey").value =
-    partner?.logo_key || "";
-  document.getElementById("partnerStatus").value =
-    partner?.status || "inactive";
-
-  showPartnerLogoPreview(partner?.logo_key || "");
-
-  partnerEditor.hidden = false;
-  partnerEditor.scrollIntoView({ behavior: "smooth" });
-}
-
-async function loadPartners() {
-  if (!partnersList) return;
-
-  partnersList.replaceChildren(
-    createElement("p", "muted", "Partner werden geladen …")
-  );
-
-  try {
-    const data = await apiRequest("/api/admin/partners");
-    partnerItems = data.partners || [];
-
-    const filter =
-      document.getElementById("partnerStatusFilter")?.value || "";
-
-    const visiblePartners = filter
-      ? partnerItems.filter(partner => partner.status === filter)
-      : partnerItems;
-
-    partnersList.replaceChildren();
-
-    if (!visiblePartners.length) {
-      partnersList.append(
-        createElement("p", "muted", "Keine Partner vorhanden.")
-      );
-      return;
-    }
-
-    for (const partner of visiblePartners) {
-      const card = createElement("article", "news-card");
-      const details = createElement("div", "news-card-details");
-
-      details.append(
-        createElement("h3", "", partner.name),
-        createElement(
-          "p",
-          "news-meta",
-          `${partnerStatusLabel(partner.status)} · ${partner.website_url || "Keine Website"}`
-        )
-      );
-
-      if (partner.description) {
-        details.append(
-          createElement("p", "news-excerpt", partner.description)
-        );
-      }
-
-      const actions = createElement("div", "news-actions");
-
-      if (partnerCan("partners.edit")) {
-        actions.append(
-          partnerButton(
-            "Bearbeiten",
-            "secondary-button",
-            () => openPartnerEditor(partner)
-          )
-        );
-      }
-
-      if (partnerCan("partners.publish")) {
-        if (partner.status === "active") {
-          actions.append(
-            partnerButton(
-              "Deaktivieren",
-              "secondary-button",
-              () => changePartnerStatus(partner, "deactivate")
-            )
-          );
-        } else {
-          actions.append(
-            partnerButton(
-              "Aktivieren",
-              "primary-button",
-              () => changePartnerStatus(partner, "activate")
-            )
-          );
-        }
-      }
-
-      if (partnerCan("partners.delete")) {
-        actions.append(
-          partnerButton(
-            "Löschen",
-            "danger-button",
-            () => deletePartner(partner)
-          )
-        );
-      }
-
-      card.append(details, actions);
-      partnersList.append(card);
-    }
-  } catch (error) {
-    partnersList.replaceChildren(
-      createElement("p", "message error", getErrorMessage(error))
-    );
-  }
-}
-
-async function changePartnerStatus(partner, action) {
-  const actionText = action === "activate"
-    ? "aktivieren"
-    : "deaktivieren";
-
-  if (!window.confirm(
-    `Möchtest du den Partner "${partner.name}" wirklich ${actionText}?`
-  )) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/partners/${encodeURIComponent(partner.id)}/${action}`,
-      {
-        method: "POST",
-        body: "{}"
-      }
-    );
-
-    partnerMessage(
-      data.message || `Partner wurde ${actionText}.`,
-      "success"
-    );
-
-    await loadPartners();
-  } catch (error) {
-    partnerMessage(getErrorMessage(error), "error");
-  }
-}
-
-async function deletePartner(partner) {
-  if (!window.confirm(
-    `Möchtest du den Partner "${partner.name}" endgültig löschen?`
-  )) return;
-
-  try {
-    const data = await apiRequest(
-      `/api/admin/partners/${encodeURIComponent(partner.id)}`,
-      { method: "DELETE" }
-    );
-
-    partnerMessage(
-      data.message || "Partner wurde gelöscht.",
-      "success"
-    );
-
-    await loadPartners();
-  } catch (error) {
-    partnerMessage(getErrorMessage(error), "error");
-  }
-}
-
-// Partner erstellen und bearbeiten
-partnerForm?.addEventListener("submit", async event => {
-  event.preventDefault();
-
-  const submitButton = partnerForm.querySelector(
-    'button[type="submit"]'
-  );
-
-  if (submitButton) submitButton.disabled = true;
-
-  const requestedStatus =
-    document.getElementById("partnerStatus").value;
-
-  const body = {
-    name: document.getElementById("partnerName").value.trim(),
-    description: document.getElementById("partnerDescription").value.trim(),
-    website_url: document.getElementById("partnerWebsite").value.trim(),
-    logo_key: document.getElementById("partnerLogoKey").value.trim() || null
-  };
-
-  try {
-    let savedPartnerId = editingPartnerId;
-
-    if (editingPartnerId) {
-      await apiRequest(
-        `/api/admin/partners/${encodeURIComponent(editingPartnerId)}`,
-        {
-          method: "PATCH",
-                  body: JSON.stringify(body)
         }
       );
 
@@ -2237,5 +1180,271 @@ openCmsView = function(viewName) {
   const moneyToCents = value => value === '' ? null : Math.round(Number(value) * 100);
   const centsToMoney = value => value == null ? '' : (Number(value) / 100).toFixed(2);
   const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const showShopMessage = (text, type='') => showMessage(message, text, type);  
-}
+  const showShopMessage = (text, type='') => showMessage(message, text, type);
+
+  async function shopRequest(path, options={}) {
+    return apiRequest(`/api/admin/shop${path}`, options);
+  }
+
+  function closeProductEditor() {
+    productEditor.hidden = true;
+    $('shopProductForm').reset();
+    $('shopProductId').value = '';
+    $('shopVariantEditor').hidden = true;
+    editingProductId = null;
+  }
+
+  function closeCategoryEditor() {
+    categoryEditor.hidden = true;
+    $('shopCategoryForm').reset();
+    $('shopCategoryId').value = '';
+  }
+
+  function renderCategoryChoices(selected=[]) {
+    const container = $('shopProductCategoryChoices');
+    container.replaceChildren();
+    if (!shopCategories.length) {
+      container.textContent = 'Lege zuerst mindestens eine aktive Kategorie an.';
+      return;
+    }
+    shopCategories.filter(category => category.status === 'active').forEach(category => {
+      const label = document.createElement('label');
+      label.className = 'shop-category-choice';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox'; checkbox.name = 'shopCategoryIds'; checkbox.value = category.id;
+      checkbox.checked = selected.includes(category.id);
+      label.append(checkbox, document.createTextNode(category.name));
+      container.append(label);
+    });
+  }
+
+  function renderProducts() {
+    if (!productsList) return;
+    productsList.replaceChildren();
+    const filter = $('shopProductStatusFilter')?.value || '';
+    const filtered = shopProducts.filter(product => !filter || product.status === filter);
+    if (!filtered.length) {
+      const empty = document.createElement('p'); empty.className='muted';
+      empty.textContent = 'Noch keine Produkte in diesem Bereich.'; productsList.append(empty); return;
+    }
+    filtered.forEach(product => {
+      const card = document.createElement('article'); card.className='news-card';
+      const details = document.createElement('div'); details.className='news-card-details';
+      const title = document.createElement('h3'); title.textContent=product.name;
+      const meta = document.createElement('p'); meta.className='news-meta';
+      meta.textContent = `${product.price_cents == null ? 'Preis folgt' : new Intl.NumberFormat('de-DE',{style:'currency',currency:product.currency||'EUR'}).format(product.price_cents/100)} · ${product.slug || ''}`;
+      const status = document.createElement('span'); status.className=`shop-status ${product.status}`; status.textContent=product.status;
+      details.append(title,meta,status);
+      if (product.short_description) { const desc=document.createElement('p'); desc.className='news-excerpt'; desc.textContent=product.short_description; details.append(desc); }
+      const actions=document.createElement('div'); actions.className='news-actions';
+      if (canShop('shop.products.edit')) actions.append(actionButton('Bearbeiten','secondary-button',()=>openProductEditor(product)));
+      if (canShop('shop.products.publish')) actions.append(actionButton(product.status==='published'?'Zurückziehen':'Veröffentlichen','secondary-button',()=>togglePublish(product)));
+      if (canShop('shop.products.delete')) actions.append(actionButton('Löschen','danger-button',()=>deleteProduct(product)));
+      card.append(details,actions); productsList.append(card);
+    });
+  }
+
+  function actionButton(label, className, handler) {
+    const button=document.createElement('button'); button.type='button'; button.className=className; button.textContent=label;
+    button.addEventListener('click',handler); return button;
+  }
+
+  function renderCategories() {
+    if (!categoriesList) return;
+    categoriesList.replaceChildren();
+    if (!shopCategories.length) { const p=document.createElement('p'); p.className='muted'; p.textContent='Noch keine Kategorien vorhanden.'; categoriesList.append(p); return; }
+    shopCategories.forEach(category => {
+      const card=document.createElement('article'); card.className='news-card';
+      const details=document.createElement('div'); details.className='news-card-details';
+      const title=document.createElement('h3'); title.textContent=category.name;
+      const meta=document.createElement('p'); meta.className='news-meta';
+      meta.textContent=`${category.status} · ${category.slug || ''}`;
+      details.append(title,meta);
+      if(category.description){const desc=document.createElement('p');desc.className='news-excerpt';desc.textContent=category.description;details.append(desc);}
+      const actions=document.createElement('div');actions.className='news-actions';
+      if(canShop('shop.categories.manage')) actions.append(actionButton('Bearbeiten','secondary-button',()=>openCategoryEditor(category)));
+      if(canShop('shop.categories.manage')) actions.append(actionButton('Löschen','danger-button',()=>deleteCategory(category)));
+      card.append(details,actions);categoriesList.append(card);
+    });
+  }
+
+  async function loadShop() {
+    if (!productsList || !categoriesList) return;
+    productsList.replaceChildren(Object.assign(document.createElement('p'),{className:'muted',textContent:'Shop wird geladen …'}));
+    try {
+      const data = await shopRequest('/products');
+      shopProducts = data.products || [];
+      const categoryData = await shopRequest('/categories');
+      shopCategories = categoryData.categories || [];
+      renderProducts();
+      renderCategories();
+    } catch(error) {
+      showShopMessage(getErrorMessage(error),'error');
+    }
+  }
+
+  function openProductEditor(product=null) {
+    editingProductId = product?.id || null;
+    $('shopProductEditorTitle').textContent = product ? 'Produkt bearbeiten' : 'Neues Produkt';
+    $('shopProductId').value = product?.id || '';
+    $('shopProductName').value = product?.name || '';
+    $('shopProductSlug').value = product?.slug || '';
+    $('shopProductShortDescription').value = product?.short_description || '';
+    $('shopProductDescription').value = product?.description || '';
+    $('shopProductStatus').value = product?.status || 'draft';
+    $('shopProductPrice').value = centsToMoney(product?.price_cents);
+    $('shopProductComparePrice').value = centsToMoney(product?.compare_at_price_cents);
+    $('shopProductSortOrder').value = product?.sort_order ?? 0;
+    $('shopProductFeatured').checked = Boolean(product?.is_featured);
+    renderCategoryChoices(product?.category_ids || []);
+    $('shopVariantEditor').hidden = !product;
+    $('shopProductEditor').hidden = false;
+    $('shopProductEditor').scrollIntoView({behavior:'smooth'});
+  }
+
+  function openCategoryEditor(category=null) {
+    $('shopCategoryId').value = category?.id || '';
+    $('shopCategoryName').value = category?.name || '';
+    $('shopCategoryDescription').value = category?.description || '';
+    $('shopCategorySortOrder').value = category?.sort_order ?? 0;
+    $('shopCategoryEditorTitle').textContent = category ? 'Kategorie bearbeiten' : 'Neue Kategorie';
+    categoryEditor.hidden = false;
+    categoryEditor.scrollIntoView({behavior:'smooth'});
+  }
+
+  $('shopProductForm')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const category_ids = Array.from(document.querySelectorAll('input[name="shopCategoryIds"]:checked')).map(input=>input.value);
+    const payload={name:$('shopProductName').value.trim(),slug:$('shopProductSlug').value.trim(),short_description:$('shopProductShortDescription').value.trim(),description:$('shopProductDescription').value.trim(),status:$('shopProductStatus').value,price_cents:moneyToCents($('shopProductPrice').value),compare_at_price_cents:moneyToCents($('shopProductComparePrice').value),sort_order:Number($('shopProductSortOrder').value||0),is_featured:$('shopProductFeatured').checked};
+    const button=$('shopProductForm').querySelector('button[type="submit"]'); button.disabled=true;
+    try {
+      let productId=editingProductId;
+      if (productId) await shopRequest(`/products/${encodeURIComponent(productId)}`,{method:'PATCH',body:JSON.stringify(payload)});
+      else { const created=await shopRequest('/products',{method:'POST',body:JSON.stringify(payload)}); productId=created.id; }
+      // Beim Erstellen werden Kategorien direkt zugewiesen. Beim Bearbeiten lassen wir bestehende Zuordnungen unverändert, da die aktuelle Admin-GET-API diese nicht mitliefert.
+      if (!editingProductId) await shopRequest(`/products/${encodeURIComponent(productId)}/categories`,{method:'PUT',body:JSON.stringify({category_ids})});
+      showShopMessage('Produkt gespeichert. Es befindet sich zunächst als Entwurf im Shop.','success');
+      closeProductEditor(); await loadShop();
+    } catch(error) { showShopMessage(getErrorMessage(error),'error'); }
+    finally { button.disabled=false; }
+  });
+
+  $('shopCategoryForm')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const id=$('shopCategoryId').value;
+    const payload={name:$('shopCategoryName').value.trim(),description:$('shopCategoryDescription').value.trim(),sort_order:Number($('shopCategorySortOrder').value||0),status:'active'};
+    const button=$('shopCategoryForm').querySelector('button[type="submit"]'); button.disabled=true;
+    try {
+      if(id) await shopRequest(`/categories/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload)});
+      else await shopRequest('/categories',{method:'POST',body:JSON.stringify(payload)});
+      closeCategoryEditor(); await loadShop(); showShopMessage('Kategorie gespeichert.','success');
+    } catch(error) { showShopMessage(getErrorMessage(error),'error'); }
+    finally { button.disabled=false; }
+  });
+
+  $('shopVariantForm')?.addEventListener('submit', async event => {
+    event.preventDefault(); if(!editingProductId) return;
+    const payload={variant_name:$('shopVariantName').value.trim(),sku:$('shopVariantSku').value.trim(),stock_quantity:Number($('shopVariantStock').value||0),track_inventory:$('shopVariantTrackInventory').checked,status:'active'};
+    try { await shopRequest(`/products/${encodeURIComponent(editingProductId)}/variants`,{method:'POST',body:JSON.stringify(payload)}); $('shopVariantForm').reset(); $('shopVariantStock').value='0'; $('shopVariantTrackInventory').checked=true; showShopMessage('Variante wurde hinzugefügt.','success'); }
+    catch(error){showShopMessage(getErrorMessage(error),'error');}
+  });
+
+  async function togglePublish(product) {
+    const action=product.status==='published'?'unpublish':'publish';
+    try { await shopRequest(`/products/${encodeURIComponent(product.id)}/${action}`,{method:'POST',body:'{}'}); await loadShop(); showShopMessage(action==='publish'?'Produkt veröffentlicht.':'Produkt zurückgezogen.','success'); }
+    catch(error){showShopMessage(getErrorMessage(error),'error');}
+  }
+  async function deleteProduct(product) {
+    if(!confirm(`Produkt „${product.name}“ wirklich löschen?`)) return;
+    try { await shopRequest(`/products/${encodeURIComponent(product.id)}`,{method:'DELETE'}); await loadShop(); showShopMessage('Produkt gelöscht.','success'); }
+    catch(error){showShopMessage(getErrorMessage(error),'error');}
+  }
+  async function deleteCategory(category) {
+    if(!confirm(`Kategorie „${category.name}“ wirklich löschen?`)) return;
+    try { await shopRequest(`/categories/${encodeURIComponent(category.id)}`,{method:'DELETE'}); await loadShop(); showShopMessage('Kategorie gelöscht.','success'); }
+    catch(error){showShopMessage(getErrorMessage(error),'error');}
+  }
+
+  $('createShopProductButton')?.addEventListener('click',()=>openProductEditor());
+  $('createShopCategoryButton')?.addEventListener('click',()=>openCategoryEditor());
+  $('closeShopProductEditor')?.addEventListener('click',closeProductEditor);
+  $('cancelShopProductEditor')?.addEventListener('click',closeProductEditor);
+  $('closeShopCategoryEditor')?.addEventListener('click',closeCategoryEditor);
+  $('cancelShopCategoryEditor')?.addEventListener('click',closeCategoryEditor);
+  $('shopProductStatusFilter')?.addEventListener('change',renderProducts);
+
+  const previousOpenCmsViewForShop = openCmsView;
+  openCmsView = function(viewName) {
+    previousOpenCmsViewForShop(viewName);
+    if(viewName==='shop') loadShop();
+  };
+})();
+
+
+// ==================================================
+// FINAL CMS DASHBOARD INITIALIZATION FIX
+// ==================================================
+(() => {
+  const isOwnerUser = value =>
+    value === 1 || value === true || value === "1";
+
+  async function refreshCmsDashboard() {
+    const message = document.getElementById("dashboardMessage");
+    const currentUser = document.getElementById("currentUser");
+    if (!currentUser) return;
+
+    try {
+      const data = await apiRequest("/api/admin/me");
+      if (!data?.user) {
+        throw new Error("Die Benutzerinformationen wurden nicht korrekt geliefert.");
+      }
+
+      const user = data.user;
+      const permissions = Array.isArray(data.permissions) ? data.permissions : [];
+      const owner = isOwnerUser(user.is_owner);
+      const roleText = owner ? "OWNER" : "BENUTZER";
+
+      const setText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value ?? "–";
+      };
+
+      setText("currentUser", `${user.name || "Unbekannt"} (${user.email || "–"})`);
+      setText("roleBadge", roleText);
+      setText("sidebarUserName", user.name || "ULTOR User");
+      setText("sidebarUserRole", owner ? "Owner" : "CMS-Benutzer");
+      setText("userAvatar", (user.name || "U").trim().charAt(0).toUpperCase());
+      setText("statUserRole", roleText);
+      setText("statPermissionCount", owner ? "Alle" : String(permissions.length));
+      setText("accountName", user.name || "–");
+      setText("accountEmail", user.email || "–");
+      setText("accountRole", roleText);
+
+      const ownerPanelElement = document.getElementById("ownerPanel");
+      const standardPanelElement = document.getElementById("standardPanel");
+      if (ownerPanelElement) ownerPanelElement.hidden = !owner;
+      if (standardPanelElement) standardPanelElement.hidden = owner;
+
+      if (!owner && typeof renderMyPermissions === "function") {
+        renderMyPermissions(permissions);
+      }
+      if (owner && typeof loadUsers === "function") {
+        await loadUsers();
+      }
+      if (message) showMessage(message, "");
+    } catch (error) {
+      console.error("CMS dashboard initialization failed:", error);
+      if (message) showMessage(message, getErrorMessage(error), "error");
+
+      if (/Nicht angemeldet|Zugriff nicht freigegeben|freigegeben/i.test(String(error?.message || ""))) {
+        window.location.replace("/admin/login.html");
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshCmsDashboard, { once: true });
+  } else {
+    refreshCmsDashboard();
+  }
+})();
