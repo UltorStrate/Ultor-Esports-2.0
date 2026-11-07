@@ -878,6 +878,152 @@
   </main>
 
   <script src="/admin/admin.js?v=20261108" defer></script>
+<script>
+(() => {
+  const titles = {
+    dashboard: "Dashboard",
+    news: "News",
+    teams: "Teams & Spieler",
+    partners: "Partner",
+    shop: "Shop",
+    media: "Medien",
+    users: "Benutzer & Rechte",
+    activity: "Aktivitätsprotokoll"
+  };
 
+  function showView(name) {
+    const target = document.getElementById("view-" + name);
+    if (!target) return;
+
+    document.querySelectorAll(".cms-view").forEach(view => {
+      view.classList.toggle("active", view === target);
+    });
+
+    document.querySelectorAll(".nav-item[data-view]").forEach(button => {
+      button.classList.toggle("active", button.dataset.view === name);
+    });
+
+    const title = document.getElementById("breadcrumbTitle");
+    if (title) title.textContent = titles[name] || "Dashboard";
+
+    document.getElementById("sidebar")?.classList.remove("open");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  document.addEventListener("click", event => {
+    const button = event.target.closest?.("[data-view]");
+    if (!button) return;
+
+    // Das reguläre CMS übernimmt, wenn sein Script funktioniert.
+    if (typeof window.openCmsView === "function") return;
+
+    event.preventDefault();
+    showView(button.dataset.view);
+  }, true);
+
+  document.getElementById("mobileMenuButton")?.addEventListener("click", () => {
+    if (typeof window.openCmsView === "function") return;
+    document.getElementById("sidebar")?.classList.toggle("open");
+  });
+
+  async function loadUser() {
+    const message = document.getElementById("dashboardMessage");
+
+    try {
+      const response = await fetch("/api/admin/me", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      });
+
+      const raw = await response.text();
+      let data;
+
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error("Ungültige API-Antwort (HTTP " + response.status + ")");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "HTTP " + response.status
+        );
+      }
+
+      const user = data.user;
+      if (!user) throw new Error("Benutzerobjekt fehlt in der API-Antwort.");
+
+      const permissions = Array.isArray(data.permissions)
+        ? data.permissions
+        : [];
+
+      const owner =
+        user.is_owner === 1 ||
+        user.is_owner === true ||
+        user.is_owner === "1";
+
+      const name = user.name || user.email || "ULTOR User";
+      const role = owner ? "OWNER" : "CMS-BENUTZER";
+
+      const setText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value ?? "–";
+      };
+
+      setText("sidebarUserName", name);
+      setText("sidebarUserRole", owner ? "Owner" : "CMS-Benutzer");
+      setText("userAvatar", name.charAt(0).toUpperCase());
+      setText("roleBadge", role);
+      setText("statUserRole", role);
+      setText("statPermissionCount", owner ? "Alle" : permissions.length);
+      setText("accountName", name);
+      setText("accountEmail", user.email || "–");
+      setText("accountRole", role);
+
+      const ownerPanel = document.getElementById("ownerPanel");
+      const standardPanel = document.getElementById("standardPanel");
+
+      if (ownerPanel) ownerPanel.hidden = !owner;
+      if (standardPanel) standardPanel.hidden = owner;
+
+      if (!owner) {
+        const container = document.getElementById("myPermissions");
+
+        if (container) {
+          container.replaceChildren();
+
+          permissions.forEach(permission => {
+            const chip = document.createElement("span");
+            chip.className = "permission-chip";
+            chip.textContent = permission;
+            container.append(chip);
+          });
+        }
+      }
+
+      if (message) {
+        message.textContent = "";
+        message.className = "message";
+      }
+
+    } catch (error) {
+      console.error("ULTOR CMS Benutzerfehler:", error);
+
+      if (message) {
+        message.textContent =
+          "Benutzer konnte nicht geladen werden: " + error.message;
+        message.className = "message error";
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadUser, { once: true });
+  } else {
+    loadUser();
+  }
+})();
+</script>
 </body>
 </html> 
