@@ -1274,7 +1274,42 @@ export async function handlePublicShopApi(request, env) {
       ORDER BY p.sort_order ASC, p.published_at DESC
     `).all();
 
-    return json({ success: true, products: result.results });
+    const products = result.results || [];
+
+    // Kategorien gehören zur Produktübersicht, nicht nur zur Detailansicht.
+    // Ein gemeinsamer Join vermeidet eine separate Anfrage pro Produkt.
+    const categoryResult = await env.DB.prepare(`
+      SELECT
+        pc.product_id,
+        c.id,
+        c.name,
+        c.slug
+      FROM shop_product_categories pc
+      JOIN shop_categories c ON c.id = pc.category_id
+      JOIN shop_products p ON p.id = pc.product_id
+      WHERE p.status = 'published'
+        AND c.status = 'active'
+      ORDER BY c.sort_order ASC, c.name ASC
+    `).all();
+
+    const categoriesByProduct = new Map();
+    for (const row of categoryResult.results || []) {
+      if (!categoriesByProduct.has(row.product_id)) {
+        categoriesByProduct.set(row.product_id, []);
+      }
+      categoriesByProduct.get(row.product_id).push({
+        id: row.id,
+        name: row.name,
+        slug: row.slug
+      });
+    }
+
+    const productsWithCategories = products.map(product => ({
+      ...product,
+      categories: categoriesByProduct.get(product.id) || []
+    }));
+
+    return json({ success: true, products: productsWithCategories });
   }
 
   return json({ error: "Shop-Endpunkt nicht gefunden." }, 404);
