@@ -839,6 +839,102 @@ async function createVariant(request, env, current, productId) {
   return json({ success: true, id }, 201);
 }
 
+async function updateVariant(request, env, current, variantId) {
+  if (!can(current, "shop.products.edit")) {
+    return json({
+      error: "Keine Berechtigung zum Bearbeiten von Produkten."
+    }, 403);
+  }
+
+  const body = await readBody(request);
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json({ error: "Ungültige Anfrage." }, 400);
+  }
+
+  const existing = await env.DB.prepare(`
+    SELECT *
+    FROM shop_product_variants
+    WHERE id = ?
+  `).bind(variantId).first();
+
+  if (!existing) {
+    return json({ error: "Variante nicht gefunden." }, 404);
+  }
+
+  const merged = { ...existing, ...body };
+  const error = validateVariant(merged);
+
+  if (error) return json({ error }, 400);
+
+  if (
+    body.sort_order !== undefined &&
+    !Number.isInteger(body.sort_order)
+  ) {
+    return json({ error: "Ungültige Sortierung." }, 400);
+  }
+
+  try {
+    await env.DB.prepare(`
+      UPDATE shop_product_variants
+      SET
+        variant_name = ?,
+        sku = ?,
+        option1_name = ?,
+        option1_value = ?,
+        option2_name = ?,
+        option2_value = ?,
+        option3_name = ?,
+        option3_value = ?,
+        price_cents = ?,
+        compare_at_price_cents = ?,
+        stock_quantity = ?,
+        track_inventory = ?,
+        status = ?,
+        sort_order = ?
+      WHERE id = ?
+    `).bind(
+      merged.variant_name.trim(),
+      merged.sku?.trim() || null,
+      merged.option1_name?.trim() || null,
+      merged.option1_value?.trim() || null,
+      merged.option2_name?.trim() || null,
+      merged.option2_value?.trim() || null,
+      merged.option3_name?.trim() || null,
+      merged.option3_value?.trim() || null,
+      merged.price_cents ?? null,
+      merged.compare_at_price_cents ?? null,
+      merged.stock_quantity ?? 0,
+      merged.track_inventory ? 1 : 0,
+      merged.status || "active",
+      merged.sort_order ?? existing.sort_order ?? 0,
+      variantId
+    ).run();
+  } catch (error) {
+    if (error.message?.includes("UNIQUE")) {
+      return json({ error: "Diese SKU ist bereits vergeben." }, 409);
+    }
+
+    throw error;
+  }
+
+  await audit(
+    env,
+    current.user.id,
+    "shop.product.variant.updated",
+    existing.product_id,
+    {
+      variant_id: variantId,
+      variant_name: merged.variant_name
+    }
+  );
+
+  return json({
+    success: true,
+    message: "Variante wurde aktualisiert."
+  });
+}
+
 async function deleteVariant(env, current, variantId) {
   if (!can(current, "shop.products.edit")) {
     return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
@@ -993,6 +1089,10 @@ export async function handleShopApi(request, env, auth) {
   const variantMatch = path.match(
     /^\/api\/admin\/shop\/variants\/([^/]+)$/
   );
+
+    if (variantMatch && method === "PATCH") {
+    return updateVariant(request, env, current, variantMatch[1]);
+  }
 
   if (variantMatch && method === "DELETE") {
     return deleteVariant(env, current, variantMatch[1]);
