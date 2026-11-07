@@ -2142,3 +2142,130 @@ body.dashboard-page .coming-soon {
     width: 100%;
   }
 }
+
+
+/* =========================================
+   SHOP PRODUCT CATEGORY SELECT – DROPDOWN
+   ========================================= */
+#view-shop .shop-category-choices {
+  display: block;
+  width: 100%;
+  margin: 10px 0 16px;
+}
+
+#view-shop .shop-category-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+#view-shop .shop-category-dropdown > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #0b0911;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+#view-shop .shop-category-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+#view-shop .shop-category-dropdown > summary::after {
+  content: "⌄";
+  flex: 0 0 auto;
+  color: var(--accent-hover);
+  font-size: 18px;
+  line-height: 1;
+  transition: transform .18s ease;
+}
+
+#view-shop .shop-category-dropdown[open] > summary {
+  border-color: var(--accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+#view-shop .shop-category-dropdown[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+#view-shop .shop-category-dropdown-text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#view-shop .shop-category-dropdown-meta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#view-shop .shop-category-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: grid;
+  gap: 3px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--accent);
+  border-top: 0;
+  border-radius: 0 0 7px 7px;
+  background: #100d17;
+  box-shadow: 0 14px 30px rgba(0,0,0,.38);
+}
+
+#view-shop .shop-category-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#view-shop .shop-category-choice:hover {
+  border-color: rgba(139,53,245,.35);
+  background: rgba(139,53,245,.10);
+}
+
+#view-shop .shop-category-choice input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+#view-shop .shop-category-choice.is-inactive {
+  color: var(--muted);
+}
+
+#view-shop .shop-category-choice input:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
