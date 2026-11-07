@@ -2231,8 +2231,10 @@ openCmsView = function(viewName) {
     if (!container) return;
     container.replaceChildren();
 
-    const availableCategories = shopCategories;
-    if (!availableCategories.length) {
+    const selectedIds = new Set((Array.isArray(selected) ? selected : []).map(id => String(id)));
+    const availableCategories = Array.isArray(shopCategories) ? shopCategories : [];
+
+    if (!availableCategories.some(category => category.status === 'active')) {
       const empty = document.createElement('p');
       empty.className = 'muted';
       empty.textContent = 'Lege zuerst eine aktive Kategorie an.';
@@ -2240,18 +2242,65 @@ openCmsView = function(viewName) {
       return;
     }
 
+    // Native details/summary gives us an accessible dropdown without changing
+    // the existing category_ids API payload or the product save workflow.
+    const dropdown = document.createElement('details');
+    dropdown.className = 'shop-category-dropdown';
+
+    const summary = document.createElement('summary');
+    summary.className = 'shop-category-dropdown-trigger';
+
+    const summaryText = document.createElement('span');
+    summaryText.className = 'shop-category-dropdown-text';
+
+    const summaryMeta = document.createElement('span');
+    summaryMeta.className = 'shop-category-dropdown-meta';
+
+    const updateSummary = () => {
+      const checked = Array.from(dropdown.querySelectorAll('input[name="shopCategoryIds"]:checked'));
+      const names = checked.map(input => input.dataset.categoryName || input.value);
+      if (!names.length) {
+        summaryText.textContent = 'Shop-Kategorien auswählen';
+      } else if (names.length <= 2) {
+        summaryText.textContent = names.join(' · ');
+      } else {
+        summaryText.textContent = `${names.slice(0, 2).join(' · ')} +${names.length - 2}`;
+      }
+      summaryMeta.textContent = names.length === 1 ? '1 ausgewählt' : `${names.length} ausgewählt`;
+    };
+
+    summary.append(summaryText, summaryMeta);
+    const menu = document.createElement('div');
+    menu.className = 'shop-category-dropdown-menu';
+
     availableCategories.forEach(category => {
+      const isActive = category.status === 'active';
+      const isSelected = selectedIds.has(String(category.id));
+
       const label = document.createElement('label');
       label.className = 'shop-category-choice';
+      if (!isActive) label.classList.add('is-inactive');
+
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.name = 'shopCategoryIds';
-      checkbox.value = category.id;
-      checkbox.checked = selected.includes(category.id);
-      const categoryLabel = category.status === 'active' ? category.name : `${category.name} (inaktiv)`;
-      label.append(checkbox, document.createTextNode(categoryLabel));
-      container.append(label);
+      checkbox.value = String(category.id);
+      checkbox.dataset.categoryName = category.name || 'Kategorie';
+      checkbox.checked = isSelected;
+      // Inactive categories cannot be newly assigned. Existing assignments
+      // remain visible and can be unchecked to remove them.
+      checkbox.disabled = !isActive && !isSelected;
+      checkbox.addEventListener('change', updateSummary);
+
+      const categoryLabel = document.createElement('span');
+      categoryLabel.textContent = isActive ? category.name : `${category.name} (inaktiv)`;
+      label.append(checkbox, categoryLabel);
+      menu.append(label);
     });
+
+    dropdown.append(summary, menu);
+    container.append(dropdown);
+    updateSummary();
   }
 
   function renderProducts() {
