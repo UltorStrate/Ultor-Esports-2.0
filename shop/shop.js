@@ -173,25 +173,42 @@ function getCategoryName(product) {
     return category.name || "ULTOR COLLECTION";
 }
 
-function getProductImage(product) {
-    const primary = product.primary_image;
+function normalizeShopImageUrl(value) {
+    if (!value) return null;
 
-    if (typeof primary === "string") return primary;
-
-    if (primary && typeof primary === "object") {
-        return primary.url || primary.image_url || primary.src || null;
+    // Unterstützt bereits vollständige URLs und absolute Website-Pfade.
+    if (typeof value === "object") {
+        value = value.image_key || value.imageKey || value.key ||
+            value.url || value.image_url || value.src || null;
     }
+
+    if (typeof value !== "string" || !value.trim()) return null;
+
+    const raw = value.trim();
+
+    if (/^(https?:)?\/\//i.test(raw) || raw.startsWith("data:")) {
+        return raw;
+    }
+
+    if (raw.startsWith("/media/")) return raw;
+
+    // R2-Schlüssel wie "shop/UUID.jpg" müssen über die Media-Route laufen.
+    const key = raw.replace(/^\/+/, "").replace(/^media\//i, "");
+    return "/media/" + key.split("/").map(encodeURIComponent).join("/");
+}
+
+function getProductImage(product) {
+    const primary = normalizeShopImageUrl(product.primary_image);
+    if (primary) return primary;
 
     if (Array.isArray(product.images) && product.images.length) {
-        const image = product.images.find(item => item.is_primary) ||
+        const image = product.images.find(item => item && item.is_primary) ||
             product.images[0];
-
-        if (typeof image === "string") return image;
-
-        return image.url || image.image_url || image.src || null;
+        const imageUrl = normalizeShopImageUrl(image);
+        if (imageUrl) return imageUrl;
     }
 
-    return product.image_url || product.image || null;
+    return normalizeShopImageUrl(product.image_url || product.image || product.image_key);
 }
 
 function formatPrice(cents, currency = "EUR") {
