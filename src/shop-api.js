@@ -1,3 +1,4 @@
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -428,6 +429,11 @@ async function updateProduct(request, env, current, id) {
 
   if (!existing) return json({ error: "Produkt nicht gefunden." }, 404);
 
+  if (body.status !== undefined && body.status !== existing.status &&
+      !can(current, "shop.products.publish")) {
+    return json({ error: "Keine Berechtigung zum Ändern des Veröffentlichungsstatus." }, 403);
+  }
+
   const name = body.name !== undefined ? body.name.trim() : existing.name;
   const slug = body.slug !== undefined
     ? slugify(body.slug)
@@ -446,6 +452,11 @@ async function updateProduct(request, env, current, id) {
         price_cents = ?,
         compare_at_price_cents = ?,
         currency = ?,
+        status = ?,
+        published_at = CASE
+          WHEN ? = 'published' THEN COALESCE(published_at, CURRENT_TIMESTAMP)
+          ELSE NULL
+        END,
         is_featured = ?,
         sort_order = ?,
         updated_by = ?,
@@ -465,6 +476,8 @@ async function updateProduct(request, env, current, id) {
         ? body.compare_at_price_cents
         : existing.compare_at_price_cents,
       body.currency || existing.currency,
+      body.status || existing.status,
+      body.status || existing.status,
       body.is_featured !== undefined
         ? (body.is_featured ? 1 : 0)
         : existing.is_featured,
@@ -552,10 +565,6 @@ async function changeProductStatus(env, current, id, action) {
 // =========================================
 
 async function setProductCategories(request, env, current, productId) {
-  if (!can(current, "shop.products.edit")) {
-    return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
-  }
-
   const body = await readBody(request);
 
   if (!Array.isArray(body?.category_ids) ||
@@ -564,10 +573,19 @@ async function setProductCategories(request, env, current, productId) {
   }
 
   const product = await env.DB.prepare(`
-    SELECT id FROM shop_products WHERE id = ?
+    SELECT id, created_by, status FROM shop_products WHERE id = ?
   `).bind(productId).first();
 
   if (!product) return json({ error: "Produkt nicht gefunden." }, 404);
+
+  // Ersteller dürfen Kategorien beim Anlegen des eigenen Entwurfs setzen.
+  const maySetCategories = can(current, "shop.products.edit") ||
+    (can(current, "shop.products.create") &&
+      product.created_by === current.user.id && product.status === "draft");
+
+  if (!maySetCategories) {
+    return json({ error: "Keine Berechtigung zum Bearbeiten von Produktkategorien." }, 403);
+  }
 
   const statements = [
     env.DB.prepare(`
@@ -655,13 +673,71 @@ async function addProductImage(request, env, current, productId) {
   return json({ success: true, id }, 201);
 }
 
+async function updateProductImage(request, env, current, imageId) {
+  if (!can(current, "shop.products.edit")) {
+    return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
+  }
+
+  const body = await readBody(request);
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json({ error: "Ungültige Anfrage." }, 400);
+  }
+  if (body.alt_text !== undefined && !validText(body.alt_text, 300)) {
+    return json({ error: "Der Alt-Text darf maximal 300 Zeichen enthalten." }, 400);
+  }
+  if (body.sort_order !== undefined && !Number.isInteger(body.sort_order)) {
+    return json({ error: "Ungültige Bildsortierung." }, 400);
+  }
+  if (body.is_primary !== undefined && ![0, 1, true, false].includes(body.is_primary)) {
+    return json({ error: "Ungültige Hauptbild-Einstellung." }, 400);
+  }
+
+  const image = await env.DB.prepare(`
+    SELECT id, product_id, image_key, alt_text, sort_order, is_primary
+    FROM shop_product_images
+    WHERE id = ?
+  `).bind(imageId).first();
+
+  if (!image) return json({ error: "Produktbild nicht gefunden." }, 404);
+
+  const isPrimary = body.is_primary !== undefined
+    ? (body.is_primary ? 1 : 0)
+    : image.is_primary;
+
+  if (isPrimary) {
+    await env.DB.prepare(`
+      UPDATE shop_product_images
+      SET is_primary = 0
+      WHERE product_id = ? AND id != ?
+    `).bind(image.product_id, imageId).run();
+  }
+
+  await env.DB.prepare(`
+    UPDATE shop_product_images
+    SET alt_text = ?, sort_order = ?, is_primary = ?
+    WHERE id = ?
+  `).bind(
+    body.alt_text !== undefined ? (body.alt_text.trim() || null) : image.alt_text,
+    body.sort_order ?? image.sort_order,
+    isPrimary,
+    imageId
+  ).run();
+
+  await audit(env, current.user.id, "shop.product.image.updated", image.product_id, {
+    image_id: imageId,
+    is_primary: Boolean(isPrimary)
+  });
+
+  return json({ success: true, message: "Produktbild wurde aktualisiert." });
+}
+
 async function deleteProductImage(env, current, imageId) {
   if (!can(current, "shop.products.edit")) {
     return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
   }
 
   const image = await env.DB.prepare(`
-    SELECT id, product_id, image_key
+    SELECT id, product_id, image_key, is_primary
     FROM shop_product_images
     WHERE id = ?
   `).bind(imageId).first();
@@ -671,6 +747,22 @@ async function deleteProductImage(env, current, imageId) {
   await env.DB.prepare(`
     DELETE FROM shop_product_images WHERE id = ?
   `).bind(imageId).run();
+
+  if (image.is_primary) {
+    const nextImage = await env.DB.prepare(`
+      SELECT id
+      FROM shop_product_images
+      WHERE product_id = ?
+      ORDER BY sort_order ASC, id ASC
+      LIMIT 1
+    `).bind(image.product_id).first();
+
+    if (nextImage) {
+      await env.DB.prepare(`
+        UPDATE shop_product_images SET is_primary = 1 WHERE id = ?
+      `).bind(nextImage.id).run();
+    }
+  }
 
   await audit(env, current.user.id, "shop.product.image.deleted", image.product_id, {
     image_id: imageId
@@ -723,6 +815,10 @@ function validateVariant(body) {
   if (body.track_inventory !== undefined &&
       ![0, 1, true, false].includes(body.track_inventory)) {
     return "Ungültige Lagerbestandseinstellung.";
+  }
+
+  if (body.sort_order !== undefined && !Number.isInteger(body.sort_order)) {
+    return "Ungültige Variantensortierung.";
   }
 
   if (body.status !== undefined &&
@@ -795,6 +891,65 @@ async function createVariant(request, env, current, productId) {
   return json({ success: true, id }, 201);
 }
 
+async function updateVariant(request, env, current, variantId) {
+  if (!can(current, "shop.products.edit")) {
+    return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
+  }
+
+  const body = await readBody(request);
+  const error = validateVariant(body);
+  if (error) return json({ error }, 400);
+
+  const existing = await env.DB.prepare(`
+    SELECT * FROM shop_product_variants WHERE id = ?
+  `).bind(variantId).first();
+
+  if (!existing) return json({ error: "Variante nicht gefunden." }, 404);
+
+  try {
+    await env.DB.prepare(`
+      UPDATE shop_product_variants
+      SET
+        variant_name = ?, sku = ?,
+        option1_name = ?, option1_value = ?,
+        option2_name = ?, option2_value = ?,
+        option3_name = ?, option3_value = ?,
+        price_cents = ?, compare_at_price_cents = ?,
+        stock_quantity = ?, track_inventory = ?,
+        status = ?, sort_order = ?
+      WHERE id = ?
+    `).bind(
+      body.variant_name.trim(),
+      body.sku?.trim() || null,
+      body.option1_name?.trim() || null,
+      body.option1_value?.trim() || null,
+      body.option2_name?.trim() || null,
+      body.option2_value?.trim() || null,
+      body.option3_name?.trim() || null,
+      body.option3_value?.trim() || null,
+      body.price_cents ?? null,
+      body.compare_at_price_cents ?? null,
+      body.stock_quantity ?? 0,
+      body.track_inventory ? 1 : 0,
+      body.status || "active",
+      body.sort_order ?? 0,
+      variantId
+    ).run();
+  } catch (error) {
+    if (error.message?.includes("UNIQUE")) {
+      return json({ error: "Diese SKU ist bereits vergeben." }, 409);
+    }
+    throw error;
+  }
+
+  await audit(env, current.user.id, "shop.product.variant.updated", existing.product_id, {
+    variant_id: variantId,
+    variant_name: body.variant_name
+  });
+
+  return json({ success: true, message: "Variante wurde aktualisiert." });
+}
+
 async function deleteVariant(env, current, variantId) {
   if (!can(current, "shop.products.edit")) {
     return json({ error: "Keine Berechtigung zum Bearbeiten von Produkten." }, 403);
@@ -864,12 +1019,71 @@ export async function handleShopApi(request, env, auth) {
     }
 
     const result = await env.DB.prepare(`
-      SELECT *
-      FROM shop_products
-      ORDER BY sort_order ASC, updated_at DESC
+      SELECT
+        p.*,
+        (
+          SELECT image_key
+          FROM shop_product_images i
+          WHERE i.product_id = p.id
+          ORDER BY i.is_primary DESC, i.sort_order ASC
+          LIMIT 1
+        ) AS primary_image
+      FROM shop_products p
+      ORDER BY p.sort_order ASC, p.updated_at DESC
     `).all();
 
     return json({ success: true, products: result.results });
+  }
+
+  const productDetailMatch = path.match(/^\/api\/admin\/shop\/products\/([^/]+)$/);
+  if (productDetailMatch && method === "GET") {
+    if (!can(current, "shop.view")) {
+      return json({ error: "Keine Berechtigung zum Anzeigen des Shops." }, 403);
+    }
+
+    const productId = productDetailMatch[1];
+    const product = await env.DB.prepare(`
+      SELECT * FROM shop_products WHERE id = ?
+    `).bind(productId).first();
+
+    if (!product) return json({ error: "Produkt nicht gefunden." }, 404);
+
+    const [categoryRows, imageRows, variantRows] = await Promise.all([
+      env.DB.prepare(`
+        SELECT category_id
+        FROM shop_product_categories
+        WHERE product_id = ?
+        ORDER BY category_id ASC
+      `).bind(productId).all(),
+      env.DB.prepare(`
+        SELECT id, image_key, alt_text, sort_order, is_primary
+        FROM shop_product_images
+        WHERE product_id = ?
+        ORDER BY is_primary DESC, sort_order ASC
+      `).bind(productId).all(),
+      env.DB.prepare(`
+        SELECT
+          id, product_id, variant_name, sku,
+          option1_name, option1_value,
+          option2_name, option2_value,
+          option3_name, option3_value,
+          price_cents, compare_at_price_cents,
+          stock_quantity, track_inventory, status, sort_order
+        FROM shop_product_variants
+        WHERE product_id = ?
+        ORDER BY sort_order ASC, variant_name ASC
+      `).bind(productId).all()
+    ]);
+
+    return json({
+      success: true,
+      product: {
+        ...product,
+        category_ids: categoryRows.results.map(row => row.category_id),
+        images: imageRows.results,
+        variants: variantRows.results
+      }
+    });
   }
 
   if (path === "/api/admin/shop/products" && method === "POST") {
@@ -942,6 +1156,10 @@ export async function handleShopApi(request, env, auth) {
     /^\/api\/admin\/shop\/images\/([^/]+)$/
   );
 
+  if (imageMatch && method === "PATCH") {
+    return updateProductImage(request, env, current, imageMatch[1]);
+  }
+
   if (imageMatch && method === "DELETE") {
     return deleteProductImage(env, current, imageMatch[1]);
   }
@@ -949,6 +1167,10 @@ export async function handleShopApi(request, env, auth) {
   const variantMatch = path.match(
     /^\/api\/admin\/shop\/variants\/([^/]+)$/
   );
+
+  if (variantMatch && method === "PATCH") {
+    return updateVariant(request, env, current, variantMatch[1]);
+  }
 
   if (variantMatch && method === "DELETE") {
     return deleteVariant(env, current, variantMatch[1]);
@@ -1057,3 +1279,4 @@ export async function handlePublicShopApi(request, env) {
 
   return json({ error: "Shop-Endpunkt nicht gefunden." }, 404);
 }
+
