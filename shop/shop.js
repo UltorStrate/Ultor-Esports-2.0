@@ -1,13 +1,4 @@
 
-
-
-
-
-
-
-
-
-
 /* =========================================
    ULTOR ESPORTS - OFFICIAL SHOP
    API, PRODUCTS & PRODUCT DETAILS
@@ -17,7 +8,7 @@ const SHOP_API = "/api/shop";
 
 let shopProducts = [];
 let shopCategories = [];
-let activeCategory = "all";
+let activeCategory = null; // Hidden until a category is selected.
 
 /* =========================================
    API
@@ -44,10 +35,39 @@ async function shopApiRequest(endpoint) {
 }
 
 /* =========================================
+   PRODUCT SECTION VISIBILITY
+   ========================================= */
+
+function getProductSection() {
+    const productGrid = document.getElementById("productGrid");
+    return document.querySelector(".shop-products") ||
+        document.getElementById("products") ||
+        productGrid?.closest("section") ||
+        productGrid?.parentElement ||
+        null;
+}
+
+function setProductSectionVisible(visible) {
+    const section = getProductSection();
+    if (!section) return;
+
+    if (visible) {
+        section.hidden = false;
+        section.style.removeProperty("display");
+    } else {
+        section.hidden = true;
+        // Override a possible display:grid/flex declaration from the stylesheet.
+        section.style.setProperty("display", "none", "important");
+    }
+}
+
+/* =========================================
    LOAD SHOP DATA
    ========================================= */
 
 async function loadShopData() {
+    setProductSectionVisible(false);
+
     const productGrid = document.getElementById("productGrid");
     const emptyState = document.getElementById("productEmptyState");
 
@@ -196,7 +216,10 @@ function renderShopCategories() {
 }
 
 function setActiveCategory(categoryId) {
-    activeCategory = categoryId || "all";
+    if (!categoryId) return;
+
+    activeCategory = categoryId;
+    setProductSectionVisible(true);
 
     document.querySelectorAll(".category-card").forEach(card => {
         const isActive = card.dataset.category === activeCategory;
@@ -363,11 +386,19 @@ function renderShopProducts() {
 
     if (!productGrid || !emptyState) return;
 
-    const filteredProducts = shopProducts.filter(product => {
-        if (activeCategory === "all") return true;
+    // Initial state: no product list until the visitor chooses a category.
+    if (!activeCategory) {
+        productGrid.replaceChildren();
+        emptyState.hidden = true;
+        setProductSectionVisible(false);
+        return;
+    }
 
-        return getProductCategories(product).includes(activeCategory);
-    });
+    setProductSectionVisible(true);
+
+    const filteredProducts = shopProducts.filter(product =>
+        getProductCategories(product).includes(activeCategory)
+    );
 
     productGrid.replaceChildren();
 
@@ -378,15 +409,11 @@ function renderShopProducts() {
         const paragraph = emptyState.querySelector("p");
 
         if (heading) {
-            heading.textContent = activeCategory === "all"
-                ? "DIE KOLLEKTION ENTSTEHT."
-                : "KEINE PRODUKTE GEFUNDEN.";
+            heading.textContent = "KEINE PRODUKTE GEFUNDEN.";
         }
 
         if (paragraph) {
-            paragraph.textContent = activeCategory === "all"
-                ? "Wir arbeiten an den ersten offiziellen ULTOR Produkten. Schau bald wieder vorbei!"
-                : "In dieser Kategorie sind aktuell keine Produkte verfügbar.";
+            paragraph.textContent = "In dieser Kategorie sind aktuell keine Produkte verfügbar.";
         }
 
         return;
@@ -1050,11 +1077,15 @@ function closeProductDetails() {
    INITIALIZATION
    ========================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+function initializeUltorShop() {
+    setProductSectionVisible(false);
     ensureShopPriceStyles();
     createCartInterface();
     loadShopData();
-});
+}
 
-
-
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeUltorShop, { once: true });
+} else {
+    initializeUltorShop();
+}
