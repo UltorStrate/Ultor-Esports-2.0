@@ -1,4 +1,13 @@
 
+
+
+
+
+
+
+
+
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -101,6 +110,27 @@ function validId(value) {
     value.length <= 100;
 }
 
+const HOMEPAGE_CATEGORY_SLOTS = [
+  "teamwear",
+  "apparel",
+  "accessories",
+  "limited_editions"
+];
+
+function validHomepageSlot(value) {
+  return value === null || value === "" ||
+    (typeof value === "string" && HOMEPAGE_CATEGORY_SLOTS.includes(value));
+}
+
+function homepageSlotLabelForError(slot) {
+  return ({
+    teamwear: "Teamwear-Kachel",
+    apparel: "Apparel-Kachel",
+    accessories: "Accessories-Kachel",
+    limited_editions: "Limited Editions-Kachel"
+  })[slot] || "Startseiten-Kachel";
+}
+
 // =========================================
 // KATEGORIEN
 // =========================================
@@ -137,6 +167,10 @@ function validateCategory(body, partial = false) {
     return "Ungültiger Kategorienstatus.";
   }
 
+  if (body.homepage_slot !== undefined && !validHomepageSlot(body.homepage_slot)) {
+    return "Ungültige Startseiten-Kachel. Bitte Teamwear, Apparel, Accessories, Limited Editions oder keine Zuordnung wählen.";
+  }
+
   return null;
 }
 
@@ -152,8 +186,20 @@ async function createCategory(request, env, current) {
 
   const id = crypto.randomUUID();
   const slug = slugify(body.slug || body.name);
+  const homepageSlot = body.homepage_slot || null;
 
   if (!slug) return json({ error: "Ungültiger Kategorie-Slug." }, 400);
+
+  if (homepageSlot) {
+    const occupied = await env.DB.prepare(`
+      SELECT id, name FROM shop_categories WHERE homepage_slot = ? LIMIT 1
+    `).bind(homepageSlot).first();
+    if (occupied) {
+      return json({
+        error: `Die ${homepageSlotLabelForError(homepageSlot)} ist bereits der Kategorie „${occupied.name}“ zugeordnet. Bitte bearbeite diese Kategorie oder wähle eine andere Kachel.`
+      }, 409);
+    }
+  }
 
   if (body.parent_id) {
     const parent = await env.DB.prepare(`
@@ -168,9 +214,9 @@ async function createCategory(request, env, current) {
   try {
     await env.DB.prepare(`
       INSERT INTO shop_categories (
-        id, parent_id, name, slug, description, sort_order, status
+        id, parent_id, name, slug, description, sort_order, status, homepage_slot
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       body.parent_id || null,
@@ -178,7 +224,8 @@ async function createCategory(request, env, current) {
       slug,
       body.description?.trim() || null,
       body.sort_order ?? 0,
-      body.status || "active"
+      body.status || "active",
+      homepageSlot
     ).run();
   } catch (error) {
     if (error.message?.includes("UNIQUE")) {
@@ -224,6 +271,21 @@ async function updateCategory(request, env, current, id) {
   const parentId = body.parent_id !== undefined
     ? body.parent_id
     : existing.parent_id;
+  const homepageSlot = body.homepage_slot !== undefined
+    ? (body.homepage_slot || null)
+    : (existing.homepage_slot || null);
+
+  if (homepageSlot) {
+    const occupied = await env.DB.prepare(`
+      SELECT id, name FROM shop_categories
+      WHERE homepage_slot = ? AND id <> ? LIMIT 1
+    `).bind(homepageSlot, id).first();
+    if (occupied) {
+      return json({
+        error: `Die ${homepageSlotLabelForError(homepageSlot)} ist bereits der Kategorie „${occupied.name}“ zugeordnet. Bitte bearbeite diese Kategorie oder wähle eine andere Kachel.`
+      }, 409);
+    }
+  }
 
   if (parentId === id) {
     return json({ error: "Eine Kategorie kann nicht ihr eigener Unterpunkt sein." }, 400);
@@ -247,6 +309,7 @@ async function updateCategory(request, env, current, id) {
         description = ?,
         sort_order = ?,
         status = ?,
+        homepage_slot = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).bind(
@@ -258,6 +321,7 @@ async function updateCategory(request, env, current, id) {
         : existing.description,
       body.sort_order ?? existing.sort_order,
       body.status || existing.status,
+      homepageSlot,
       id
     ).run();
   } catch (error) {
@@ -1193,7 +1257,7 @@ export async function handlePublicShopApi(request, env) {
 
   if (path === "/api/shop/categories") {
     const result = await env.DB.prepare(`
-      SELECT id, parent_id, name, slug, description, image_key, sort_order
+      SELECT id, parent_id, name, slug, description, image_key, sort_order, homepage_slot
       FROM shop_categories
       WHERE status = 'active'
       ORDER BY sort_order ASC, name ASC
@@ -1315,4 +1379,7 @@ export async function handlePublicShopApi(request, env) {
 
   return json({ error: "Shop-Endpunkt nicht gefunden." }, 404);
 }
+
+
+
 
