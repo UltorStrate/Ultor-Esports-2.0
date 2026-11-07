@@ -1230,7 +1230,8 @@ export async function handlePublicShopApi(request, env) {
           option1_name, option1_value,
           option2_name, option2_value,
           option3_name, option3_value,
-          price_cents, compare_at_price_cents
+          price_cents, compare_at_price_cents,
+          stock_quantity, track_inventory
         FROM shop_product_variants
         WHERE product_id = ? AND status = 'active'
         ORDER BY sort_order ASC, variant_name ASC
