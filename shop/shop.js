@@ -99,31 +99,71 @@ async function loadShopData() {
    CATEGORIES
    ========================================= */
 
+function normalizeCategoryToken(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "")
+        .trim();
+}
+
+function findCategoryForCard(card, index) {
+    const heading = card.querySelector("h3");
+    const overlay = card.querySelector(".category-overlay-text");
+    const rawLabels = [
+        card.dataset.category,
+        heading?.textContent,
+        overlay?.textContent,
+        card.getAttribute("aria-label")
+    ].filter(Boolean).map(normalizeCategoryToken);
+
+    const aliases = [
+        ["teamwear", "teamwear", "teammerch", "jerseys"],
+        ["apparel", "apparel", "clothing", "kleidung"],
+        ["accessories", "accessories", "accessory", "zubehor"],
+        ["limitededitions", "limitededitions", "limitededition", "specials", "special", "limited"]
+    ];
+    const expected = aliases[index] || [];
+
+    // Prefer exact slug/name matches. This keeps the visual card connected to
+    // the intended database category even if category sort order changes.
+    const tokens = [...rawLabels, ...expected];
+    const match = shopCategories.find(category => {
+        const categoryTokens = [category.slug, category.name, category.id]
+            .filter(Boolean).map(normalizeCategoryToken);
+        return tokens.some(token => token && categoryTokens.includes(token));
+    });
+
+    // Legacy fallback only when a category has no recognisable label.
+    return match || shopCategories[index] || null;
+}
+
 function renderShopCategories() {
     const cards = document.querySelectorAll(".category-card");
 
     cards.forEach((card, index) => {
-        const category = shopCategories[index];
-
-        if (!category) return;
+        const category = findCategoryForCard(card, index);
+        if (!category) {
+            card.dataset.category = "";
+            card.setAttribute("aria-disabled", "true");
+            return;
+        }
 
         const categoryId = category.slug || category.id;
         card.dataset.category = categoryId;
         card.href = "#products";
+        card.removeAttribute("aria-disabled");
+        card.setAttribute("aria-pressed", String(activeCategory === categoryId));
 
         const heading = card.querySelector("h3");
-
-        if (heading) {
-            heading.textContent = category.name;
-        }
+        if (heading) heading.textContent = category.name;
 
         card.onclick = event => {
             event.preventDefault();
             setActiveCategory(categoryId);
-
-            document.getElementById("products")?.scrollIntoView({
-                behavior: "smooth"
-            });
+            document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
         };
     });
 }
@@ -331,6 +371,328 @@ function renderShopProducts() {
 }
 
 /* =========================================
+   ULTOR CART
+   Local cart state; checkout/payment can be connected later.
+   ========================================= */
+
+const ULTOR_CART_STORAGE_KEY = "ultor_shop_cart_v1";
+let ultorCart = readStoredCart();
+
+function readStoredCart() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(ULTOR_CART_STORAGE_KEY) || "[]");
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(item =>
+            item && item.key && item.product_name &&
+            Number.isInteger(Number(item.quantity)) && Number(item.quantity) > 0 &&
+            Number.isFinite(Number(item.unit_price_cents))
+        ).map(item => ({
+            ...item,
+            quantity: Math.max(1, Number(item.quantity)),
+            unit_price_cents: Number(item.unit_price_cents)
+        }));
+    } catch (error) {
+        console.warn("ULTOR Warenkorb konnte nicht gelesen werden:", error);
+        return [];
+    }
+}
+
+function persistCart() {
+    try {
+        localStorage.setItem(ULTOR_CART_STORAGE_KEY, JSON.stringify(ultorCart));
+    } catch (error) {
+        console.warn("ULTOR Warenkorb konnte nicht gespeichert werden:", error);
+    }
+    renderCart();
+}
+
+function cartItemKey(product, variant) {
+    const productKey = product.id || product.slug;
+    return `${productKey}::${variant?.id || "default"}`;
+}
+
+function addProductToCart(product, variant = null) {
+    const variants = Array.isArray(product.variants)
+        ? product.variants.filter(item => !item.status || ["active", "published"].includes(item.status))
+        : [];
+
+    if (variants.length && !variant) {
+        showCartFeedback("Bitte wähle zuerst eine Variante aus.");
+        return false;
+    }
+
+    const rawPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
+        ? variant.price_cents
+        : product.price_cents;
+    const unitPrice = Number(rawPrice);
+
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        showCartFeedback("Für dieses Produkt ist noch kein gültiger Preis hinterlegt.");
+        return false;
+    }
+
+    const tracksInventory = Boolean(variant && Number(variant.track_inventory));
+    const stockQuantity = variant && variant.stock_quantity !== null && variant.stock_quantity !== undefined
+        ? Number(variant.stock_quantity)
+        : null;
+
+    if (tracksInventory && (!Number.isFinite(stockQuantity) || stockQuantity <= 0)) {
+        showCartFeedback("Diese Variante ist aktuell nicht verfügbar.");
+        return false;
+    }
+
+    const key = cartItemKey(product, variant);
+    const existing = ultorCart.find(item => item.key === key);
+    const nextQuantity = (existing?.quantity || 0) + 1;
+
+    if (tracksInventory && nextQuantity > stockQuantity) {
+        showCartFeedback(`Es sind nur ${stockQuantity} Stück verfügbar.`);
+        return false;
+    }
+
+    const line = {
+        key,
+        product_id: product.id || null,
+        product_slug: product.slug || null,
+        product_name: product.name || "ULTOR Produkt",
+        variant_id: variant?.id || null,
+        variant_name: variant ? getVariantLabel(variant) : null,
+        sku: variant?.sku || null,
+        unit_price_cents: unitPrice,
+        currency: product.currency || "EUR",
+        quantity: nextQuantity,
+        image_url: getProductImage(product),
+        track_inventory: tracksInventory,
+        stock_quantity: stockQuantity
+    };
+
+    if (existing) Object.assign(existing, line);
+    else ultorCart.push(line);
+
+    persistCart();
+    setCartOpen(true);
+    showCartFeedback("Zum Warenkorb hinzugefügt.");
+    return true;
+}
+
+function showCartFeedback(message) {
+    const status = document.getElementById("ultorCartStatus");
+    if (status) status.textContent = message;
+}
+
+function setCartOpen(open) {
+    const root = document.getElementById("ultorCartRoot");
+    if (!root) return;
+    root.classList.toggle("is-open", Boolean(open));
+    document.body.classList.toggle("ultor-cart-open", Boolean(open));
+    const toggle = document.getElementById("ultorCartToggle");
+    if (toggle) toggle.setAttribute("aria-expanded", String(Boolean(open)));
+}
+
+function changeCartQuantity(key, delta) {
+    const item = ultorCart.find(line => line.key === key);
+    if (!item) return;
+    const next = item.quantity + delta;
+    if (next <= 0) {
+        ultorCart = ultorCart.filter(line => line.key !== key);
+    } else {
+        if (item.track_inventory && Number.isFinite(Number(item.stock_quantity)) && next > Number(item.stock_quantity)) {
+            showCartFeedback(`Es sind nur ${item.stock_quantity} Stück verfügbar.`);
+            return;
+        }
+        item.quantity = next;
+    }
+    persistCart();
+}
+
+function removeCartItem(key) {
+    ultorCart = ultorCart.filter(item => item.key !== key);
+    persistCart();
+}
+
+function getCartTotals() {
+    const itemCount = ultorCart.reduce((sum, item) => sum + item.quantity, 0);
+    const subtotal = ultorCart.reduce((sum, item) => sum + item.unit_price_cents * item.quantity, 0);
+    const currency = ultorCart[0]?.currency || "EUR";
+    return { itemCount, subtotal, currency };
+}
+
+function formatCartPrice(cents, currency = "EUR") {
+    return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency
+    }).format(Number(cents || 0) / 100);
+}
+
+function createCartInterface() {
+    if (document.getElementById("ultorCartRoot")) return;
+
+    const style = document.createElement("style");
+    style.id = "ultorCartStyles";
+    style.textContent = `
+      #ultorCartRoot{position:relative;z-index:9990;font-family:inherit}
+      #ultorCartToggle{position:fixed;right:28px;bottom:28px;z-index:9991;display:flex;align-items:center;gap:13px;padding:15px 19px;background:#8735f5;border:1px solid #a86aff;color:#fff;font-size:11px;font-weight:800;letter-spacing:1.5px;cursor:pointer;box-shadow:0 12px 36px rgba(0,0,0,.38);transition:.2s}
+      #ultorCartToggle:hover{transform:translateY(-3px);background:#9b50ff}
+      #ultorCartCount{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:50px;background:#fff;color:#241332;font-size:11px;letter-spacing:0}
+      #ultorCartLayer{position:fixed;inset:0;z-index:9992;visibility:hidden;pointer-events:none}
+      #ultorCartRoot.is-open #ultorCartLayer{visibility:visible;pointer-events:auto}
+      #ultorCartBackdrop{position:absolute;inset:0;background:rgba(4,3,9,.76);opacity:0;transition:opacity .25s}
+      #ultorCartRoot.is-open #ultorCartBackdrop{opacity:1}
+      #ultorCartDrawer{position:absolute;top:0;right:0;bottom:0;width:min(480px,100%);display:flex;flex-direction:column;background:#100d18;border-left:1px solid rgba(181,138,255,.25);transform:translateX(102%);transition:transform .28s ease;box-shadow:-24px 0 70px rgba(0,0,0,.4)}
+      #ultorCartRoot.is-open #ultorCartDrawer{transform:translateX(0)}
+      #ultorCartHeader{display:flex;align-items:center;justify-content:space-between;padding:25px 25px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+      #ultorCartHeader h2{margin:0;color:#f3f0f8;font-size:25px;font-weight:800}
+      #ultorCartHeader h2 span{color:#a66aff}
+      .ultor-cart-close{width:38px;height:38px;background:transparent;border:1px solid rgba(255,255,255,.18);color:#fff;font-size:25px;cursor:pointer}
+      #ultorCartItems{flex:1;overflow:auto;padding:8px 25px}
+      .ultor-cart-empty{padding:60px 10px;text-align:center;color:#aaa4b7;line-height:1.7}
+      .ultor-cart-line{display:grid;grid-template-columns:78px minmax(0,1fr);gap:15px;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.09)}
+      .ultor-cart-line img,.ultor-cart-line-placeholder{width:78px;height:94px;object-fit:cover;background:#1a1424;display:flex;align-items:center;justify-content:center;color:#8d52d5;font-weight:900}
+      .ultor-cart-line-main{min-width:0}
+      .ultor-cart-line-title{margin:0 0 5px;color:#fff;font-size:14px;font-weight:800}
+      .ultor-cart-line-variant{margin:0 0 8px;color:#aaa4b7;font-size:11px}
+      .ultor-cart-line-price{color:#c49cff;font-size:13px;font-weight:800}
+      .ultor-cart-line-controls{display:flex;align-items:center;gap:8px;margin-top:11px}
+      .ultor-cart-qty{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.18)}
+      .ultor-cart-qty button{width:30px;height:28px;background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer}
+      .ultor-cart-qty span{min-width:24px;text-align:center;color:#fff;font-size:12px}
+      .ultor-cart-remove{margin-left:auto;background:transparent;border:0;color:#bba9d3;font-size:11px;text-decoration:underline;cursor:pointer}
+      #ultorCartFooter{padding:20px 25px 25px;border-top:1px solid rgba(255,255,255,.1);background:#15111e}
+      .ultor-cart-total{display:flex;justify-content:space-between;gap:20px;margin-bottom:12px;color:#fff;font-size:16px;font-weight:800}
+      .ultor-cart-note{margin:0 0 15px;color:#aaa4b7;font-size:11px;line-height:1.6}
+      #ultorCartCheckout{width:100%;padding:15px;background:#30243f;border:1px solid #58416f;color:#c9b7df;font-weight:800;letter-spacing:1px;cursor:not-allowed}
+      #ultorCartStatus{min-height:18px;margin:9px 0 0;color:#c49cff;font-size:11px}
+      @media(max-width:600px){#ultorCartToggle{right:14px;bottom:14px;padding:13px 15px}#ultorCartHeader,#ultorCartItems{padding-left:18px;padding-right:18px}#ultorCartFooter{padding:17px 18px 20px}}
+    `;
+    document.head.appendChild(style);
+
+    const root = document.createElement("div");
+    root.id = "ultorCartRoot";
+    root.innerHTML = `
+      <button id="ultorCartToggle" type="button" aria-expanded="false" aria-controls="ultorCartDrawer">
+        <span>WARENKORB</span><span id="ultorCartCount">0</span>
+      </button>
+      <div id="ultorCartLayer" aria-hidden="true">
+        <div id="ultorCartBackdrop"></div>
+        <aside id="ultorCartDrawer" role="dialog" aria-modal="true" aria-label="Warenkorb">
+          <header id="ultorCartHeader">
+            <h2>DEIN <span>WARENKORB.</span></h2>
+            <button class="ultor-cart-close" type="button" aria-label="Warenkorb schließen">×</button>
+          </header>
+          <div id="ultorCartItems"></div>
+          <footer id="ultorCartFooter">
+            <div class="ultor-cart-total"><span>Zwischensumme</span><span id="ultorCartSubtotal">0,00 €</span></div>
+            <p class="ultor-cart-note">Versandkosten und Steuern werden im späteren Bestellschritt berechnet. Der Warenkorb wird aktuell lokal auf diesem Gerät gespeichert.</p>
+            <button id="ultorCartCheckout" type="button" disabled>CHECKOUT FOLGT</button>
+            <p id="ultorCartStatus" aria-live="polite"></p>
+          </footer>
+        </aside>
+      </div>
+    `;
+    document.body.appendChild(root);
+
+    document.getElementById("ultorCartToggle").addEventListener("click", () => setCartOpen(true));
+    root.querySelector(".ultor-cart-close").addEventListener("click", () => setCartOpen(false));
+    document.getElementById("ultorCartBackdrop").addEventListener("click", () => setCartOpen(false));
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") setCartOpen(false);
+    });
+
+    renderCart();
+}
+
+function renderCart() {
+    const root = document.getElementById("ultorCartRoot");
+    if (!root) return;
+
+    const { itemCount, subtotal, currency } = getCartTotals();
+    const count = document.getElementById("ultorCartCount");
+    const items = document.getElementById("ultorCartItems");
+    const subtotalElement = document.getElementById("ultorCartSubtotal");
+
+    if (count) count.textContent = String(itemCount);
+    if (subtotalElement) subtotalElement.textContent = formatCartPrice(subtotal, currency);
+    if (!items) return;
+
+    items.replaceChildren();
+    if (!ultorCart.length) {
+        const empty = document.createElement("p");
+        empty.className = "ultor-cart-empty";
+        empty.textContent = "Dein Warenkorb ist noch leer. Entdecke die ULTOR Kollektion.";
+        items.appendChild(empty);
+        return;
+    }
+
+    ultorCart.forEach(item => {
+        const line = document.createElement("article");
+        line.className = "ultor-cart-line";
+
+        if (item.image_url) {
+            const image = document.createElement("img");
+            image.src = item.image_url;
+            image.alt = item.product_name;
+            image.loading = "lazy";
+            line.appendChild(image);
+        } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "ultor-cart-line-placeholder";
+            placeholder.textContent = "ULTOR";
+            line.appendChild(placeholder);
+        }
+
+        const main = document.createElement("div");
+        main.className = "ultor-cart-line-main";
+        const title = document.createElement("h3");
+        title.className = "ultor-cart-line-title";
+        title.textContent = item.product_name;
+        const variant = document.createElement("p");
+        variant.className = "ultor-cart-line-variant";
+        variant.textContent = [item.variant_name, item.sku].filter(Boolean).join(" · ") || "Standard";
+        const price = document.createElement("div");
+        price.className = "ultor-cart-line-price";
+        price.textContent = formatCartPrice(item.unit_price_cents * item.quantity, item.currency);
+
+        const controls = document.createElement("div");
+        controls.className = "ultor-cart-line-controls";
+        const quantity = document.createElement("div");
+        quantity.className = "ultor-cart-qty";
+        const minus = document.createElement("button");
+        minus.type = "button";
+        minus.textContent = "−";
+        minus.setAttribute("aria-label", "Menge verringern");
+        minus.addEventListener("click", () => changeCartQuantity(item.key, -1));
+        const number = document.createElement("span");
+        number.textContent = String(item.quantity);
+        const plus = document.createElement("button");
+        plus.type = "button";
+        plus.textContent = "+";
+        plus.setAttribute("aria-label", "Menge erhöhen");
+        plus.addEventListener("click", () => changeCartQuantity(item.key, 1));
+        if (item.track_inventory && item.quantity >= Number(item.stock_quantity)) plus.disabled = true;
+        quantity.append(minus, number, plus);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "ultor-cart-remove";
+        remove.textContent = "Entfernen";
+        remove.addEventListener("click", () => removeCartItem(item.key));
+        controls.append(quantity, remove);
+        main.append(title, variant, price, controls);
+        line.appendChild(main);
+        items.appendChild(line);
+    });
+}
+
+// A small public interface makes later checkout integration straightforward.
+// Prices stored in this browser cart are display values only; the future order API
+// must re-read current prices and stock from D1 before creating an order.
+window.ULTORCart = {
+    getItems: () => ultorCart.map(item => ({ ...item })),
+    getTotals: () => ({ ...getCartTotals() }),
+    clear: () => { ultorCart = []; persistCart(); },
+    open: () => setCartOpen(true)
+};
+
+/* =========================================
    PRODUCT DETAIL MODAL
    ========================================= */
 
@@ -488,25 +850,35 @@ function renderProductDetails(product) {
 
     const stockInfo = document.createElement("p");
     stockInfo.className = "product-stock-info";
+    let selectedVariant = null;
+
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "product-detail-button shop-cart-add-button";
+    addButton.textContent = "IN DEN WARENKORB";
 
     function updateVariant(variant) {
-        const currentPrice = variant &&
-            typeof variant.price_cents === "number"
-            ? variant.price_cents
-            : product.price_cents;
+        selectedVariant = variant || null;
+        const currentPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
+            ? Number(variant.price_cents)
+            : Number(product.price_cents);
 
         price.textContent = formatPrice(
             currentPrice,
             product.currency || "EUR"
         );
 
-        if (variant && variant.track_inventory) {
-            stockInfo.textContent = variant.stock_quantity > 0
+        const soldOut = Boolean(variant && Number(variant.track_inventory) && Number(variant.stock_quantity) <= 0);
+        if (variant && Number(variant.track_inventory)) {
+            stockInfo.textContent = Number(variant.stock_quantity) > 0
                 ? `${variant.stock_quantity} verfügbar`
                 : "Aktuell nicht verfügbar";
         } else {
             stockInfo.textContent = "";
         }
+
+        addButton.disabled = soldOut || (activeVariants.length > 0 && !selectedVariant);
+        addButton.textContent = soldOut ? "AUSVERKAUFT" : "IN DEN WARENKORB";
     }
 
     if (activeVariants.length) {
@@ -551,13 +923,27 @@ function renderProductDetails(product) {
 
     updateVariant(null);
 
+    addButton.disabled = activeVariants.length > 0;
+    addButton.addEventListener("click", () => {
+        if (activeVariants.length && !selectedVariant) {
+            showCartFeedback("Bitte wähle zuerst eine Variante aus.");
+            return;
+        }
+        if (addProductToCart(product, selectedVariant)) {
+            addButton.textContent = "HINZUGEFÜGT ✓";
+            window.setTimeout(() => {
+                if (addButton.isConnected) addButton.textContent = "IN DEN WARENKORB";
+            }, 1200);
+        }
+    });
+
     info.append(category, name, description, price);
 
     if (activeVariants.length) {
         info.append(variantLabel, variantSelect);
     }
 
-    info.append(stockInfo);
+    info.append(stockInfo, addButton);
 
     layout.append(imageArea, info);
     content.appendChild(layout);
@@ -577,5 +963,6 @@ function closeProductDetails() {
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+    createCartInterface();
     loadShopData();
 });
