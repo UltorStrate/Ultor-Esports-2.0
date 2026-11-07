@@ -1074,7 +1074,57 @@ export async function handleShopApi(request, env, auth) {
   }
 
   const productMatch = path.match(/^\/api\/admin\/shop\/products\/([^/]+)$/);
+  if (productMatch && method === "GET") {
+    if (!can(current, "shop.view")) {
+      return json({
+        error: "Keine Berechtigung zum Anzeigen des Shops."
+      }, 403);
+    }
 
+    const product = await env.DB.prepare(`
+      SELECT *
+      FROM shop_products
+      WHERE id = ?
+    `).bind(productMatch[1]).first();
+
+    if (!product) {
+      return json({ error: "Produkt nicht gefunden." }, 404);
+    }
+
+    const [categories, images, variants] = await Promise.all([
+      env.DB.prepare(`
+        SELECT c.*
+        FROM shop_product_categories pc
+        JOIN shop_categories c ON c.id = pc.category_id
+        WHERE pc.product_id = ?
+        ORDER BY c.sort_order ASC, c.name ASC
+      `).bind(product.id).all(),
+
+      env.DB.prepare(`
+        SELECT *
+        FROM shop_product_images
+        WHERE product_id = ?
+        ORDER BY is_primary DESC, sort_order ASC
+      `).bind(product.id).all(),
+
+      env.DB.prepare(`
+        SELECT *
+        FROM shop_product_variants
+        WHERE product_id = ?
+        ORDER BY sort_order ASC, variant_name ASC
+      `).bind(product.id).all()
+    ]);
+
+    return json({
+      success: true,
+      product: {
+        ...product,
+        categories: categories.results,
+        images: images.results,
+        variants: variants.results
+      }
+    });
+  }
   if (productMatch && method === "PATCH") {
     return updateProduct(request, env, current, productMatch[1]);
   }
