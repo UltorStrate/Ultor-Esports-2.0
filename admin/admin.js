@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 const API_AUTH = "/api/auth";
 const API_ADMIN = "/api/admin";
 
@@ -2395,7 +2404,7 @@ openCmsView = function(viewName) {
       title.textContent = category.name;
       const meta = document.createElement('p');
       meta.className = 'news-meta';
-      meta.textContent = `/${category.slug || ''} · ${category.status === 'active' ? 'Aktiv' : 'Inaktiv'} · Sortierung ${category.sort_order ?? 0}`;
+      meta.textContent = `/${category.slug || ''} · ${category.status === 'active' ? 'Aktiv' : 'Inaktiv'} · ${homepageSlotLabel(category.homepage_slot || inferHomepageSlot(category))} · Sortierung ${category.sort_order ?? 0}`;
       details.append(title, meta);
       if (category.description) {
         const description = document.createElement('p');
@@ -2518,6 +2527,29 @@ openCmsView = function(viewName) {
     }
   }
 
+  function inferHomepageSlot(category) {
+    const token = String(category?.slug || category?.name || '')
+      .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '');
+    const aliases = {
+      teamwear: 'teamwear', teammerch: 'teamwear', jerseys: 'teamwear',
+      apparel: 'apparel', clothing: 'apparel', kleidung: 'apparel',
+      accessories: 'accessories', accessory: 'accessories', zubehor: 'accessories',
+      limitededitions: 'limited_editions', limitededition: 'limited_editions',
+      specials: 'limited_editions', special: 'limited_editions', limited: 'limited_editions'
+    };
+    return aliases[token] || '';
+  }
+
+  function homepageSlotLabel(slot) {
+    return ({
+      teamwear: 'Teamwear-Kachel',
+      apparel: 'Apparel-Kachel',
+      accessories: 'Accessories-Kachel',
+      limited_editions: 'Limited Editions-Kachel'
+    })[slot] || 'Nicht auf der Startseite';
+  }
+
   function openCategoryEditor(category = null) {
     if (!canShop('shop.categories.manage')) {
       showShopMessage('Du hast keine Berechtigung, Kategorien zu verwalten.', 'error');
@@ -2531,6 +2563,7 @@ openCmsView = function(viewName) {
     $('shopCategoryDescription').value = category?.description || '';
     $('shopCategorySortOrder').value = category?.sort_order ?? 0;
     $('shopCategoryStatus').value = category?.status || 'active';
+    $('shopCategoryHomepageSlot').value = category?.homepage_slot || inferHomepageSlot(category);
     categoryEditor.hidden = false;
     categoryEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -2846,6 +2879,7 @@ openCmsView = function(viewName) {
       name,
       slug: slugify($('shopCategorySlug').value || name),
       description: $('shopCategoryDescription').value.trim(),
+      homepage_slot: $('shopCategoryHomepageSlot').value || null,
       sort_order: Number($('shopCategorySortOrder').value || 0),
       status: $('shopCategoryStatus').value
     };
@@ -2992,3 +3026,6 @@ openCmsView = function(viewName) {
     refreshCmsDashboard();
   }
 })();
+
+
+
