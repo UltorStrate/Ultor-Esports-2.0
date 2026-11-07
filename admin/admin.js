@@ -23,6 +23,14 @@ const PERMISSION_GROUPS = {
     ["partners.delete", "Partner löschen"],
     ["partners.publish", "Partner veröffentlichen"]
   ],
+  "Shop": [
+    ["shop.view", "Shop ansehen"],
+    ["shop.categories.manage", "Kategorien verwalten"],
+    ["shop.products.create", "Produkte erstellen"],
+    ["shop.products.edit", "Produkte bearbeiten"],
+    ["shop.products.delete", "Produkte löschen"],
+    ["shop.products.publish", "Produkte veröffentlichen"]
+  ],
   "Medien": [
     ["media.view", "Medien ansehen"],
     ["media.upload", "Medien hochladen"],
@@ -208,9 +216,7 @@ async function loadDashboard() {
       window.location.href = "/admin/login.html";
     }
   }
-}
-
-function renderMyPermissions(permissions) {
+  function renderMyPermissions(permissions) {
   const container = document.getElementById("myPermissions");
   if (!container) return;
 
@@ -429,8 +435,7 @@ permissionsForm?.addEventListener("submit", async event => {
     showMessage(dashboardMessage, getErrorMessage(error), "error");
   }
 });
-
-document.getElementById("cancelPermissions")?.addEventListener("click", () => {
+ document.getElementById("cancelPermissions")?.addEventListener("click", () => {
   permissionPanel.hidden = true;
   selectedUserId = null;
 });
@@ -461,6 +466,7 @@ const VIEW_TITLES = {
   news: "News",
   teams: "Teams & Spieler",
   partners: "Partner",
+  shop: "Shop",
   media: "Medien",
   users: "Benutzer & Rechte",
   activity: "Aktivitätsprotokoll"
@@ -701,6 +707,18 @@ async function loadNews() {
     );
   }
 }
+        );
+      }
+
+      card.append(details, actions);
+      newsList.append(card);
+    }
+  } catch (error) {
+    newsList.replaceChildren(
+      createElement("p", "message error", getErrorMessage(error))
+    );
+  }
+}
 
 function openNewsEditor(item = null) {
   editingNewsId = item?.id || null;
@@ -927,6 +945,7 @@ removeNewsImageButton?.addEventListener("click", () => {
   showNewsImagePreview("");
   if (newsUploadStatus) newsUploadStatus.textContent = "Kein Bild ausgewählt.";
 });
+
 // ==================================================
 // TEAMLOGOS UND SPIELERBILDER – R2 UPLOAD
 // ==================================================
@@ -947,9 +966,8 @@ const removePlayerImageButton = document.getElementById("removePlayerImage");
 
 // Bildvorschau anzeigen
 function showRosterImagePreview(key, preview, image) {
-  if (!preview || !image) return;
-
-  if (!key) {
+  if (!preview || !image) return;  
+    if (!key) {
     preview.hidden = true;
     image.removeAttribute("src");
     return;
@@ -1073,6 +1091,7 @@ removePlayerImageButton?.addEventListener("click", () => {
 
   teamMessage("Spielerbild wurde aus dem Formular entfernt.", "success");
 });
+
 // ==================================================
 // ULTOR CMS – TEAMS, SPIELER UND KADERHISTORIE
 // ==================================================
@@ -1209,7 +1228,7 @@ async function loadTeams() {
 
       card.append(details, actions);
       teamsList.append(card);
-    }
+          }
 
     updateTeamSelects();
 
@@ -1239,10 +1258,10 @@ function openTeamEditor(team = null) {
   document.getElementById("teamLogoKey").value =
     team?.logo_key || "";
   showRosterImagePreview(
-  team?.logo_key || "",
-  teamLogoPreview,
-  teamLogoPreviewImg
-);
+    team?.logo_key || "",
+    teamLogoPreview,
+    teamLogoPreviewImg
+  );
   document.getElementById("teamStatus").value =
     team?.status || "active";
 
@@ -1469,7 +1488,7 @@ function openPlayerEditor(player = null) {
 }
 
 async function deletePlayer(player) {
-  if (!window.confirm(
+    if (!window.confirm(
     `Möchtest du "${player.name}" aus dem Team entfernen?`
   )) return;
 
@@ -1729,7 +1748,7 @@ const partnerLogoKeyInput = document.getElementById("partnerLogoKey");
 const removePartnerLogoButton = document.getElementById("removePartnerLogo");
 
 function partnerCan(permission) {
-  return partnerPermissions.includes("*") ||
+    return partnerPermissions.includes("*") ||
     partnerPermissions.includes(permission);
 }
 
@@ -1989,7 +2008,7 @@ partnerForm?.addEventListener("submit", async event => {
         `/api/admin/partners/${encodeURIComponent(editingPartnerId)}`,
         {
           method: "PATCH",
-          body: JSON.stringify(body)
+                  body: JSON.stringify(body)
         }
       );
 
@@ -2189,3 +2208,24 @@ openCmsView = function(viewName) {
     });
 };
 
+// ==================================================
+// ULTOR SHOP CMS – PRODUKTE, KATEGORIEN UND VARIANTEN
+// ==================================================
+(() => {
+  const $ = id => document.getElementById(id);
+  const message = $('shopMessage');
+  const productsList = $('shopProductsList');
+  const categoriesList = $('shopCategoriesList');
+  const productEditor = $('shopProductEditor');
+  const categoryEditor = $('shopCategoryEditor');
+  let shopPermissions = [];
+  let shopProducts = [];
+  let shopCategories = [];
+  let editingProductId = null;
+
+  const canShop = permission => shopPermissions.includes('*') || shopPermissions.includes(permission);
+  const moneyToCents = value => value === '' ? null : Math.round(Number(value) * 100);
+  const centsToMoney = value => value == null ? '' : (Number(value) / 100).toFixed(2);
+  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const showShopMessage = (text, type='') => showMessage(message, text, type);  
+}
