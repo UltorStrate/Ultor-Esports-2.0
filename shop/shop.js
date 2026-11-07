@@ -252,12 +252,66 @@ function getProductImage(product) {
 }
 
 function formatPrice(cents, currency = "EUR") {
-    if (typeof cents !== "number") return "Preis folgt";
+    const value = cents === null || cents === undefined || cents === ""
+        ? NaN
+        : Number(cents);
+    if (!Number.isFinite(value)) return "Preis folgt";
 
     return new Intl.NumberFormat("de-DE", {
         style: "currency",
         currency
-    }).format(cents / 100);
+    }).format(value / 100);
+}
+
+// Einheitliche Preiszeile für Produktkarten und Produktdetailansicht.
+// Ein Streichpreis wird nur angezeigt, wenn er tatsächlich über dem Verkaufspreis liegt.
+function renderPriceDisplay(container, sellingPriceCents, comparePriceCents, currency = "EUR") {
+    if (!container) return;
+
+    container.replaceChildren();
+
+    const sellingPrice = sellingPriceCents === null || sellingPriceCents === undefined || sellingPriceCents === ""
+        ? NaN
+        : Number(sellingPriceCents);
+    if (!Number.isFinite(sellingPrice)) {
+        const fallback = document.createElement("span");
+        fallback.className = "product-price";
+        fallback.textContent = "Preis folgt";
+        container.appendChild(fallback);
+        return;
+    }
+
+    const current = document.createElement("span");
+    current.className = "product-price";
+    current.textContent = formatPrice(sellingPrice, currency);
+    container.appendChild(current);
+
+    const comparePrice = comparePriceCents === null || comparePriceCents === undefined || comparePriceCents === ""
+        ? NaN
+        : Number(comparePriceCents);
+
+    if (Number.isFinite(comparePrice) && comparePrice > sellingPrice) {
+        const previous = document.createElement("s");
+        previous.className = "product-compare-price";
+        previous.textContent = formatPrice(comparePrice, currency);
+        previous.setAttribute("aria-label", `Vorheriger Preis ${formatPrice(comparePrice, currency)}`);
+        container.appendChild(previous);
+    }
+}
+
+function ensureShopPriceStyles() {
+    if (document.getElementById("ultorShopPriceStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "ultorShopPriceStyles";
+    style.textContent = `
+      .product-price-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px}
+      .product-price-line .product-price{display:inline-block;margin:0}
+      .product-price-line .product-compare-price{display:inline-block;color:#93899f;font-size:.88em;font-weight:600;line-height:1.3;text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.85}
+      .product-detail-price.product-price-line{margin:0 0 18px}
+      .product-detail-price .product-price{color:inherit}
+    `;
+    document.head.appendChild(style);
 }
 
 function getVariantLabel(variant) {
@@ -349,10 +403,12 @@ function renderShopProducts() {
         description.textContent =
             product.short_description || product.description || "";
 
-        const price = document.createElement("span");
-        price.className = "product-price";
-        price.textContent = formatPrice(
+        const price = document.createElement("div");
+        price.className = "product-price-line";
+        renderPriceDisplay(
+            price,
             product.price_cents,
+            product.compare_at_price_cents,
             product.currency || "EUR"
         );
 
@@ -829,7 +885,7 @@ function renderProductDetails(product) {
         "Weitere Produktinformationen folgen.";
 
     const price = document.createElement("div");
-    price.className = "product-detail-price";
+    price.className = "product-detail-price product-price-line";
 
     const variants = Array.isArray(product.variants)
         ? product.variants
@@ -862,9 +918,14 @@ function renderProductDetails(product) {
         const currentPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
             ? Number(variant.price_cents)
             : Number(product.price_cents);
+        const comparePrice = variant && variant.compare_at_price_cents !== null && variant.compare_at_price_cents !== undefined
+            ? Number(variant.compare_at_price_cents)
+            : product.compare_at_price_cents;
 
-        price.textContent = formatPrice(
+        renderPriceDisplay(
+            price,
             currentPrice,
+            comparePrice,
             product.currency || "EUR"
         );
 
@@ -963,6 +1024,7 @@ function closeProductDetails() {
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+    ensureShopPriceStyles();
     createCartInterface();
     loadShopData();
 });
