@@ -1,4 +1,13 @@
 
+
+
+
+
+
+
+
+
+
 /* =========================================
    ULTOR ESPORTS - OFFICIAL SHOP
    API, PRODUCTS & PRODUCT DETAILS
@@ -110,6 +119,15 @@ function normalizeCategoryToken(value) {
 }
 
 function findCategoryForCard(card, index) {
+    const homepageSlots = ["teamwear", "apparel", "accessories", "limited_editions"];
+    const requestedSlot = card.dataset.homeSlot || homepageSlots[index];
+
+    // Explicit CMS assignment always wins over name/slug heuristics.
+    const assignedCategory = shopCategories.find(category =>
+        category.homepage_slot === requestedSlot
+    );
+    if (assignedCategory) return assignedCategory;
+
     const heading = card.querySelector("h3");
     const overlay = card.querySelector(".category-overlay-text");
     const rawLabels = [
@@ -136,8 +154,17 @@ function findCategoryForCard(card, index) {
         return tokens.some(token => token && categoryTokens.includes(token));
     });
 
-    // Legacy fallback only when a category has no recognisable label.
-    return match || shopCategories[index] || null;
+    // Legacy fallback only for categories that do not yet have a stored slot.
+    const legacyMatch = match && !match.homepage_slot ? match : null;
+    if (legacyMatch) return legacyMatch;
+
+    return shopCategories.find(category =>
+        !category.homepage_slot && expected.some(token => {
+            const categoryTokens = [category.slug, category.name, category.id]
+                .filter(Boolean).map(normalizeCategoryToken);
+            return categoryTokens.includes(token);
+        })
+    ) || null;
 }
 
 function renderShopCategories() {
@@ -1028,3 +1055,6 @@ document.addEventListener("DOMContentLoaded", () => {
     createCartInterface();
     loadShopData();
 });
+
+
+
