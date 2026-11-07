@@ -1,4 +1,3 @@
-
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -229,37 +228,12 @@ async function updateCategory(request, env, current, id) {
     return json({ error: "Eine Kategorie kann nicht ihr eigener Unterpunkt sein." }, 400);
   }
 
-    if (parentId) {
+  if (parentId) {
     const parent = await env.DB.prepare(`
       SELECT id FROM shop_categories WHERE id = ?
     `).bind(parentId).first();
 
-    if (!parent) {
-      return json({
-        error: "Übergeordnete Kategorie nicht gefunden."
-      }, 404);
-    }
-
-    const descendants = await env.DB.prepare(`
-      WITH RECURSIVE category_tree(id) AS (
-        SELECT id
-        FROM shop_categories
-        WHERE parent_id = ?
-
-        UNION ALL
-
-        SELECT c.id
-        FROM shop_categories c
-        JOIN category_tree ct ON c.parent_id = ct.id
-      )
-      SELECT id FROM category_tree
-    `).bind(id).all();
-
-    if (descendants.results.some(row => row.id === parentId)) {
-      return json({
-        error: "Eine Kategorie kann nicht zu einem eigenen Unterpunkt werden."
-      }, 400);
-    }
+    if (!parent) return json({ error: "Übergeordnete Kategorie nicht gefunden." }, 404);
   }
 
   try {
@@ -453,21 +427,7 @@ async function updateProduct(request, env, current, id) {
   `).bind(id).first();
 
   if (!existing) return json({ error: "Produkt nicht gefunden." }, 404);
-  if (
-    body.status !== undefined &&
-    body.status !== existing.status &&
-    !can(current, "shop.products.publish")
-  ) {
-    return json({
-      error: "Keine Berechtigung zum Ändern des Produktstatus."
-    }, 403);
-  }
 
-  const status = body.status ?? existing.status;
-
-  const publishedAt = status === "published"
-    ? (existing.published_at || new Date().toISOString())
-    : null;
   const name = body.name !== undefined ? body.name.trim() : existing.name;
   const slug = body.slug !== undefined
     ? slugify(body.slug)
@@ -476,7 +436,7 @@ async function updateProduct(request, env, current, id) {
       : existing.slug;
 
   try {
-        await env.DB.prepare(`
+    await env.DB.prepare(`
       UPDATE shop_products
       SET
         name = ?,
@@ -486,8 +446,6 @@ async function updateProduct(request, env, current, id) {
         price_cents = ?,
         compare_at_price_cents = ?,
         currency = ?,
-        status = ?,
-        published_at = ?,
         is_featured = ?,
         sort_order = ?,
         updated_by = ?,
@@ -507,8 +465,6 @@ async function updateProduct(request, env, current, id) {
         ? body.compare_at_price_cents
         : existing.compare_at_price_cents,
       body.currency || existing.currency,
-      status,
-      publishedAt,
       body.is_featured !== undefined
         ? (body.is_featured ? 1 : 0)
         : existing.is_featured,
@@ -773,12 +729,7 @@ function validateVariant(body) {
       !["active", "inactive"].includes(body.status)) {
     return "Ungültiger Variantenstatus.";
   }
-  if (
-    body.sort_order !== undefined &&
-    (!Number.isInteger(body.sort_order) || body.sort_order < 0)
-  ) {
-    return "Die Sortierung muss eine positive ganze Zahl sein.";
-  }
+
   return null;
 }
 
@@ -842,102 +793,6 @@ async function createVariant(request, env, current, productId) {
   });
 
   return json({ success: true, id }, 201);
-}
-
-async function updateVariant(request, env, current, variantId) {
-  if (!can(current, "shop.products.edit")) {
-    return json({
-      error: "Keine Berechtigung zum Bearbeiten von Produkten."
-    }, 403);
-  }
-
-  const body = await readBody(request);
-
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return json({ error: "Ungültige Anfrage." }, 400);
-  }
-
-  const existing = await env.DB.prepare(`
-    SELECT *
-    FROM shop_product_variants
-    WHERE id = ?
-  `).bind(variantId).first();
-
-  if (!existing) {
-    return json({ error: "Variante nicht gefunden." }, 404);
-  }
-
-  const merged = { ...existing, ...body };
-  const error = validateVariant(merged);
-
-  if (error) return json({ error }, 400);
-
-  if (
-    body.sort_order !== undefined &&
-    !Number.isInteger(body.sort_order)
-  ) {
-    return json({ error: "Ungültige Sortierung." }, 400);
-  }
-
-  try {
-    await env.DB.prepare(`
-      UPDATE shop_product_variants
-      SET
-        variant_name = ?,
-        sku = ?,
-        option1_name = ?,
-        option1_value = ?,
-        option2_name = ?,
-        option2_value = ?,
-        option3_name = ?,
-        option3_value = ?,
-        price_cents = ?,
-        compare_at_price_cents = ?,
-        stock_quantity = ?,
-        track_inventory = ?,
-        status = ?,
-        sort_order = ?
-      WHERE id = ?
-    `).bind(
-      merged.variant_name.trim(),
-      merged.sku?.trim() || null,
-      merged.option1_name?.trim() || null,
-      merged.option1_value?.trim() || null,
-      merged.option2_name?.trim() || null,
-      merged.option2_value?.trim() || null,
-      merged.option3_name?.trim() || null,
-      merged.option3_value?.trim() || null,
-      merged.price_cents ?? null,
-      merged.compare_at_price_cents ?? null,
-      merged.stock_quantity ?? 0,
-      merged.track_inventory ? 1 : 0,
-      merged.status || "active",
-      merged.sort_order ?? existing.sort_order ?? 0,
-      variantId
-    ).run();
-  } catch (error) {
-    if (error.message?.includes("UNIQUE")) {
-      return json({ error: "Diese SKU ist bereits vergeben." }, 409);
-    }
-
-    throw error;
-  }
-
-  await audit(
-    env,
-    current.user.id,
-    "shop.product.variant.updated",
-    existing.product_id,
-    {
-      variant_id: variantId,
-      variant_name: merged.variant_name
-    }
-  );
-
-  return json({
-    success: true,
-    message: "Variante wurde aktualisiert."
-  });
 }
 
 async function deleteVariant(env, current, variantId) {
@@ -1074,57 +929,7 @@ export async function handleShopApi(request, env, auth) {
   }
 
   const productMatch = path.match(/^\/api\/admin\/shop\/products\/([^/]+)$/);
-  if (productMatch && method === "GET") {
-    if (!can(current, "shop.view")) {
-      return json({
-        error: "Keine Berechtigung zum Anzeigen des Shops."
-      }, 403);
-    }
 
-    const product = await env.DB.prepare(`
-      SELECT *
-      FROM shop_products
-      WHERE id = ?
-    `).bind(productMatch[1]).first();
-
-    if (!product) {
-      return json({ error: "Produkt nicht gefunden." }, 404);
-    }
-
-    const [categories, images, variants] = await Promise.all([
-      env.DB.prepare(`
-        SELECT c.*
-        FROM shop_product_categories pc
-        JOIN shop_categories c ON c.id = pc.category_id
-        WHERE pc.product_id = ?
-        ORDER BY c.sort_order ASC, c.name ASC
-      `).bind(product.id).all(),
-
-      env.DB.prepare(`
-        SELECT *
-        FROM shop_product_images
-        WHERE product_id = ?
-        ORDER BY is_primary DESC, sort_order ASC
-      `).bind(product.id).all(),
-
-      env.DB.prepare(`
-        SELECT *
-        FROM shop_product_variants
-        WHERE product_id = ?
-        ORDER BY sort_order ASC, variant_name ASC
-      `).bind(product.id).all()
-    ]);
-
-    return json({
-      success: true,
-      product: {
-        ...product,
-        categories: categories.results,
-        images: images.results,
-        variants: variants.results
-      }
-    });
-  }
   if (productMatch && method === "PATCH") {
     return updateProduct(request, env, current, productMatch[1]);
   }
@@ -1144,10 +949,6 @@ export async function handleShopApi(request, env, auth) {
   const variantMatch = path.match(
     /^\/api\/admin\/shop\/variants\/([^/]+)$/
   );
-
-    if (variantMatch && method === "PATCH") {
-    return updateVariant(request, env, current, variantMatch[1]);
-  }
 
   if (variantMatch && method === "DELETE") {
     return deleteVariant(env, current, variantMatch[1]);
@@ -1256,4 +1057,3 @@ export async function handlePublicShopApi(request, env) {
 
   return json({ error: "Shop-Endpunkt nicht gefunden." }, 404);
 }
-
