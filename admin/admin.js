@@ -2140,7 +2140,8 @@ openCmsView = function(viewName) {
 };
 
 // ==================================================
-// ULTOR SHOP CMS – PRODUKTE, KATEGORIEN UND VARIANTEN
+// ULTOR SHOP CMS – PRODUKTE, BILDER, VARIANTEN, KATEGORIEN
+// Dieser Bereich ist bewusst gekapselt und verändert keine anderen CMS-Module.
 // ==================================================
 (() => {
   const $ = id => document.getElementById(id);
@@ -2149,217 +2150,727 @@ openCmsView = function(viewName) {
   const categoriesList = $('shopCategoriesList');
   const productEditor = $('shopProductEditor');
   const categoryEditor = $('shopCategoryEditor');
+
+  if (!message || !productsList || !categoriesList || !productEditor || !categoryEditor) {
+    console.warn('ULTOR Shop: Die Shop-Oberfläche fehlt in admin/index.html.');
+    return;
+  }
+
   let shopPermissions = [];
   let shopProducts = [];
   let shopCategories = [];
   let editingProductId = null;
+  let editingVariantId = null;
+  let loadedProductDetails = null;
+  let isLoading = false;
 
-  const canShop = permission => window.ULTOR_IS_OWNER === true || shopPermissions.includes('*') || shopPermissions.includes(permission);
+  const canShop = permission => window.ULTOR_IS_OWNER === true ||
+    shopPermissions.includes('*') || shopPermissions.includes(permission);
   const moneyToCents = value => value === '' ? null : Math.round(Number(value) * 100);
   const centsToMoney = value => value == null ? '' : (Number(value) / 100).toFixed(2);
-  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const showShopMessage = (text, type='') => showMessage(message, text, type);
+  const slugify = value => String(value || '').trim().toLowerCase()
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const money = (cents, currency = 'EUR') => cents == null
+    ? 'Preis folgt'
+    : new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(Number(cents) / 100);
+  const showShopMessage = (text, type = '') => showMessage(message, text, type);
+  const text = (value, fallback = '–') => value == null || value === '' ? fallback : String(value);
 
-  async function shopRequest(path, options={}) {
+  async function shopRequest(path, options = {}) {
     return apiRequest(`/api/admin/shop${path}`, options);
+  }
+
+  function actionButton(label, className, handler) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = label;
+    button.addEventListener('click', handler);
+    return button;
+  }
+
+  function mediaUrl(key) {
+    return `/media/${String(key).split('/').map(encodeURIComponent).join('/')}`;
   }
 
   function closeProductEditor() {
     productEditor.hidden = true;
-    $('shopProductForm').reset();
+    $('shopProductForm')?.reset();
     $('shopProductId').value = '';
     $('shopVariantEditor').hidden = true;
+    $('shopImageEditor').hidden = true;
     editingProductId = null;
+    editingVariantId = null;
+    loadedProductDetails = null;
+    resetVariantForm();
   }
 
   function closeCategoryEditor() {
     categoryEditor.hidden = true;
-    $('shopCategoryForm').reset();
+    $('shopCategoryForm')?.reset();
     $('shopCategoryId').value = '';
   }
 
-  function renderCategoryChoices(selected=[]) {
+  function resetVariantForm() {
+    const form = $('shopVariantForm');
+    if (!form) return;
+    form.reset();
+    $('shopVariantId').value = '';
+    editingVariantId = null;
+    $('shopVariantEditorTitle').textContent = 'Variante hinzufügen';
+    $('shopVariantStock').value = '0';
+    $('shopVariantTrackInventory').checked = true;
+    $('shopVariantStatus').value = 'active';
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.textContent = 'Variante hinzufügen';
+  }
+
+  function renderCategoryChoices(selected = []) {
     const container = $('shopProductCategoryChoices');
+    if (!container) return;
     container.replaceChildren();
-    if (!shopCategories.length) {
-      container.textContent = 'Lege zuerst mindestens eine aktive Kategorie an.';
+
+    const availableCategories = shopCategories;
+    if (!availableCategories.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Lege zuerst eine aktive Kategorie an.';
+      container.append(empty);
       return;
     }
-    shopCategories.filter(category => category.status === 'active').forEach(category => {
+
+    availableCategories.forEach(category => {
       const label = document.createElement('label');
       label.className = 'shop-category-choice';
       const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox'; checkbox.name = 'shopCategoryIds'; checkbox.value = category.id;
+      checkbox.type = 'checkbox';
+      checkbox.name = 'shopCategoryIds';
+      checkbox.value = category.id;
       checkbox.checked = selected.includes(category.id);
-      label.append(checkbox, document.createTextNode(category.name));
+      const categoryLabel = category.status === 'active' ? category.name : `${category.name} (inaktiv)`;
+      label.append(checkbox, document.createTextNode(categoryLabel));
       container.append(label);
     });
   }
 
   function renderProducts() {
-    if (!productsList) return;
     productsList.replaceChildren();
     const filter = $('shopProductStatusFilter')?.value || '';
-    const filtered = shopProducts.filter(product => !filter || product.status === filter);
+    const query = ($('shopProductSearch')?.value || '').trim().toLocaleLowerCase('de-DE');
+    const filtered = shopProducts.filter(product => {
+      const matchesStatus = !filter || product.status === filter;
+      const haystack = `${product.name || ''} ${product.slug || ''} ${product.short_description || ''}`.toLocaleLowerCase('de-DE');
+      return matchesStatus && (!query || haystack.includes(query));
+    });
+
     if (!filtered.length) {
-      const empty = document.createElement('p'); empty.className='muted';
-      empty.textContent = 'Noch keine Produkte in diesem Bereich.'; productsList.append(empty); return;
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = shopProducts.length
+        ? 'Keine Produkte passen zu deiner Suche.'
+        : 'Noch keine Produkte vorhanden. Erstelle dein erstes ULTOR-Produkt.';
+      productsList.append(empty);
+      return;
     }
+
     filtered.forEach(product => {
-      const card = document.createElement('article'); card.className='news-card';
-      const details = document.createElement('div'); details.className='news-card-details';
-      const title = document.createElement('h3'); title.textContent=product.name;
-      const meta = document.createElement('p'); meta.className='news-meta';
-      meta.textContent = `${product.price_cents == null ? 'Preis folgt' : new Intl.NumberFormat('de-DE',{style:'currency',currency:product.currency||'EUR'}).format(product.price_cents/100)} · ${product.slug || ''}`;
-      const status = document.createElement('span'); status.className=`shop-status ${product.status}`; status.textContent=product.status;
-      details.append(title,meta,status);
-      if (product.short_description) { const desc=document.createElement('p'); desc.className='news-excerpt'; desc.textContent=product.short_description; details.append(desc); }
-      const actions=document.createElement('div'); actions.className='news-actions';
-      if (canShop('shop.products.edit')) actions.append(actionButton('Bearbeiten','secondary-button',()=>openProductEditor(product)));
-      if (canShop('shop.products.publish')) actions.append(actionButton(product.status==='published'?'Zurückziehen':'Veröffentlichen','secondary-button',()=>togglePublish(product)));
-      if (canShop('shop.products.delete')) actions.append(actionButton('Löschen','danger-button',()=>deleteProduct(product)));
-      card.append(details,actions); productsList.append(card);
+      const card = document.createElement('article');
+      card.className = 'news-card shop-product-card';
+      const imageWrap = document.createElement('div');
+      imageWrap.className = 'shop-product-thumb';
+      if (product.primary_image) {
+        const image = document.createElement('img');
+        image.src = mediaUrl(product.primary_image);
+        image.alt = product.name || 'Produktbild';
+        image.loading = 'lazy';
+        imageWrap.append(image);
+      } else {
+        imageWrap.textContent = 'ULTOR';
+      }
+
+      const details = document.createElement('div');
+      details.className = 'news-card-details shop-product-details';
+      const title = document.createElement('h3');
+      title.textContent = product.name;
+      const meta = document.createElement('p');
+      meta.className = 'news-meta';
+      meta.textContent = `${money(product.price_cents, product.currency || 'EUR')} · /${product.slug || ''}`;
+      const status = document.createElement('span');
+      status.className = `shop-status ${product.status || 'draft'}`;
+      status.textContent = ({ draft: 'Entwurf', published: 'Veröffentlicht', archived: 'Archiviert' })[product.status] || product.status || 'Unbekannt';
+      details.append(title, meta, status);
+      if (product.short_description) {
+        const desc = document.createElement('p');
+        desc.className = 'news-excerpt';
+        desc.textContent = product.short_description;
+        details.append(desc);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'news-actions';
+      if (canShop('shop.products.edit')) {
+        actions.append(actionButton('Bearbeiten', 'secondary-button', () => openProductEditor(product.id)));
+      }
+      if (canShop('shop.products.publish')) {
+        if (product.status === 'published') {
+          actions.append(actionButton('Zurückziehen', 'secondary-button', () => changeProductStatus(product, 'unpublish')));
+        } else if (product.status !== 'archived') {
+          actions.append(actionButton('Veröffentlichen', 'primary-button', () => changeProductStatus(product, 'publish')));
+        }
+      }
+      if (canShop('shop.products.delete')) {
+        actions.append(actionButton('Löschen', 'danger-button', () => deleteProduct(product)));
+      }
+      card.append(imageWrap, details, actions);
+      productsList.append(card);
     });
   }
 
-  function actionButton(label, className, handler) {
-    const button=document.createElement('button'); button.type='button'; button.className=className; button.textContent=label;
-    button.addEventListener('click',handler); return button;
-  }
-
   function renderCategories() {
-    if (!categoriesList) return;
     categoriesList.replaceChildren();
-    if (!shopCategories.length) { const p=document.createElement('p'); p.className='muted'; p.textContent='Noch keine Kategorien vorhanden.'; categoriesList.append(p); return; }
+    if (!shopCategories.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Noch keine Kategorien vorhanden.';
+      categoriesList.append(empty);
+      return;
+    }
+
     shopCategories.forEach(category => {
-      const card=document.createElement('article'); card.className='news-card';
-      const details=document.createElement('div'); details.className='news-card-details';
-      const title=document.createElement('h3'); title.textContent=category.name;
-      const meta=document.createElement('p'); meta.className='news-meta'; meta.textContent=`/${category.slug} · ${category.status}`;
-      const desc=document.createElement('p'); desc.className='news-excerpt'; desc.textContent=category.description||'';
-      details.append(title,meta,desc);
-      const actions=document.createElement('div'); actions.className='news-actions';
-      if (canShop('shop.categories.manage')) {
-        actions.append(actionButton('Bearbeiten','secondary-button',()=>openCategoryEditor(category)));
-        actions.append(actionButton('Löschen','danger-button',()=>deleteCategory(category)));
+      const card = document.createElement('article');
+      card.className = 'news-card';
+      const details = document.createElement('div');
+      details.className = 'news-card-details';
+      const title = document.createElement('h3');
+      title.textContent = category.name;
+      const meta = document.createElement('p');
+      meta.className = 'news-meta';
+      meta.textContent = `/${category.slug || ''} · ${category.status === 'active' ? 'Aktiv' : 'Inaktiv'} · Sortierung ${category.sort_order ?? 0}`;
+      details.append(title, meta);
+      if (category.description) {
+        const description = document.createElement('p');
+        description.className = 'news-excerpt';
+        description.textContent = category.description;
+        details.append(description);
       }
-      card.append(details,actions); categoriesList.append(card);
+      const actions = document.createElement('div');
+      actions.className = 'news-actions';
+      if (canShop('shop.categories.manage')) {
+        actions.append(
+          actionButton('Bearbeiten', 'secondary-button', () => openCategoryEditor(category)),
+          actionButton('Löschen', 'danger-button', () => deleteCategory(category))
+        );
+      }
+      card.append(details, actions);
+      categoriesList.append(card);
     });
   }
 
   async function loadShop() {
-    if (!message) return;
+    if (isLoading) return;
+    isLoading = true;
+    productsList.replaceChildren(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'Produkte werden geladen …' }));
+    categoriesList.replaceChildren(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'Kategorien werden geladen …' }));
+
     try {
       const me = await apiRequest('/api/admin/me');
       shopPermissions = permissionsForResponse(me);
       if (!canShop('shop.view')) {
-        showShopMessage('Du hast keine Berechtigung, die Shop-Verwaltung aufzurufen.','error');
-        productsList?.replaceChildren(); categoriesList?.replaceChildren(); return;
+        showShopMessage('Du hast keine Berechtigung, die Shop-Verwaltung aufzurufen.', 'error');
+        productsList.replaceChildren();
+        categoriesList.replaceChildren();
+        $('createShopProductButton').hidden = true;
+        $('createShopCategoryButton').hidden = true;
+        return;
       }
+
+      const shopNav = document.querySelector('.nav-item[data-view="shop"]');
+      if (shopNav) shopNav.hidden = !canShop('shop.view');
       $('createShopProductButton').hidden = !canShop('shop.products.create');
       $('createShopCategoryButton').hidden = !canShop('shop.categories.manage');
-      const [productsData,categoriesData] = await Promise.all([
-        shopRequest('/products'), shopRequest('/categories')
+
+      const [productsData, categoriesData] = await Promise.all([
+        shopRequest('/products'),
+        shopRequest('/categories')
       ]);
-      shopProducts=productsData.products||[]; shopCategories=categoriesData.categories||[];
-      renderProducts(); renderCategories(); renderCategoryChoices();
-      showShopMessage('Shop-Daten erfolgreich geladen.','success');
-    } catch(error) { showShopMessage(getErrorMessage(error),'error'); }
+      shopProducts = Array.isArray(productsData.products) ? productsData.products : [];
+      shopCategories = Array.isArray(categoriesData.categories) ? categoriesData.categories : [];
+      renderProducts();
+      renderCategories();
+      renderCategoryChoices();
+      showShopMessage(`${shopProducts.length} Produkte und ${shopCategories.length} Kategorien geladen.`, 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+      productsList.replaceChildren();
+      categoriesList.replaceChildren();
+    } finally {
+      isLoading = false;
+    }
   }
 
-  function openProductEditor(product=null) {
-    if (!product && !canShop('shop.products.create')) return showShopMessage('Keine Berechtigung zum Erstellen von Produkten.','error');
-    if (product && !canShop('shop.products.edit')) return showShopMessage('Keine Berechtigung zum Bearbeiten von Produkten.','error');
-    $('shopProductForm').reset(); editingProductId=product?.id||null;
-    $('shopProductId').value=product?.id||'';
-    $('shopProductEditorTitle').textContent=product?'Produkt bearbeiten':'Neues Produkt';
-    $('shopProductName').value=product?.name||'';
-    $('shopProductShortDescription').value=product?.short_description||'';
-    $('shopProductDescription').value=product?.description||'';
-    $('shopProductPrice').value=centsToMoney(product?.price_cents);
-    $('shopProductComparePrice').value=centsToMoney(product?.compare_at_price_cents);
-    $('shopProductSortOrder').value=product?.sort_order??0;
-    $('shopProductFeatured').checked=Boolean(product?.is_featured);
-    renderCategoryChoices();
-    $('shopVariantEditor').hidden=!product;
-    productEditor.hidden=false; productEditor.scrollIntoView({behavior:'smooth',block:'start'});
-  }
+  async function openProductEditor(productId = null) {
+    const isNew = !productId;
+    if (isNew && !canShop('shop.products.create')) {
+      showShopMessage('Du hast keine Berechtigung, Produkte zu erstellen.', 'error');
+      return;
+    }
+    if (!isNew && !canShop('shop.products.edit')) {
+      showShopMessage('Du hast keine Berechtigung, Produkte zu bearbeiten.', 'error');
+      return;
+    }
 
-  function openCategoryEditor(category=null) {
-    if (!canShop('shop.categories.manage')) return showShopMessage('Keine Berechtigung zum Verwalten von Kategorien.','error');
-    $('shopCategoryForm').reset(); $('shopCategoryId').value=category?.id||'';
-    $('shopCategoryEditorTitle').textContent=category?'Kategorie bearbeiten':'Neue Kategorie';
-    $('shopCategoryName').value=category?.name||'';
-    $('shopCategoryDescription').value=category?.description||'';
-    $('shopCategorySortOrder').value=category?.sort_order??0;
-    categoryEditor.hidden=false; categoryEditor.scrollIntoView({behavior:'smooth',block:'start'});
-  }
+    $('shopProductForm').reset();
+    editingProductId = productId;
+    loadedProductDetails = null;
+    $('shopProductId').value = productId || '';
+    $('shopProductEditorTitle').textContent = isNew ? 'Neues Produkt erstellen' : 'Produkt bearbeiten';
+    $('shopProductStatus').value = 'draft';
+    $('shopProductCurrency').value = 'EUR';
+    $('shopProductSortOrder').value = '0';
+    $('shopProductFeatured').checked = false;
+    $('shopProductStatus').disabled = !canShop('shop.products.publish');
+    renderCategoryChoices([]);
+    $('shopProductImages').replaceChildren();
+    $('shopVariantsList').replaceChildren();
+    $('shopImageEditor').hidden = isNew || !canShop('shop.products.edit');
+    $('shopVariantEditor').hidden = isNew || !canShop('shop.products.edit');
 
-  $('shopProductForm')?.addEventListener('submit', async event => {
-    event.preventDefault();
-    const category_ids=Array.from(document.querySelectorAll('input[name="shopCategoryIds"]:checked')).map(input=>input.value);
-    const payload={name:$('shopProductName').value.trim(),short_description:$('shopProductShortDescription').value.trim(),description:$('shopProductDescription').value.trim(),price_cents:moneyToCents($('shopProductPrice').value),compare_at_price_cents:moneyToCents($('shopProductComparePrice').value),sort_order:Number($('shopProductSortOrder').value||0),is_featured:$('shopProductFeatured').checked};
-    const button=$('shopProductForm').querySelector('button[type="submit"]'); button.disabled=true;
+    productEditor.hidden = false;
+    productEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (isNew) return;
+
+    showShopMessage('Produktdetails werden geladen …');
     try {
-      let productId=editingProductId;
-      if (productId) await shopRequest(`/products/${encodeURIComponent(productId)}`,{method:'PATCH',body:JSON.stringify(payload)});
-      else { const created=await shopRequest('/products',{method:'POST',body:JSON.stringify(payload)}); productId=created.id; }
-      // Beim Erstellen werden Kategorien direkt zugewiesen. Beim Bearbeiten lassen wir bestehende Zuordnungen unverändert, da die aktuelle Admin-GET-API diese nicht mitliefert.
-      if (!editingProductId) await shopRequest(`/products/${encodeURIComponent(productId)}/categories`,{method:'PUT',body:JSON.stringify({category_ids})});
-      showShopMessage('Produkt gespeichert. Es befindet sich zunächst als Entwurf im Shop.','success');
-      closeProductEditor(); await loadShop();
-    } catch(error) { showShopMessage(getErrorMessage(error),'error'); }
-    finally { button.disabled=false; }
-  });
-
-  $('shopCategoryForm')?.addEventListener('submit', async event => {
-    event.preventDefault();
-    const id=$('shopCategoryId').value;
-    const payload={name:$('shopCategoryName').value.trim(),description:$('shopCategoryDescription').value.trim(),sort_order:Number($('shopCategorySortOrder').value||0),status:'active'};
-    const button=$('shopCategoryForm').querySelector('button[type="submit"]'); button.disabled=true;
-    try {
-      if(id) await shopRequest(`/categories/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(payload)});
-      else await shopRequest('/categories',{method:'POST',body:JSON.stringify(payload)});
-      closeCategoryEditor(); await loadShop(); showShopMessage('Kategorie gespeichert.','success');
-    } catch(error) { showShopMessage(getErrorMessage(error),'error'); }
-    finally { button.disabled=false; }
-  });
-
-  $('shopVariantForm')?.addEventListener('submit', async event => {
-    event.preventDefault(); if(!editingProductId) return;
-    const payload={variant_name:$('shopVariantName').value.trim(),sku:$('shopVariantSku').value.trim(),stock_quantity:Number($('shopVariantStock').value||0),track_inventory:$('shopVariantTrackInventory').checked,status:'active'};
-    try { await shopRequest(`/products/${encodeURIComponent(editingProductId)}/variants`,{method:'POST',body:JSON.stringify(payload)}); $('shopVariantForm').reset(); $('shopVariantStock').value='0'; $('shopVariantTrackInventory').checked=true; showShopMessage('Variante wurde hinzugefügt.','success'); }
-    catch(error){showShopMessage(getErrorMessage(error),'error');}
-  });
-
-  async function togglePublish(product) {
-    const action=product.status==='published'?'unpublish':'publish';
-    try { await shopRequest(`/products/${encodeURIComponent(product.id)}/${action}`,{method:'POST',body:'{}'}); await loadShop(); showShopMessage(action==='publish'?'Produkt veröffentlicht.':'Produkt zurückgezogen.','success'); }
-    catch(error){showShopMessage(getErrorMessage(error),'error');}
+      const data = await shopRequest(`/products/${encodeURIComponent(productId)}`);
+      const product = data.product;
+      if (!product) throw new Error('Die Produktdetails fehlen in der API-Antwort.');
+      loadedProductDetails = product;
+      $('shopProductName').value = product.name || '';
+      $('shopProductSlug').value = product.slug || '';
+      $('shopProductShortDescription').value = product.short_description || '';
+      $('shopProductDescription').value = product.description || '';
+      $('shopProductPrice').value = centsToMoney(product.price_cents);
+      $('shopProductComparePrice').value = centsToMoney(product.compare_at_price_cents);
+      $('shopProductCurrency').value = product.currency || 'EUR';
+      $('shopProductStatus').value = product.status || 'draft';
+      $('shopProductStatus').disabled = !canShop('shop.products.publish');
+      $('shopProductSortOrder').value = product.sort_order ?? 0;
+      $('shopProductFeatured').checked = Boolean(product.is_featured);
+      renderCategoryChoices(product.category_ids || []);
+      renderProductImages(product.images || []);
+      renderVariants(product.variants || []);
+      $('shopImageEditor').hidden = !canShop('shop.products.edit');
+      $('shopVariantEditor').hidden = !canShop('shop.products.edit');
+      showShopMessage('Produktdetails geladen.');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
   }
+
+  function openCategoryEditor(category = null) {
+    if (!canShop('shop.categories.manage')) {
+      showShopMessage('Du hast keine Berechtigung, Kategorien zu verwalten.', 'error');
+      return;
+    }
+    $('shopCategoryForm').reset();
+    $('shopCategoryId').value = category?.id || '';
+    $('shopCategoryEditorTitle').textContent = category ? 'Kategorie bearbeiten' : 'Neue Kategorie erstellen';
+    $('shopCategoryName').value = category?.name || '';
+    $('shopCategorySlug').value = category?.slug || '';
+    $('shopCategoryDescription').value = category?.description || '';
+    $('shopCategorySortOrder').value = category?.sort_order ?? 0;
+    $('shopCategoryStatus').value = category?.status || 'active';
+    categoryEditor.hidden = false;
+    categoryEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function saveProduct(event) {
+    event.preventDefault();
+    const button = $('shopProductForm').querySelector('button[type="submit"]');
+    button.disabled = true;
+    const name = $('shopProductName').value.trim();
+    const payload = {
+      name,
+      slug: slugify($('shopProductSlug').value || name),
+      short_description: $('shopProductShortDescription').value.trim(),
+      description: $('shopProductDescription').value.trim(),
+      price_cents: moneyToCents($('shopProductPrice').value),
+      compare_at_price_cents: moneyToCents($('shopProductComparePrice').value),
+      currency: $('shopProductCurrency').value || 'EUR',
+      status: $('shopProductStatus').value,
+      sort_order: Number($('shopProductSortOrder').value || 0),
+      is_featured: $('shopProductFeatured').checked
+    };
+    const category_ids = Array.from(document.querySelectorAll('input[name="shopCategoryIds"]:checked')).map(input => input.value);
+
+    try {
+      if (editingProductId) {
+        await shopRequest(`/products/${encodeURIComponent(editingProductId)}`, {
+          method: 'PATCH', body: JSON.stringify(payload)
+        });
+        await shopRequest(`/products/${encodeURIComponent(editingProductId)}/categories`, {
+          method: 'PUT', body: JSON.stringify({ category_ids })
+        });
+        showShopMessage('Produkt wurde aktualisiert.', 'success');
+      } else {
+        const created = await shopRequest('/products', {
+          method: 'POST', body: JSON.stringify(payload)
+        });
+        editingProductId = created.id;
+        $('shopProductId').value = created.id;
+        if (category_ids.length) {
+          await shopRequest(`/products/${encodeURIComponent(created.id)}/categories`, {
+            method: 'PUT', body: JSON.stringify({ category_ids })
+          });
+        }
+        $('shopProductEditorTitle').textContent = 'Produkt bearbeiten';
+        $('shopImageEditor').hidden = !canShop('shop.products.edit');
+        $('shopVariantEditor').hidden = !canShop('shop.products.edit');
+        showShopMessage('Produkt wurde als Entwurf erstellt. Du kannst jetzt Bilder und Varianten hinzufügen.', 'success');
+      }
+      await loadShop();
+      if (editingProductId) {
+        const currentId = editingProductId;
+        await openProductEditor(currentId);
+      }
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderProductImages(images) {
+    const container = $('shopProductImages');
+    container.replaceChildren();
+    if (!images.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Noch keine Produktbilder vorhanden.';
+      container.append(empty);
+      return;
+    }
+
+    images.forEach(imageData => {
+      const card = document.createElement('div');
+      card.className = 'shop-image-card';
+      const image = document.createElement('img');
+      image.src = mediaUrl(imageData.image_key);
+      image.alt = imageData.alt_text || 'Produktbild';
+      image.loading = 'lazy';
+      const meta = document.createElement('div');
+      meta.className = 'shop-image-meta';
+      const title = document.createElement('strong');
+      title.textContent = imageData.is_primary ? 'Hauptbild' : 'Produktbild';
+      const alt = document.createElement('span');
+      alt.textContent = imageData.alt_text || 'Kein Alt-Text';
+      meta.append(title, alt);
+      const actions = document.createElement('div');
+      actions.className = 'news-actions';
+      if (!imageData.is_primary) {
+        actions.append(actionButton('Als Hauptbild', 'secondary-button', () => setPrimaryProductImage(imageData)));
+      }
+      actions.append(actionButton('Entfernen', 'danger-button', () => deleteProductImage(imageData)));
+      card.append(image, meta, actions);
+      container.append(card);
+    });
+  }
+
+  async function uploadProductImage() {
+    if (!editingProductId) {
+      showShopMessage('Speichere das Produkt zuerst, bevor du Bilder hinzufügst.', 'error');
+      return;
+    }
+    if (!canShop('shop.products.edit')) {
+      showShopMessage('Du hast keine Berechtigung, Produktbilder zu bearbeiten.', 'error');
+      return;
+    }
+    const file = $('shopProductImageFile').files?.[0];
+    if (!file) {
+      showShopMessage('Bitte wähle zuerst ein Bild aus.', 'error');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showShopMessage('Das Bild darf maximal 8 MB groß sein.', 'error');
+      return;
+    }
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+      showShopMessage('Erlaubt sind JPG, PNG, WEBP und GIF.', 'error');
+      return;
+    }
+
+    const button = $('uploadShopProductImageButton');
+    button.disabled = true;
+    button.textContent = 'Upload läuft …';
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'shop');
+      const response = await fetch('/api/admin/media/upload', {
+        method: 'POST', credentials: 'same-origin', body: formData
+      });
+      const uploaded = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(uploaded.error || uploaded.message || `Upload fehlgeschlagen (${response.status})`);
+      if (!uploaded.key || !/^shop\/[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(uploaded.key)) {
+        throw new Error('Der Upload lieferte keinen gültigen Shop-Bildschlüssel zurück.');
+      }
+
+      await shopRequest(`/products/${encodeURIComponent(editingProductId)}/images`, {
+        method: 'POST',
+        body: JSON.stringify({
+          image_key: uploaded.key,
+          alt_text: $('shopProductImageAlt').value.trim(),
+          is_primary: $('shopProductImagePrimary').checked || !(loadedProductDetails?.images || []).length,
+          sort_order: (loadedProductDetails?.images || []).length
+        })
+      });
+      $('shopProductImageFile').value = '';
+      $('shopProductImageAlt').value = '';
+      $('shopProductImagePrimary').checked = false;
+      await reloadProductDetails();
+      showShopMessage('Produktbild wurde hochgeladen und gespeichert.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Bild hochladen';
+    }
+  }
+
+  async function setPrimaryProductImage(imageData) {
+    try {
+      await shopRequest(`/images/${encodeURIComponent(imageData.id)}`, {
+        method: 'PATCH', body: JSON.stringify({ is_primary: true })
+      });
+      await reloadProductDetails();
+      await loadShop();
+      showShopMessage('Hauptbild wurde geändert.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
+  }
+
+  async function deleteProductImage(imageData) {
+    if (!confirm('Dieses Produktbild wirklich entfernen?')) return;
+    try {
+      await shopRequest(`/images/${encodeURIComponent(imageData.id)}`, { method: 'DELETE' });
+      await reloadProductDetails();
+      showShopMessage('Produktbild wurde entfernt.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
+  }
+
+  function renderVariants(variants) {
+    const container = $('shopVariantsList');
+    container.replaceChildren();
+    if (!variants.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Noch keine Varianten angelegt.';
+      container.append(empty);
+      return;
+    }
+
+    variants.forEach(variant => {
+      const card = document.createElement('article');
+      card.className = 'shop-variant-card';
+      const details = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = variant.variant_name;
+      const options = [
+        [variant.option1_name, variant.option1_value],
+        [variant.option2_name, variant.option2_value],
+        [variant.option3_name, variant.option3_value]
+      ].filter(pair => pair[0] && pair[1]).map(pair => `${pair[0]}: ${pair[1]}`).join(' · ');
+      const meta = document.createElement('p');
+      meta.className = 'news-meta';
+      meta.textContent = [variant.sku ? `SKU ${variant.sku}` : '', options, `Bestand: ${variant.track_inventory ? variant.stock_quantity : 'nicht verfolgt'}`, variant.price_cents != null ? money(variant.price_cents) : 'Standardpreis'].filter(Boolean).join(' · ');
+      details.append(title, meta);
+      const actions = document.createElement('div');
+      actions.className = 'news-actions';
+      if (canShop('shop.products.edit')) {
+        actions.append(
+          actionButton('Bearbeiten', 'secondary-button', () => openVariantEditor(variant)),
+          actionButton('Löschen', 'danger-button', () => deleteVariant(variant))
+        );
+      }
+      card.append(details, actions);
+      container.append(card);
+    });
+  }
+
+  function openVariantEditor(variant = null) {
+    editingVariantId = variant?.id || null;
+    $('shopVariantForm').reset();
+    $('shopVariantId').value = variant?.id || '';
+    $('shopVariantName').value = variant?.variant_name || '';
+    $('shopVariantSku').value = variant?.sku || '';
+    $('shopVariantOption1Name').value = variant?.option1_name || '';
+    $('shopVariantOption1Value').value = variant?.option1_value || '';
+    $('shopVariantOption2Name').value = variant?.option2_name || '';
+    $('shopVariantOption2Value').value = variant?.option2_value || '';
+    $('shopVariantOption3Name').value = variant?.option3_name || '';
+    $('shopVariantOption3Value').value = variant?.option3_value || '';
+    $('shopVariantPrice').value = centsToMoney(variant?.price_cents);
+    $('shopVariantComparePrice').value = centsToMoney(variant?.compare_at_price_cents);
+    $('shopVariantStock').value = variant?.stock_quantity ?? 0;
+    $('shopVariantTrackInventory').checked = variant ? Boolean(variant.track_inventory) : true;
+    $('shopVariantStatus').value = variant?.status || 'active';
+    $('shopVariantSortOrder').value = variant?.sort_order ?? 0;
+    $('shopVariantEditorTitle').textContent = variant ? 'Variante bearbeiten' : 'Variante hinzufügen';
+    const submit = $('shopVariantForm').querySelector('button[type="submit"]');
+    submit.textContent = variant ? 'Änderungen speichern' : 'Variante hinzufügen';
+    $('shopVariantForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function saveVariant(event) {
+    event.preventDefault();
+    if (!editingProductId) return;
+    const button = $('shopVariantForm').querySelector('button[type="submit"]');
+    button.disabled = true;
+    const payload = {
+      variant_name: $('shopVariantName').value.trim(),
+      sku: $('shopVariantSku').value.trim(),
+      option1_name: $('shopVariantOption1Name').value.trim(),
+      option1_value: $('shopVariantOption1Value').value.trim(),
+      option2_name: $('shopVariantOption2Name').value.trim(),
+      option2_value: $('shopVariantOption2Value').value.trim(),
+      option3_name: $('shopVariantOption3Name').value.trim(),
+      option3_value: $('shopVariantOption3Value').value.trim(),
+      price_cents: moneyToCents($('shopVariantPrice').value),
+      compare_at_price_cents: moneyToCents($('shopVariantComparePrice').value),
+      stock_quantity: Number($('shopVariantStock').value || 0),
+      track_inventory: $('shopVariantTrackInventory').checked,
+      status: $('shopVariantStatus').value,
+      sort_order: Number($('shopVariantSortOrder').value || 0)
+    };
+    const wasEditing = Boolean(editingVariantId);
+    try {
+      if (wasEditing) {
+        await shopRequest(`/variants/${encodeURIComponent(editingVariantId)}`, {
+          method: 'PATCH', body: JSON.stringify(payload)
+        });
+      } else {
+        await shopRequest(`/products/${encodeURIComponent(editingProductId)}/variants`, {
+          method: 'POST', body: JSON.stringify(payload)
+        });
+      }
+      resetVariantForm();
+      await reloadProductDetails();
+      showShopMessage(wasEditing ? 'Variante aktualisiert.' : 'Variante hinzugefügt.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function deleteVariant(variant) {
+    if (!confirm(`Variante „${variant.variant_name}“ wirklich löschen?`)) return;
+    try {
+      await shopRequest(`/variants/${encodeURIComponent(variant.id)}`, { method: 'DELETE' });
+      await reloadProductDetails();
+      showShopMessage('Variante gelöscht.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
+  }
+
+  async function reloadProductDetails() {
+    if (!editingProductId) return;
+    const data = await shopRequest(`/products/${encodeURIComponent(editingProductId)}`);
+    loadedProductDetails = data.product;
+    renderProductImages(loadedProductDetails.images || []);
+    renderVariants(loadedProductDetails.variants || []);
+  }
+
+  async function saveCategory(event) {
+    event.preventDefault();
+    const id = $('shopCategoryId').value;
+    const button = $('shopCategoryForm').querySelector('button[type="submit"]');
+    button.disabled = true;
+    const name = $('shopCategoryName').value.trim();
+    const payload = {
+      name,
+      slug: slugify($('shopCategorySlug').value || name),
+      description: $('shopCategoryDescription').value.trim(),
+      sort_order: Number($('shopCategorySortOrder').value || 0),
+      status: $('shopCategoryStatus').value
+    };
+    try {
+      if (id) {
+        await shopRequest(`/categories/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      } else {
+        await shopRequest('/categories', { method: 'POST', body: JSON.stringify(payload) });
+      }
+      closeCategoryEditor();
+      await loadShop();
+      showShopMessage('Kategorie gespeichert.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function changeProductStatus(product, action) {
+    const label = action === 'publish' ? 'veröffentlichen' : 'zurückziehen';
+    if (!confirm(`Produkt „${product.name}“ wirklich ${label}?`)) return;
+    try {
+      await shopRequest(`/products/${encodeURIComponent(product.id)}/${action}`, { method: 'POST', body: '{}' });
+      await loadShop();
+      showShopMessage(action === 'publish' ? 'Produkt veröffentlicht.' : 'Produkt zurückgezogen.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
+  }
+
   async function deleteProduct(product) {
-    if(!confirm(`Produkt „${product.name}“ wirklich löschen?`)) return;
-    try { await shopRequest(`/products/${encodeURIComponent(product.id)}`,{method:'DELETE'}); await loadShop(); showShopMessage('Produkt gelöscht.','success'); }
-    catch(error){showShopMessage(getErrorMessage(error),'error');}
-  }
-  async function deleteCategory(category) {
-    if(!confirm(`Kategorie „${category.name}“ wirklich löschen?`)) return;
-    try { await shopRequest(`/categories/${encodeURIComponent(category.id)}`,{method:'DELETE'}); await loadShop(); showShopMessage('Kategorie gelöscht.','success'); }
-    catch(error){showShopMessage(getErrorMessage(error),'error');}
+    if (!canShop('shop.products.delete')) return;
+    if (!confirm(`Produkt „${product.name}“ endgültig löschen?`)) return;
+    try {
+      await shopRequest(`/products/${encodeURIComponent(product.id)}`, { method: 'DELETE' });
+      await loadShop();
+      showShopMessage('Produkt gelöscht.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
   }
 
-  $('createShopProductButton')?.addEventListener('click',()=>openProductEditor());
-  $('createShopCategoryButton')?.addEventListener('click',()=>openCategoryEditor());
-  $('closeShopProductEditor')?.addEventListener('click',closeProductEditor);
-  $('cancelShopProductEditor')?.addEventListener('click',closeProductEditor);
-  $('closeShopCategoryEditor')?.addEventListener('click',closeCategoryEditor);
-  $('cancelShopCategoryEditor')?.addEventListener('click',closeCategoryEditor);
-  $('shopProductStatusFilter')?.addEventListener('change',renderProducts);
+  async function deleteCategory(category) {
+    if (!canShop('shop.categories.manage')) return;
+    if (!confirm(`Kategorie „${category.name}“ wirklich löschen?`)) return;
+    try {
+      await shopRequest(`/categories/${encodeURIComponent(category.id)}`, { method: 'DELETE' });
+      await loadShop();
+      showShopMessage('Kategorie gelöscht.', 'success');
+    } catch (error) {
+      showShopMessage(getErrorMessage(error), 'error');
+    }
+  }
+
+  $('shopProductForm')?.addEventListener('submit', saveProduct);
+  $('shopCategoryForm')?.addEventListener('submit', saveCategory);
+  $('shopVariantForm')?.addEventListener('submit', saveVariant);
+  $('createShopProductButton')?.addEventListener('click', () => openProductEditor());
+  $('createShopCategoryButton')?.addEventListener('click', () => openCategoryEditor());
+  $('closeShopProductEditor')?.addEventListener('click', closeProductEditor);
+  $('cancelShopProductEditor')?.addEventListener('click', closeProductEditor);
+  $('closeShopCategoryEditor')?.addEventListener('click', closeCategoryEditor);
+  $('cancelShopCategoryEditor')?.addEventListener('click', closeCategoryEditor);
+  $('uploadShopProductImageButton')?.addEventListener('click', uploadProductImage);
+  $('newShopVariantButton')?.addEventListener('click', () => openVariantEditor());
+  $('cancelShopVariantEdit')?.addEventListener('click', resetVariantForm);
+  $('shopProductStatusFilter')?.addEventListener('change', renderProducts);
+  $('shopProductSearch')?.addEventListener('input', renderProducts);
 
   const previousOpenCmsViewForShop = openCmsView;
   openCmsView = function(viewName) {
     previousOpenCmsViewForShop(viewName);
-    if(viewName==='shop') loadShop();
+    if (viewName === 'shop') loadShop();
   };
 })();
 
