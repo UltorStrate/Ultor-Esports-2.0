@@ -229,12 +229,37 @@ async function updateCategory(request, env, current, id) {
     return json({ error: "Eine Kategorie kann nicht ihr eigener Unterpunkt sein." }, 400);
   }
 
-  if (parentId) {
+    if (parentId) {
     const parent = await env.DB.prepare(`
       SELECT id FROM shop_categories WHERE id = ?
     `).bind(parentId).first();
 
-    if (!parent) return json({ error: "Übergeordnete Kategorie nicht gefunden." }, 404);
+    if (!parent) {
+      return json({
+        error: "Übergeordnete Kategorie nicht gefunden."
+      }, 404);
+    }
+
+    const descendants = await env.DB.prepare(`
+      WITH RECURSIVE category_tree(id) AS (
+        SELECT id
+        FROM shop_categories
+        WHERE parent_id = ?
+
+        UNION ALL
+
+        SELECT c.id
+        FROM shop_categories c
+        JOIN category_tree ct ON c.parent_id = ct.id
+      )
+      SELECT id FROM category_tree
+    `).bind(id).all();
+
+    if (descendants.results.some(row => row.id === parentId)) {
+      return json({
+        error: "Eine Kategorie kann nicht zu einem eigenen Unterpunkt werden."
+      }, 400);
+    }
   }
 
   try {
