@@ -1,81 +1,283 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>ULTOR ESPORTS – CMS Login</title>
+  <title>ULTOR ESPORTS – Anmeldung</title>
 
-  <link rel="stylesheet" href="/admin/admin.css?v=20261106">
-
-  <script src="/admin/admin.js?v=20261106" defer></script>
+  <link rel="stylesheet" href="/admin/admin.css?v=20261108-login2">
 </head>
 
 <body class="auth-page">
+
   <main class="auth-card">
 
-    <a href="/" class="brand">
+    <a class="brand" href="/">
       ULTOR <span>ESPORTS</span>
     </a>
 
     <p class="eyebrow">CONTENT MANAGEMENT SYSTEM</p>
 
-    <div class="auth-tabs">
-      <button type="button" id="loginTab" class="tab-button active">
+    <div class="auth-tabs" role="tablist">
+      <button
+        id="loginTab"
+        class="tab-button active"
+        type="button"
+        aria-selected="true">
         Anmelden
       </button>
-      <button type="button" id="registerTab" class="tab-button">
+
+      <button
+        id="registerTab"
+        class="tab-button"
+        type="button"
+        aria-selected="false">
         Registrieren
       </button>
     </div>
 
-    <form id="loginForm">
+    <form id="loginForm" autocomplete="on">
+
       <h1>Willkommen zurück.</h1>
-      <p class="muted">Melde dich mit deinem CMS-Konto an.</p>
 
-      <label for="loginEmail">E-Mail-Adresse</label>
-      <input type="email" id="loginEmail" name="email"
-        placeholder="name@beispiel.de" autocomplete="username" required>
-
-      <label for="loginPassword">Passwort</label>
-      <input type="password" id="loginPassword" name="password"
-        placeholder="Dein Passwort" autocomplete="current-password" required>
-
-      <button type="submit" class="primary-button full-width">
-        Anmelden
-      </button>
-    </form>
-
-    <form id="registerForm" hidden>
-      <h1>Konto erstellen.</h1>
       <p class="muted">
-        Erstelle ein CMS-Konto für ULTOR ESPORTS.
-        Dein Zugang muss anschließend vom Owner freigegeben werden.
+        Melde dich mit deinem ULTOR-Account an, um das CMS zu verwalten.
       </p>
 
-      <label for="registerName">Vollständiger Name</label>
-      <input type="text" id="registerName" name="name"
-        placeholder="Dein Name" autocomplete="name" required>
+      <label for="loginEmail">E-Mail-Adresse</label>
 
-      <label for="registerEmail">E-Mail-Adresse</label>
-      <input type="email" id="registerEmail" name="email"
-        placeholder="name@beispiel.de" autocomplete="email" required>
+      <input
+        id="loginEmail"
+        name="email"
+        type="email"
+        autocomplete="username"
+        placeholder="name@beispiel.de"
+        required>
 
-      <label for="registerPassword">Passwort</label>
-      <input type="password" id="registerPassword" name="password"
-        placeholder="Mindestens 8 Zeichen" autocomplete="new-password"
-        minlength="8" required>
+      <label for="loginPassword">Passwort</label>
 
-      <button type="submit" class="primary-button full-width">
-        Konto erstellen
+      <input
+        id="loginPassword"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Dein Passwort"
+        required>
+
+      <button
+        id="loginButton"
+        class="primary-button full-width"
+        type="submit">
+        Anmelden
       </button>
+
     </form>
 
-    <div id="authMessage" class="message"
-      role="status" aria-live="polite"></div>
+    <form id="registerForm" autocomplete="on" hidden>
 
-    <a href="/" class="back-link">← Zurück zur Website</a>
+      <h1>Account erstellen.</h1>
+
+      <p class="muted">
+        Erstelle einen Zugang. Dein Konto muss anschließend vom Owner freigegeben werden.
+      </p>
+
+      <label for="registerName">Name</label>
+
+      <input
+        id="registerName"
+        name="name"
+        type="text"
+        autocomplete="name"
+        placeholder="Dein Name"
+        required>
+
+      <label for="registerEmail">E-Mail-Adresse</label>
+
+      <input
+        id="registerEmail"
+        name="email"
+        type="email"
+        autocomplete="email"
+        placeholder="name@beispiel.de"
+        required>
+
+      <label for="registerPassword">Passwort</label>
+
+      <input
+        id="registerPassword"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        minlength="8"
+        placeholder="Mindestens 8 Zeichen"
+        required>
+
+      <button
+        id="registerButton"
+        class="primary-button full-width"
+        type="submit">
+        Konto erstellen
+      </button>
+
+    </form>
+
+    <div
+      id="authMessage"
+      class="message"
+      role="status"
+      aria-live="polite">
+    </div>
+
+    <a class="back-link" href="/">
+      ← Zurück zur Website
+    </a>
 
   </main>
+
+  <script>
+    const API_AUTH = "/api/auth";
+    const API_ADMIN = "/api/admin";
+
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+
+    const loginTab = document.getElementById("loginTab");
+    const registerTab = document.getElementById("registerTab");
+
+    const authMessage = document.getElementById("authMessage");
+
+    function showMessage(message, type = "") {
+      authMessage.textContent = message;
+      authMessage.className = ("message " + type).trim();
+    }
+
+    async function apiRequest(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message =
+          data.message ||
+          data.error?.message ||
+          (typeof data.error === "string" ? data.error : null) ||
+          "Fehler " + response.status;
+
+        throw new Error(message);
+      }
+
+      return data;
+    }
+
+    function showTab(tab) {
+      const showLogin = tab === "login";
+
+      loginForm.hidden = !showLogin;
+      registerForm.hidden = showLogin;
+
+      loginTab.classList.toggle("active", showLogin);
+      registerTab.classList.toggle("active", !showLogin);
+
+      loginTab.setAttribute("aria-selected", String(showLogin));
+      registerTab.setAttribute("aria-selected", String(!showLogin));
+
+      showMessage("");
+    }
+
+    loginTab.addEventListener("click", () => {
+      showTab("login");
+    });
+
+    registerTab.addEventListener("click", () => {
+      showTab("register");
+    });
+
+    loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const button = document.getElementById("loginButton");
+
+      button.disabled = true;
+      button.textContent = "Anmeldung läuft …";
+
+      showMessage("Anmeldung wird überprüft …");
+
+      try {
+        await apiRequest(API_AUTH + "/sign-in/email", {
+          method: "POST",
+          body: JSON.stringify({
+            email: document.getElementById("loginEmail").value.trim(),
+            password: document.getElementById("loginPassword").value
+          })
+        });
+
+        showMessage("Anmeldung erfolgreich. CMS wird geöffnet …", "success");
+
+        await apiRequest(API_ADMIN + "/me");
+
+        window.location.replace("/admin/index.html");
+
+      } catch (error) {
+        showMessage(
+          error.message || "Die Anmeldung ist fehlgeschlagen.",
+          "error"
+        );
+
+        button.disabled = false;
+        button.textContent = "Anmelden";
+      }
+    });
+
+    registerForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const button = document.getElementById("registerButton");
+
+      button.disabled = true;
+      button.textContent = "Konto wird erstellt …";
+
+      showMessage("Registrierung wird verarbeitet …");
+
+      try {
+        await apiRequest(API_AUTH + "/sign-up/email", {
+          method: "POST",
+          body: JSON.stringify({
+            name: document.getElementById("registerName").value.trim(),
+            email: document.getElementById("registerEmail").value.trim(),
+            password: document.getElementById("registerPassword").value
+          })
+        });
+
+        registerForm.reset();
+
+        showTab("login");
+
+        showMessage(
+          "Dein Konto wurde erstellt. Es muss jetzt noch vom Owner freigegeben werden. Du kannst dich anschließend anmelden.",
+          "success"
+        );
+
+      } catch (error) {
+        showMessage(
+          error.message || "Die Registrierung ist fehlgeschlagen.",
+          "error"
+        );
+
+      } finally {
+        button.disabled = false;
+        button.textContent = "Konto erstellen";
+      }
+    });
+  </script>
+
 </body>
 </html>
