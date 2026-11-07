@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -1008,6 +1017,19 @@
             <textarea id="shopCategoryDescription" rows="3" maxlength="2000"></textarea>
             <div class="shop-form-grid shop-form-grid-two">
               <div>
+                <label for="shopCategoryHomepageSlot">Startseiten-Menü</label>
+                <select id="shopCategoryHomepageSlot">
+                  <option value="">Nicht auf der Startseite anzeigen</option>
+                  <option value="teamwear">Teamwear</option>
+                  <option value="apparel">Apparel</option>
+                  <option value="accessories">Accessories</option>
+                  <option value="limited_editions">Limited Editions</option>
+                </select>
+                <p class="muted shop-category-slot-help">Ordnet diese Kategorie einer der vier Kacheln im Shop zu. Jede Kachel kann genau eine Kategorie anzeigen.</p>
+              </div>
+            </div>
+            <div class="shop-form-grid shop-form-grid-two">
+              <div>
                 <label for="shopCategorySortOrder">Sortierung</label>
                 <input id="shopCategorySortOrder" type="number" min="0" step="1" value="0">
               </div>
@@ -1153,7 +1175,7 @@
     </div>
   </main>
 
-  <script src="/admin/admin.js?v=20261107-shop-management1" defer
+  <script src="/admin/admin.js?v=20261107-homepage-slot1" defer
     onerror="document.getElementById('dashboardMessage').textContent='admin.js konnte nicht geladen werden. Prüfe den Pfad /admin/admin.js.';document.getElementById('dashboardMessage').className='message error';"></script>
 
   <!-- Fallback: Navigation und Benutzerprofil funktionieren auch dann,
@@ -1290,3 +1312,6 @@
 
 </body>
 </html> 
+
+
+
