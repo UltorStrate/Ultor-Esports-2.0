@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>ULTOR ESPORTS – CMS</title>
-  <link rel="stylesheet" href="/admin/admin.css?v=20261106">
+  <link rel="stylesheet" href="/admin/admin.css?v=20261107-shop-management1">
 </head>
 
 <body class="dashboard-page">
@@ -30,6 +30,9 @@
       </button>
       <button class="nav-item" data-view="partners" type="button">
         <span class="nav-icon">◇</span> Partner
+      </button>
+      <button class="nav-item" data-view="shop" type="button">
+        <span class="nav-icon">▣</span> Shop
       </button>
       <button class="nav-item" data-view="media" type="button">
         <span class="nav-icon">▧</span> Medien
@@ -751,6 +754,279 @@
 </section>
 
 
+
+            <!-- =====================================
+           SHOP MANAGEMENT
+      ====================================== -->
+      <section class="cms-view" id="view-shop">
+        <div class="page-heading shop-page-heading">
+          <div>
+            <p class="eyebrow">ECOMMERCE MANAGEMENT</p>
+            <h1>Shop</h1>
+            <p class="muted">Verwalte Produkte, Produktbilder, Varianten, Lagerbestände und Kategorien.</p>
+          </div>
+          <div class="shop-heading-actions">
+            <button id="createShopCategoryButton" class="secondary-button" type="button">+ Neue Kategorie</button>
+            <button id="createShopProductButton" class="primary-button" type="button">+ Neues Produkt</button>
+          </div>
+        </div>
+
+        <div id="shopMessage" class="message" role="status" aria-live="polite"></div>
+
+        <div class="content-panel">
+          <div class="section-heading shop-toolbar">
+            <div>
+              <h2>Produkte</h2>
+              <p class="muted">Alle Produkte deiner ULTOR-Kollektion.</p>
+            </div>
+            <div class="shop-filters">
+              <input id="shopProductSearch" type="search" placeholder="Produkt suchen …" aria-label="Produkte suchen">
+              <select id="shopProductStatusFilter" aria-label="Produktstatus">
+                <option value="">Alle Produkte</option>
+                <option value="draft">Entwürfe</option>
+                <option value="published">Veröffentlicht</option>
+                <option value="archived">Archiviert</option>
+              </select>
+            </div>
+          </div>
+          <div id="shopProductsList" class="news-list shop-products-list">
+            <p class="muted">Produkte werden geladen …</p>
+          </div>
+        </div>
+
+        <div class="content-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Kategorien</h2>
+              <p class="muted">Teamwear, Apparel, Accessories und Limited Editions verwalten.</p>
+            </div>
+          </div>
+          <div id="shopCategoriesList" class="news-list">
+            <p class="muted">Kategorien werden geladen …</p>
+          </div>
+        </div>
+
+        <section id="shopProductEditor" class="content-panel shop-editor" hidden>
+          <div class="section-heading">
+            <div>
+              <h2 id="shopProductEditorTitle">Neues Produkt erstellen</h2>
+              <p class="muted">Produktinformationen, Verkaufspreise und Veröffentlichung.</p>
+            </div>
+            <button id="closeShopProductEditor" class="secondary-button" type="button">Schließen</button>
+          </div>
+
+          <form id="shopProductForm">
+            <input id="shopProductId" type="hidden">
+            <div class="shop-form-grid shop-form-grid-two">
+              <div>
+                <label for="shopProductName">Produktname</label>
+                <input id="shopProductName" maxlength="180" required placeholder="z. B. ULTOR Official Jersey">
+              </div>
+              <div>
+                <label for="shopProductSlug">URL-Slug</label>
+                <input id="shopProductSlug" maxlength="180" placeholder="ultor-official-jersey">
+              </div>
+            </div>
+
+            <label for="shopProductShortDescription">Kurzbeschreibung</label>
+            <textarea id="shopProductShortDescription" rows="2" maxlength="500" placeholder="Kurzer Text für Produktübersichten"></textarea>
+
+            <label for="shopProductDescription">Produktbeschreibung</label>
+            <textarea id="shopProductDescription" rows="5" maxlength="10000" placeholder="Ausführliche Produktbeschreibung"></textarea>
+
+            <div class="shop-form-grid">
+              <div>
+                <label for="shopProductPrice">Verkaufspreis in Euro</label>
+                <input id="shopProductPrice" type="number" min="0" step="0.01" placeholder="49.99">
+              </div>
+              <div>
+                <label for="shopProductComparePrice">Streichpreis in Euro</label>
+                <input id="shopProductComparePrice" type="number" min="0" step="0.01" placeholder="59.99">
+              </div>
+              <div>
+                <label for="shopProductCurrency">Währung</label>
+                <select id="shopProductCurrency">
+                  <option value="EUR">EUR – Euro</option>
+                </select>
+              </div>
+              <div>
+                <label for="shopProductStatus">Produktstatus</label>
+                <select id="shopProductStatus">
+                  <option value="draft">Entwurf</option>
+                  <option value="published">Veröffentlicht</option>
+                  <option value="archived">Archiviert</option>
+                </select>
+              </div>
+              <div>
+                <label for="shopProductSortOrder">Sortierung</label>
+                <input id="shopProductSortOrder" type="number" min="0" step="1" value="0">
+              </div>
+            </div>
+
+            <label>Kategorien</label>
+            <div id="shopProductCategoryChoices" class="shop-category-choices"></div>
+
+            <label class="permission-option shop-featured-option">
+              <input id="shopProductFeatured" type="checkbox">
+              Als hervorgehobenes Produkt markieren
+            </label>
+
+            <div class="news-editor-actions">
+              <button class="primary-button" type="submit">Produkt speichern</button>
+              <button id="cancelShopProductEditor" class="secondary-button" type="button">Editor schließen</button>
+            </div>
+          </form>
+
+          <section id="shopImageEditor" class="shop-subeditor" hidden>
+            <div class="section-heading">
+              <div>
+                <h3>Produktbilder</h3>
+                <p class="muted">Bilder werden in R2 gespeichert und dem Produkt zugeordnet.</p>
+              </div>
+            </div>
+            <div class="shop-image-upload-grid">
+              <div>
+                <label for="shopProductImageFile">Bilddatei</label>
+                <input id="shopProductImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+              </div>
+              <div>
+                <label for="shopProductImageAlt">Alt-Text</label>
+                <input id="shopProductImageAlt" type="text" maxlength="300" placeholder="Beschreibung des Bildes">
+              </div>
+            </div>
+            <label class="permission-option shop-featured-option">
+              <input id="shopProductImagePrimary" type="checkbox">
+              Als Hauptbild festlegen
+            </label>
+            <button id="uploadShopProductImageButton" class="secondary-button" type="button">Bild hochladen</button>
+            <div id="shopProductImages" class="shop-image-grid"></div>
+          </section>
+
+          <section id="shopVariantEditor" class="shop-subeditor" hidden>
+            <div class="section-heading">
+              <div>
+                <h3>Produktvarianten</h3>
+                <p class="muted">Größen, Farben, SKUs und Lagerbestände verwalten.</p>
+              </div>
+              <button id="newShopVariantButton" class="secondary-button" type="button">+ Variante hinzufügen</button>
+            </div>
+            <div id="shopVariantsList" class="shop-variants-list"></div>
+
+            <form id="shopVariantForm" class="shop-variant-form">
+              <input id="shopVariantId" type="hidden">
+              <h4 id="shopVariantEditorTitle">Variante hinzufügen</h4>
+              <div class="shop-form-grid shop-form-grid-two">
+                <div>
+                  <label for="shopVariantName">Variantenname</label>
+                  <input id="shopVariantName" maxlength="120" required placeholder="z. B. Jersey – Größe M">
+                </div>
+                <div>
+                  <label for="shopVariantSku">SKU</label>
+                  <input id="shopVariantSku" maxlength="100" placeholder="ULT-JER-M">
+                </div>
+                <div>
+                  <label for="shopVariantOption1Name">Option 1 – Name</label>
+                  <input id="shopVariantOption1Name" maxlength="100" placeholder="Größe">
+                </div>
+                <div>
+                  <label for="shopVariantOption1Value">Option 1 – Wert</label>
+                  <input id="shopVariantOption1Value" maxlength="100" placeholder="M">
+                </div>
+                <div>
+                  <label for="shopVariantOption2Name">Option 2 – Name</label>
+                  <input id="shopVariantOption2Name" maxlength="100" placeholder="Farbe">
+                </div>
+                <div>
+                  <label for="shopVariantOption2Value">Option 2 – Wert</label>
+                  <input id="shopVariantOption2Value" maxlength="100" placeholder="Schwarz">
+                </div>
+                <div>
+                  <label for="shopVariantOption3Name">Option 3 – Name</label>
+                  <input id="shopVariantOption3Name" maxlength="100" placeholder="Ausführung">
+                </div>
+                <div>
+                  <label for="shopVariantOption3Value">Option 3 – Wert</label>
+                  <input id="shopVariantOption3Value" maxlength="100" placeholder="Limited">
+                </div>
+                <div>
+                  <label for="shopVariantPrice">Abweichender Preis in Euro</label>
+                  <input id="shopVariantPrice" type="number" min="0" step="0.01" placeholder="Leer = Produktpreis">
+                </div>
+                <div>
+                  <label for="shopVariantComparePrice">Vergleichspreis in Euro</label>
+                  <input id="shopVariantComparePrice" type="number" min="0" step="0.01" placeholder="Optional">
+                </div>
+                <div>
+                  <label for="shopVariantStock">Lagerbestand</label>
+                  <input id="shopVariantStock" type="number" min="0" step="1" value="0">
+                </div>
+                <div>
+                  <label for="shopVariantStatus">Variantenstatus</label>
+                  <select id="shopVariantStatus">
+                    <option value="active">Aktiv</option>
+                    <option value="inactive">Inaktiv</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="shopVariantSortOrder">Sortierung</label>
+                  <input id="shopVariantSortOrder" type="number" min="0" step="1" value="0">
+                </div>
+              </div>
+              <label class="permission-option shop-featured-option">
+                <input id="shopVariantTrackInventory" type="checkbox" checked>
+                Lagerbestand verfolgen
+              </label>
+              <div class="news-editor-actions">
+                <button class="primary-button" type="submit">Variante hinzufügen</button>
+                <button id="cancelShopVariantEdit" class="secondary-button" type="button">Zurücksetzen</button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section id="shopCategoryEditor" class="content-panel shop-editor" hidden>
+          <div class="section-heading">
+            <div>
+              <h2 id="shopCategoryEditorTitle">Neue Kategorie erstellen</h2>
+              <p class="muted">Shop-Kategorien strukturieren und sortieren.</p>
+            </div>
+            <button id="closeShopCategoryEditor" class="secondary-button" type="button">Schließen</button>
+          </div>
+          <form id="shopCategoryForm">
+            <input id="shopCategoryId" type="hidden">
+            <div class="shop-form-grid shop-form-grid-two">
+              <div>
+                <label for="shopCategoryName">Kategoriename</label>
+                <input id="shopCategoryName" maxlength="120" required placeholder="z. B. Teamwear">
+              </div>
+              <div>
+                <label for="shopCategorySlug">URL-Slug</label>
+                <input id="shopCategorySlug" maxlength="120" placeholder="teamwear">
+              </div>
+            </div>
+            <label for="shopCategoryDescription">Beschreibung</label>
+            <textarea id="shopCategoryDescription" rows="3" maxlength="2000"></textarea>
+            <div class="shop-form-grid shop-form-grid-two">
+              <div>
+                <label for="shopCategorySortOrder">Sortierung</label>
+                <input id="shopCategorySortOrder" type="number" min="0" step="1" value="0">
+              </div>
+              <div>
+                <label for="shopCategoryStatus">Kategorienstatus</label>
+                <select id="shopCategoryStatus">
+                  <option value="active">Aktiv</option>
+                  <option value="inactive">Inaktiv</option>
+                </select>
+              </div>
+            </div>
+            <div class="news-editor-actions">
+              <button class="primary-button" type="submit">Kategorie speichern</button>
+              <button id="cancelShopCategoryEditor" class="secondary-button" type="button">Abbrechen</button>
+            </div>
+          </form>
+        </section>
+      </section>
+
       <!-- =====================================
            MEDIA
       ====================================== -->
@@ -877,153 +1153,140 @@
     </div>
   </main>
 
-  <script src="/admin/admin.js?v=20261107-modules-fix1" defer></script>
-<script>
-(() => {
-  const titles = {
-    dashboard: "Dashboard",
-    news: "News",
-    teams: "Teams & Spieler",
-    partners: "Partner",
-    shop: "Shop",
-    media: "Medien",
-    users: "Benutzer & Rechte",
-    activity: "Aktivitätsprotokoll"
-  };
+  <script src="/admin/admin.js?v=20261107-shop-management1" defer
+    onerror="document.getElementById('dashboardMessage').textContent='admin.js konnte nicht geladen werden. Prüfe den Pfad /admin/admin.js.';document.getElementById('dashboardMessage').className='message error';"></script>
 
-  function showView(name) {
-    const target = document.getElementById("view-" + name);
-    if (!target) return;
+  <!-- Fallback: Navigation und Benutzerprofil funktionieren auch dann,
+       wenn das externe admin.js fehlt oder vorzeitig abbricht. -->
+  <script>
+  (() => {
+    const titles = {
+      dashboard: 'Dashboard', news: 'News', teams: 'Teams & Spieler',
+      partners: 'Partner', shop: 'Shop', media: 'Medien',
+      users: 'Benutzer & Rechte', activity: 'Aktivitätsprotokoll'
+    };
 
-    document.querySelectorAll(".cms-view").forEach(view => {
-      view.classList.toggle("active", view === target);
-    });
+    function showView(viewName) {
+      const target = document.getElementById(`view-${viewName}`);
+      if (!target) return;
 
-    document.querySelectorAll(".nav-item[data-view]").forEach(button => {
-      button.classList.toggle("active", button.dataset.view === name);
-    });
-
-    const title = document.getElementById("breadcrumbTitle");
-    if (title) title.textContent = titles[name] || "Dashboard";
-
-    document.getElementById("sidebar")?.classList.remove("open");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  document.addEventListener("click", event => {
-    const button = event.target.closest?.("[data-view]");
-    if (!button) return;
-
-    // Das reguläre CMS übernimmt, wenn sein Script funktioniert.
-    if (typeof window.openCmsView === "function") return;
-
-    event.preventDefault();
-    showView(button.dataset.view);
-  }, true);
-
-  document.getElementById("mobileMenuButton")?.addEventListener("click", () => {
-    if (typeof window.openCmsView === "function") return;
-    document.getElementById("sidebar")?.classList.toggle("open");
-  });
-
-  async function loadUser() {
-    const message = document.getElementById("dashboardMessage");
-
-    try {
-      const response = await fetch("/api/admin/me", {
-        credentials: "same-origin",
-        headers: { Accept: "application/json" },
-        cache: "no-store"
+      document.querySelectorAll('.cms-view').forEach(view => {
+        view.classList.toggle('active', view === target);
+      });
+      document.querySelectorAll('.nav-item[data-view]').forEach(button => {
+        button.classList.toggle('active', button.dataset.view === viewName);
       });
 
-      const raw = await response.text();
-      let data;
+      const title = document.getElementById('breadcrumbTitle');
+      if (title) title.textContent = titles[viewName] || 'Dashboard';
+      document.getElementById('sidebar')?.classList.remove('open');
 
+      if (viewName === 'users' && typeof window.loadUsers === 'function') {
+        window.loadUsers();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.addEventListener('click', event => {
+      const trigger = event.target.closest?.('[data-view]');
+      if (!trigger) return;
+
+      // Das reguläre admin.js übernimmt die Navigation, falls es geladen wurde.
+      if (typeof window.openCmsView === 'function') return;
+      event.preventDefault();
+      showView(trigger.dataset.view);
+    }, true);
+
+    const menuButton = document.getElementById('mobileMenuButton');
+    menuButton?.addEventListener('click', () => {
+      if (typeof window.openCmsView === 'function') return;
+      document.getElementById('sidebar')?.classList.toggle('open');
+    });
+
+    async function loadProfileFallback() {
+      const message = document.getElementById('dashboardMessage');
       try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error("Ungültige API-Antwort (HTTP " + response.status + ")");
-      }
+        const response = await fetch('/api/admin/me', {
+          method: 'GET',
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json' },
+          cache: 'no-store'
+        });
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; }
+        catch { throw new Error(`API lieferte keine JSON-Antwort (HTTP ${response.status}).`); }
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "HTTP " + response.status
-        );
-      }
+        if (!response.ok) {
+          const reason = data.message || data.error || `HTTP ${response.status}`;
+          throw new Error(typeof reason === 'string' ? reason : `HTTP ${response.status}`);
+        }
 
-      const user = data.user;
-      if (!user) throw new Error("Benutzerobjekt fehlt in der API-Antwort.");
+        const user = data.user || data.currentUser || null;
+        if (!user) throw new Error('Die API-Antwort enthält kein Benutzerobjekt.');
 
-      const permissions = Array.isArray(data.permissions)
-        ? data.permissions
-        : [];
+        const permissions = Array.isArray(data.permissions) ? data.permissions : [];
+        const owner = user.is_owner === 1 || user.is_owner === true || user.is_owner === '1';
+        const role = owner ? 'OWNER' : 'CMS-BENUTZER';
+        const name = user.name || user.email || 'ULTOR User';
+        const email = user.email || '–';
+        const setText = (id, value) => {
+          const element = document.getElementById(id);
+          if (element) element.textContent = value ?? '–';
+        };
 
-      const owner =
-        user.is_owner === 1 ||
-        user.is_owner === true ||
-        user.is_owner === "1";
+        setText('sidebarUserName', name);
+        setText('sidebarUserRole', owner ? 'Owner' : 'CMS-Benutzer');
+        setText('userAvatar', name.trim().charAt(0).toUpperCase() || 'U');
+        setText('roleBadge', role);
+        setText('statUserRole', role);
+        setText('statPermissionCount', owner ? 'Alle' : String(permissions.length));
+        setText('accountName', name);
+        setText('accountEmail', email);
+        setText('accountRole', role);
 
-      const name = user.name || user.email || "ULTOR User";
-      const role = owner ? "OWNER" : "CMS-BENUTZER";
+        const ownerPanel = document.getElementById('ownerPanel');
+        const standardPanel = document.getElementById('standardPanel');
+        if (ownerPanel) ownerPanel.hidden = !owner;
+        if (standardPanel) standardPanel.hidden = owner;
 
-      const setText = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value ?? "–";
-      };
+        const permissionContainer = document.getElementById('myPermissions');
+        if (!owner && permissionContainer) {
+          permissionContainer.replaceChildren();
+          if (!permissions.length) {
+            const empty = document.createElement('p');
+            empty.className = 'muted';
+            empty.textContent = 'Deinem Konto wurden noch keine Berechtigungen zugewiesen.';
+            permissionContainer.append(empty);
+          } else {
+            permissions.forEach(permission => {
+              const chip = document.createElement('span');
+              chip.className = 'permission-chip';
+              chip.textContent = permission;
+              permissionContainer.append(chip);
+            });
+          }
+        }
 
-      setText("sidebarUserName", name);
-      setText("sidebarUserRole", owner ? "Owner" : "CMS-Benutzer");
-      setText("userAvatar", name.charAt(0).toUpperCase());
-      setText("roleBadge", role);
-      setText("statUserRole", role);
-      setText("statPermissionCount", owner ? "Alle" : permissions.length);
-      setText("accountName", name);
-      setText("accountEmail", user.email || "–");
-      setText("accountRole", role);
-
-      const ownerPanel = document.getElementById("ownerPanel");
-      const standardPanel = document.getElementById("standardPanel");
-
-      if (ownerPanel) ownerPanel.hidden = !owner;
-      if (standardPanel) standardPanel.hidden = owner;
-
-      if (!owner) {
-        const container = document.getElementById("myPermissions");
-
-        if (container) {
-          container.replaceChildren();
-
-          permissions.forEach(permission => {
-            const chip = document.createElement("span");
-            chip.className = "permission-chip";
-            chip.textContent = permission;
-            container.append(chip);
-          });
+        if (message && message.textContent.includes('admin.js')) {
+          message.textContent = '';
+          message.className = 'message';
+        }
+      } catch (error) {
+        if (message) {
+          message.textContent = `Benutzerprofil konnte nicht geladen werden: ${error.message}`;
+          message.className = 'message error';
         }
       }
-
-      if (message) {
-        message.textContent = "";
-        message.className = "message";
-      }
-
-    } catch (error) {
-      console.error("ULTOR CMS Benutzerfehler:", error);
-
-      if (message) {
-        message.textContent =
-          "Benutzer konnte nicht geladen werden: " + error.message;
-        message.className = "message error";
-      }
     }
-  }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadUser, { once: true });
-  } else {
-    loadUser();
-  }
-})();
-</script>
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadProfileFallback, { once: true });
+    } else {
+      loadProfileFallback();
+    }
+  })();
+  </script>
+
 </body>
 </html> 
