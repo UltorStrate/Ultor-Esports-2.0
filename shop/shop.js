@@ -77,6 +77,52 @@ async function loadShopData() {
                 <span>ULTOR</span>
                 <p>Produkte werden geladen ...</p>
             </div>
+      <div id="ultorCheckoutLayer" aria-hidden="true">
+        <div id="ultorCheckoutBackdrop"></div>
+        <section id="ultorCheckoutPanel" role="dialog" aria-modal="true" aria-labelledby="ultorCheckoutTitle">
+          <header class="ultor-checkout-header">
+            <div><span class="ultor-checkout-kicker">ULTOR ESPORTS STORE</span><h2 id="ultorCheckoutTitle">KASSE<span>.</span></h2></div>
+            <button id="ultorCheckoutClose" type="button" aria-label="Checkout schließen">×</button>
+          </header>
+          <div id="ultorCheckoutNotice" class="ultor-checkout-notice" role="status">Checkout wird vorbereitet …</div>
+          <form id="ultorCheckoutForm">
+            <div class="ultor-checkout-section">
+              <h3>Kontakt</h3>
+              <div class="ultor-checkout-grid">
+                <label>Vor- und Nachname<input name="customer_name" autocomplete="name" required maxlength="160"></label>
+                <label>E-Mail-Adresse<input name="customer_email" type="email" autocomplete="email" required maxlength="254"></label>
+                <label class="full">Telefon (optional)<input name="customer_phone" type="tel" autocomplete="tel" maxlength="40"></label>
+              </div>
+            </div>
+            <div class="ultor-checkout-section">
+              <h3>Lieferadresse</h3>
+              <div class="ultor-checkout-grid">
+                <label class="full">Name des Empfängers<input name="shipping_name" autocomplete="shipping name" required maxlength="160"></label>
+                <label class="full">Firma (optional)<input name="shipping_company" autocomplete="shipping organization" maxlength="160"></label>
+                <label class="full">Straße und Hausnummer<input name="address1" autocomplete="shipping address-line1" required maxlength="180"></label>
+                <label class="full">Adresszusatz (optional)<input name="address2" autocomplete="shipping address-line2" maxlength="180"></label>
+                <label>Postleitzahl<input name="postal_code" autocomplete="shipping postal-code" required maxlength="24"></label>
+                <label>Stadt<input name="city" autocomplete="shipping address-level2" required maxlength="120"></label>
+                <label>Bundesland (optional)<input name="state" autocomplete="shipping address-level1" maxlength="120"></label>
+                <label>Land<select name="country_code" autocomplete="shipping country" required><option value="DE" selected>Deutschland</option><option value="AT">Österreich</option><option value="CH">Schweiz</option><option value="BE">Belgien</option><option value="NL">Niederlande</option><option value="LU">Luxemburg</option><option value="FR">Frankreich</option><option value="IT">Italien</option><option value="ES">Spanien</option><option value="PL">Polen</option><option value="DK">Dänemark</option><option value="SE">Schweden</option><option value="GB">Vereinigtes Königreich</option></select></label>
+                <label class="full">Telefon für die Zustellung (optional)<input name="shipping_phone" type="tel" autocomplete="shipping tel" maxlength="40"></label>
+              </div>
+            </div>
+            <div class="ultor-checkout-section">
+              <h3>Bestellübersicht</h3>
+              <div id="ultorCheckoutItems"></div>
+              <div class="ultor-checkout-total"><span>Zwischensumme</span><strong id="ultorCheckoutSubtotal">–</strong></div>
+              <div class="ultor-checkout-total"><span>Versand</span><strong id="ultorCheckoutShipping">Wird ermittelt</strong></div>
+              <div class="ultor-checkout-total grand"><span>Gesamtbetrag</span><strong id="ultorCheckoutTotal">–</strong></div>
+            </div>
+            <label class="ultor-checkout-note-label">Anmerkung zur Bestellung (optional)<textarea name="customer_note" rows="3" maxlength="1000"></textarea></label>
+            <label class="ultor-checkout-test-ack"><input type="checkbox" name="test_ack" required><span>Ich bestätige, dass dies derzeit ausschließlich eine technische Testbestellung ohne Zahlung und ohne Versand ist.</span></label>
+            <button id="ultorCheckoutSubmit" class="ultor-checkout-submit" type="submit" disabled>TESTBESTELLUNG ABSENDEN</button>
+            <p id="ultorCheckoutStatus" aria-live="polite"></p>
+          </form>
+          <div id="ultorCheckoutSuccess" hidden></div>
+        </section>
+      </div>
         `;
     }
 
@@ -634,6 +680,159 @@ function formatCartPrice(cents, currency = "EUR") {
     }).format(Number(cents || 0) / 100);
 }
 
+let ultorCheckoutConfig = null;
+let ultorCheckoutBusy = false;
+
+function setCheckoutNotice(message, type = "") {
+    const notice = document.getElementById("ultorCheckoutNotice");
+    if (!notice) return;
+    notice.textContent = message;
+    notice.className = `ultor-checkout-notice${type ? ` is-${type}` : ""}`;
+}
+
+function openCheckout() {
+    if (!ultorCart.length) {
+        showCartFeedback("Dein Warenkorb ist noch leer.");
+        return;
+    }
+    const layer = document.getElementById("ultorCheckoutLayer");
+    if (!layer) return;
+    layer.classList.add("is-open");
+    layer.setAttribute("aria-hidden", "false");
+    renderCheckoutSummary();
+    loadCheckoutConfig();
+}
+
+function closeCheckout() {
+    const layer = document.getElementById("ultorCheckoutLayer");
+    if (!layer) return;
+    layer.classList.remove("is-open");
+    layer.setAttribute("aria-hidden", "true");
+}
+
+function renderCheckoutSummary(shippingCents = null) {
+    const items = document.getElementById("ultorCheckoutItems");
+    if (!items) return;
+    items.replaceChildren();
+    ultorCart.forEach(item => {
+        const line = document.createElement("div");
+        line.className = "ultor-checkout-line";
+        const title = document.createElement("span");
+        title.textContent = `${item.product_name}${item.variant_name ? ` / ${item.variant_name}` : ""} × ${item.quantity}`;
+        const price = document.createElement("strong");
+        price.textContent = formatCartPrice(item.unit_price_cents * item.quantity, item.currency);
+        line.append(title, price);
+        items.appendChild(line);
+    });
+    const { subtotal, currency } = getCartTotals();
+    document.getElementById("ultorCheckoutSubtotal").textContent = formatCartPrice(subtotal, currency);
+    document.getElementById("ultorCheckoutShipping").textContent =
+        Number.isInteger(shippingCents) ? formatCartPrice(shippingCents, currency) : "Noch nicht festgelegt";
+    document.getElementById("ultorCheckoutTotal").textContent =
+        Number.isInteger(shippingCents) ? formatCartPrice(subtotal + shippingCents, currency) : "–";
+}
+
+async function loadCheckoutConfig() {
+    const submit = document.getElementById("ultorCheckoutSubmit");
+    if (submit) submit.disabled = true;
+    setCheckoutNotice("Checkout-Einstellungen werden geprüft …");
+    try {
+        const response = await fetch("/api/checkout/config", { headers: { "Accept": "application/json" }, cache: "no-store" });
+        const config = await response.json();
+        if (!response.ok || !config.success) throw new Error(config.error || "Checkout-Konfiguration nicht verfügbar.");
+        ultorCheckoutConfig = config;
+        renderCheckoutSummary(Number.isInteger(config.shipping_cents) ? config.shipping_cents : null);
+        if (config.checkout_available && Number.isInteger(config.shipping_cents)) {
+            setCheckoutNotice("TESTMODUS AKTIV: Es wird keine Zahlung eingezogen und kein Auftrag an Printful übermittelt. Diese Bestellung dient nur zum technischen Test.", "success");
+            if (submit) submit.disabled = false;
+        } else {
+            setCheckoutNotice("Das Formular ist vorbereitet. Der Test-Checkout ist serverseitig noch nicht freigeschaltet oder die Test-Versandkosten fehlen. Es kann noch keine Bestellung abgesendet werden.");
+        }
+    } catch (error) {
+        console.error("Checkout-Konfiguration:", error);
+        setCheckoutNotice("Der Checkout ist momentan nicht erreichbar. Bitte versuche es später erneut.", "error");
+    }
+}
+
+async function submitCheckout(event) {
+    event.preventDefault();
+    if (ultorCheckoutBusy || !ultorCheckoutConfig?.checkout_available || !ultorCart.length) return;
+    const form = document.getElementById("ultorCheckoutForm");
+    const submit = document.getElementById("ultorCheckoutSubmit");
+    const status = document.getElementById("ultorCheckoutStatus");
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const customerName = String(data.get("customer_name") || "").trim();
+    const payload = {
+        customer: {
+            name: customerName,
+            email: String(data.get("customer_email") || "").trim(),
+            phone: String(data.get("customer_phone") || "").trim()
+        },
+        shipping: {
+            name: String(data.get("shipping_name") || "").trim() || customerName,
+            company: String(data.get("shipping_company") || "").trim(),
+            address1: String(data.get("address1") || "").trim(),
+            address2: String(data.get("address2") || "").trim(),
+            postal_code: String(data.get("postal_code") || "").trim(),
+            city: String(data.get("city") || "").trim(),
+            state: String(data.get("state") || "").trim(),
+            country_code: String(data.get("country_code") || "DE"),
+            phone: String(data.get("shipping_phone") || "").trim()
+        },
+        customer_note: String(data.get("customer_note") || "").trim(),
+        idempotency_key: crypto.randomUUID(),
+        items: ultorCart.map(item => ({
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            quantity: item.quantity
+        }))
+    };
+    if (payload.items.some(item => !item.product_id)) {
+        status.textContent = "Ein Produkt im Warenkorb ist nicht mehr eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";
+        return;
+    }
+    ultorCheckoutBusy = true;
+    submit.disabled = true;
+    status.textContent = "Testbestellung wird sicher gespeichert …";
+    try {
+        const response = await fetch("/api/checkout/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || "Bestellung konnte nicht gespeichert werden.");
+        ultorCart = [];
+        persistCart();
+        form.hidden = true;
+        const success = document.getElementById("ultorCheckoutSuccess");
+        success.hidden = false;
+        success.innerHTML = "";
+        const heading = document.createElement("h3");
+        heading.textContent = "TESTBESTELLUNG GESPEICHERT.";
+        const paragraph = document.createElement("p");
+        paragraph.textContent = `Deine Testbestellung ${result.order?.order_number || ""} wurde gespeichert. Es wurde kein Geld eingezogen und kein Auftrag an Printful übermittelt.`;
+        const close = document.createElement("button");
+        close.type = "button";
+        close.textContent = "Zurück zum Shop";
+        close.addEventListener("click", () => {
+            closeCheckout();
+            setCartOpen(false);
+            form.reset();
+            form.hidden = false;
+            success.hidden = true;
+        });
+        success.append(heading, paragraph, close);
+        setCheckoutNotice("Testbestellung erfolgreich gespeichert.", "success");
+    } catch (error) {
+        status.textContent = error.message || "Ein Fehler ist aufgetreten.";
+        submit.disabled = false;
+    } finally {
+        ultorCheckoutBusy = false;
+    }
+}
+
 function createCartInterface() {
     if (document.getElementById("ultorCartRoot")) return;
 
@@ -672,6 +871,40 @@ function createCartInterface() {
       .ultor-cart-note{margin:0 0 15px;color:#aaa4b7;font-size:11px;line-height:1.6}
       #ultorCartCheckout{width:100%;padding:15px;background:#30243f;border:1px solid #58416f;color:#c9b7df;font-weight:800;letter-spacing:1px;cursor:not-allowed}
       #ultorCartStatus{min-height:18px;margin:9px 0 0;color:#c49cff;font-size:11px}
+      #ultorCheckoutLayer{position:fixed;inset:0;z-index:10010;display:none;align-items:center;justify-content:center;padding:22px}
+      #ultorCheckoutLayer.is-open{display:flex}
+      #ultorCheckoutBackdrop{position:absolute;inset:0;background:rgba(3,2,7,.88);backdrop-filter:blur(5px)}
+      #ultorCheckoutPanel{position:relative;width:min(760px,100%);max-height:92vh;overflow:auto;padding:28px;background:#100d18;border:1px solid rgba(181,138,255,.28);box-shadow:0 24px 90px rgba(0,0,0,.65);color:#f3f0f8}
+      .ultor-checkout-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+      .ultor-checkout-header h2{margin:5px 0 0;font-size:30px}.ultor-checkout-header h2 span{color:#a66aff}
+      .ultor-checkout-kicker{font-size:10px;letter-spacing:2px;color:#a66aff;font-weight:800}
+      #ultorCheckoutClose{width:40px;height:40px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#fff;font-size:25px;cursor:pointer}
+      .ultor-checkout-notice{padding:12px 14px;margin-bottom:20px;background:#21172d;border:1px solid #50356b;color:#d8c1f5;font-size:12px;line-height:1.6}
+      .ultor-checkout-notice.is-error{background:#2b1419;border-color:#73303b;color:#ffb6bf}
+      .ultor-checkout-notice.is-success{background:#10251d;border-color:#286044;color:#8cf0b4}
+      .ultor-checkout-section{padding:18px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+      .ultor-checkout-section h3{margin:0 0 15px;font-size:17px}
+      .ultor-checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+      .ultor-checkout-grid label,.ultor-checkout-note-label{display:flex;flex-direction:column;gap:6px;color:#cfc4dc;font-size:11px;font-weight:700}
+      .ultor-checkout-grid .full{grid-column:1/-1}
+      #ultorCheckoutPanel input:not([type=checkbox]),#ultorCheckoutPanel select,#ultorCheckoutPanel textarea{width:100%;min-height:43px;padding:11px 12px;background:#09070e;border:1px solid #40334e;color:#fff;font:inherit;font-size:13px;border-radius:5px}
+      #ultorCheckoutPanel textarea{resize:vertical}
+      #ultorCheckoutItems{display:grid;gap:9px;margin-bottom:15px}
+      .ultor-checkout-line{display:flex;justify-content:space-between;gap:16px;color:#d8cce5;font-size:12px}
+      .ultor-checkout-total{display:flex;justify-content:space-between;padding:8px 0;color:#cfc4dc;font-size:13px}
+      .ultor-checkout-total.grand{margin-top:5px;padding-top:14px;border-top:1px solid rgba(255,255,255,.18);font-size:17px;color:#fff}
+      .ultor-checkout-total strong{color:#fff}
+      .ultor-checkout-note-label{margin-top:18px}
+      .ultor-checkout-test-ack{display:flex;align-items:flex-start;gap:10px;margin:18px 0;color:#cfc4dc;font-size:11px;line-height:1.6}
+      .ultor-checkout-test-ack input{margin-top:3px;accent-color:#8735f5}
+      .ultor-checkout-submit{width:100%;padding:15px;background:#8735f5;border:1px solid #a66aff;color:#fff;font-weight:800;letter-spacing:1px;cursor:pointer}
+      .ultor-checkout-submit:disabled{opacity:.45;cursor:not-allowed}
+      #ultorCheckoutStatus{min-height:20px;color:#c49cff;font-size:12px;line-height:1.5}
+      #ultorCheckoutSuccess{padding:30px 10px;text-align:center}
+      #ultorCheckoutSuccess h3{font-size:24px;color:#fff}
+      #ultorCheckoutSuccess p{color:#cfc4dc;line-height:1.7}
+      #ultorCheckoutSuccess button{margin-top:12px;padding:12px 20px;background:#8735f5;border:0;color:#fff;font-weight:800;cursor:pointer}
+
       @media(max-width:600px){#ultorCartToggle{right:14px;bottom:14px;padding:13px 15px}#ultorCartHeader,#ultorCartItems{padding-left:18px;padding-right:18px}#ultorCartFooter{padding:17px 18px 20px}}
     `;
     document.head.appendChild(style);
@@ -693,7 +926,7 @@ function createCartInterface() {
           <footer id="ultorCartFooter">
             <div class="ultor-cart-total"><span>Zwischensumme</span><span id="ultorCartSubtotal">0,00 €</span></div>
             <p class="ultor-cart-note">Versandkosten und Steuern werden im späteren Bestellschritt berechnet. Der Warenkorb wird aktuell lokal auf diesem Gerät gespeichert.</p>
-            <button id="ultorCartCheckout" type="button" disabled>CHECKOUT FOLGT</button>
+            <button id="ultorCartCheckout" type="button">ZUR KASSE</button>
             <p id="ultorCartStatus" aria-live="polite"></p>
           </footer>
         </aside>
@@ -702,6 +935,10 @@ function createCartInterface() {
     document.body.appendChild(root);
 
     document.getElementById("ultorCartToggle").addEventListener("click", () => setCartOpen(true));
+    document.getElementById("ultorCartCheckout").addEventListener("click", openCheckout);
+    document.getElementById("ultorCheckoutClose").addEventListener("click", closeCheckout);
+    document.getElementById("ultorCheckoutBackdrop").addEventListener("click", closeCheckout);
+    document.getElementById("ultorCheckoutForm").addEventListener("submit", submitCheckout);
     root.querySelector(".ultor-cart-close").addEventListener("click", () => setCartOpen(false));
     document.getElementById("ultorCartBackdrop").addEventListener("click", () => setCartOpen(false));
     document.addEventListener("keydown", event => {
