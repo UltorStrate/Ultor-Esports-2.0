@@ -148,6 +148,87 @@ export async function handleAdminOrdersApi(request, env, auth) {
     return json({ success: true, message: "Interne Notiz gespeichert." });
   }
 
+
+  const orderActionMatch = path.match(/^\\/api\\/admin\\/shop\\/orders\\/([0-9a-f-]+)\\/(cancel|delete)$/i);
+  if (orderActionMatch && method === "POST") {
+    if (!can(current, "shop.orders.manage")) {
+      return json({ error: "Keine Berechtigung zum Verwalten von Bestellungen." }, 403);
+    }
+
+    const orderId = orderActionMatch[1];
+    const action = orderActionMatch[2].toLowerCase();
+    const order = await env.DB.prepare(`
+      SELECT id, order_number, payment_status, fulfillment_status,
+             order_status, printful_order_id
+      FROM shop_orders WHERE id = ?
+    `).bind(orderId).first();
+    if (!order) return json({ error: "Bestellung nicht gefunden." }, 404);
+
+    const fulfillment = await env.DB.prepare(`
+      SELECT status, printful_order_id, submitted_at
+      FROM shop_printful_fulfillments WHERE order_id = ?
+    `).bind(orderId).first();
+
+    const alreadySentToPrintful =
+      order.printful_order_id !== null ||
+      (fulfillment && (
+        fulfillment.printful_order_id !== null ||
+        fulfillment.submitted_at !== null ||
+        !["not_submitted", "failed", "cancelled"].includes(fulfillment.status)
+      ));
+
+    if (order.payment_status === "paid" ||
+        order.payment_status === "refunded" ||
+        order.payment_status === "partially_refunded") {
+      return json({ error: "Diese Bestellung hat einen Zahlungsvorgang. Bitte nicht löschen oder hier stornieren; eine ordnungsgemäße Rückabwicklung ist erforderlich." }, 409);
+    }
+
+    if (alreadySentToPrintful) {
+      return json({ error: "Diese Bestellung wurde bereits an Printful übermittelt oder dort verarbeitet und kann hier nicht gelöscht bzw. storniert werden." }, 409);
+    }
+
+    if (action === "cancel") {
+      if (order.order_status === "cancelled") {
+        return json({ success: true, message: "Die Bestellung ist bereits storniert." });
+      }
+      await env.DB.batch([
+        env.DB.prepare(`
+          UPDATE shop_orders
+          SET order_status = 'cancelled',
+              payment_status = CASE WHEN payment_status IN ('unpaid','pending','failed') THEN 'cancelled' ELSE payment_status END,
+              fulfillment_status = 'cancelled',
+              cancelled_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(orderId),
+        env.DB.prepare(`
+          INSERT INTO shop_order_events (id, order_id, event_type, message, actor_user_id)
+          VALUES (?, ?, 'admin_cancelled', 'Bestellung wurde im CMS storniert.', ?)
+        `).bind(crypto.randomUUID(), orderId, current.user.id)
+      ]);
+      await audit(env, current.user.id, "shop.order.cancelled", orderId, { order_number: order.order_number });
+      return json({ success: true, message: "Bestellung wurde storniert." });
+    }
+
+    if (action === "delete") {
+      if (!["unpaid", "pending", "failed", "cancelled"].includes(order.payment_status) ||
+          !["unfulfilled", "cancelled"].includes(order.fulfillment_status)) {
+        return json({ error: "Nur unbezahlte und nicht erfüllte Bestellungen können endgültig gelöscht werden." }, 409);
+      }
+      await env.DB.batch([
+        env.DB.prepare(`
+          INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, details)
+          VALUES (?, ?, 'shop.order.deleted', 'shop_order', ?, ?)
+        `).bind(
+          crypto.randomUUID(), current.user.id, orderId,
+          JSON.stringify({ order_number: order.order_number, reason: "admin_delete" })
+        ),
+        env.DB.prepare("DELETE FROM shop_orders WHERE id = ?").bind(orderId)
+      ]);
+      return json({ success: true, message: "Unbezahlte Testbestellung wurde endgültig gelöscht." });
+    }
+  }
+
   // Payment and fulfillment states are deliberately not editable via the CMS.
   // They must be changed only by verified payment-provider webhooks and the
   // idempotent Printful fulfillment worker added in a later phase.
