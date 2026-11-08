@@ -117,6 +117,65 @@ export async function handleAdminOrdersApi(request, env, auth) {
     });
   }
 
+
+  const cancelMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)\/cancel$/i);
+  if (cancelMatch && method === "POST") {
+    if (!can(current, "shop.orders.manage")) {
+      return json({ error: "Keine Berechtigung zum Stornieren von Bestellungen." }, 403);
+    }
+    let body;
+    try { body = await request.json(); } catch { body = null; }
+    const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 500) : "";
+    const orderId = cancelMatch[1];
+    const order = await env.DB.prepare(
+      "SELECT id, order_status, payment_status, fulfillment_status, printful_order_id FROM shop_orders WHERE id = ?"
+    ).bind(orderId).first();
+    if (!order) return json({ error: "Bestellung nicht gefunden." }, 404);
+    if (order.order_status === "cancelled") return json({ error: "Die Bestellung ist bereits storniert." }, 409);
+    if (order.payment_status === "paid" || order.payment_status === "partially_refunded") {
+      return json({ error: "Diese Bestellung wurde bereits bezahlt. Bitte zuerst eine Rückerstattung über den Zahlungsanbieter durchführen." }, 409);
+    }
+    if (order.printful_order_id || ["submitted", "in_production", "shipped", "delivered"].includes(order.fulfillment_status)) {
+      return json({ error: "Die Bestellung wurde bereits an die Produktion übergeben. Bitte den Printful-Auftrag zuerst prüfen." }, 409);
+    }
+    await env.DB.batch([
+      env.DB.prepare("UPDATE shop_orders SET order_status = 'cancelled', cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(orderId),
+      env.DB.prepare("INSERT INTO shop_order_events (id, order_id, event_type, message, details_json, actor_user_id) VALUES (?, ?, 'admin_cancelled', ?, ?, ?)")
+        .bind(crypto.randomUUID(), orderId, "Bestellung manuell storniert.", JSON.stringify({ reason }), current.user.id)
+    ]);
+    await audit(env, current.user.id, "shop.order.cancelled", orderId, { reason });
+    return json({ success: true, message: "Bestellung wurde storniert." });
+  }
+
+  const deleteMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)$/i);
+  if (deleteMatch && method === "DELETE") {
+    if (!can(current, "shop.orders.manage")) {
+      return json({ error: "Keine Berechtigung zum Löschen von Bestellungen." }, 403);
+    }
+    const orderId = deleteMatch[1];
+    const order = await env.DB.prepare(
+      "SELECT id, order_number, payment_status, fulfillment_status, printful_order_id FROM shop_orders WHERE id = ?"
+    ).bind(orderId).first();
+    if (!order) return json({ error: "Bestellung nicht gefunden." }, 404);
+    const testEvent = await env.DB.prepare(
+      "SELECT id FROM shop_order_events WHERE order_id = ? AND event_type = 'test_order_created' LIMIT 1"
+    ).bind(orderId).first();
+    if (!testEvent) return json({ error: "Nur ausdrücklich gekennzeichnete Testbestellungen dürfen gelöscht werden." }, 409);
+    if (order.payment_status !== "unpaid" || order.printful_order_id ||
+        !["unfulfilled", "not_submitted"].includes(order.fulfillment_status)) {
+      return json({ error: "Die Testbestellung ist nicht mehr sicher löschbar (Zahlung oder Fulfillment vorhanden)." }, 409);
+    }
+    const fulfillment = await env.DB.prepare(
+      "SELECT status FROM shop_printful_fulfillments WHERE order_id = ?"
+    ).bind(orderId).first();
+    if (fulfillment && !["not_submitted", "failed"].includes(fulfillment.status)) {
+      return json({ error: "Für diese Bestellung besteht bereits ein Printful-Fulfillment-Vorgang." }, 409);
+    }
+    await audit(env, current.user.id, "shop.order.test_deleted", orderId, { order_number: order.order_number });
+    await env.DB.prepare("DELETE FROM shop_orders WHERE id = ?").bind(orderId).run();
+    return json({ success: true, message: "Testbestellung wurde gelöscht." });
+  }
+
   const noteMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)\/note$/i);
   if (noteMatch && method === "POST") {
     if (!can(current, "shop.orders.manage")) {
