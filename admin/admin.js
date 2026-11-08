@@ -469,6 +469,7 @@ const VIEW_TITLES = {
   teams: "Teams & Spieler",
   partners: "Partner",
   shop: "Shop",
+  orders: "Bestellungen",
   media: "Medien",
   users: "Benutzer & Rechte",
   activity: "Aktivitätsprotokoll"
