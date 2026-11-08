@@ -1040,7 +1040,7 @@ async function deleteVariant(env, current, variantId) {
 }
 
 
-async function printfulRequest(env, endpoint) {
+async function printfulRequest(env, endpoint, storeId = null) {
   if (!env.PRINTFUL_API_TOKEN) {
     return { ok: false, status: 503, error: "Printful ist nicht konfiguriert. Der Worker-Secret PRINTFUL_API_TOKEN fehlt." };
   }
@@ -1049,7 +1049,8 @@ async function printfulRequest(env, endpoint) {
     method: "GET",
     headers: {
       "Authorization": "Bearer " + env.PRINTFUL_API_TOKEN,
-      "Accept": "application/json"
+      "Accept": "application/json",
+      ...(storeId ? { "X-PF-Store-Id": String(storeId) } : {})
     }
   });
 
@@ -1072,6 +1073,18 @@ async function printfulRequest(env, endpoint) {
   }
 
   return { ok: true, data };
+}
+
+async function getPrintfulStoreContext(env) {
+  const result = await printfulRequest(env, "/stores");
+  if (!result.ok) return result;
+
+  const stores = Array.isArray(result.data?.result) ? result.data.result : [];
+  const store = stores.find(item => item && item.id !== undefined) || null;
+  if (!store) {
+    return { ok: false, status: 404, error: "Im Printful-Konto wurde kein Store gefunden." };
+  }
+  return { ok: true, store };
 }
 
 async function savePrintfulThumbnail(env, sourceUrl) {
@@ -1128,25 +1141,30 @@ async function handlePrintfulApi(request, env, current, path, method) {
   }
 
   if (method === "GET" && path === "/api/admin/shop/printful/status") {
-    const result = await printfulRequest(env, "/stores");
+    const result = await getPrintfulStoreContext(env);
     if (!result.ok) {
       return json({ connected: false, error: result.error }, result.status);
     }
 
-    const stores = Array.isArray(result.data?.result) ? result.data.result : [];
-    const store = stores[0] || null;
+    const store = result.store;
     return json({
       connected: true,
-      store: store ? {
+      store: {
         id: store.id,
         name: store.name,
         type: store.type
-      } : null
+      }
     });
   }
 
   if (method === "GET" && path === "/api/admin/shop/printful/products") {
-    const result = await printfulRequest(env, "/store/products?status=all&offset=0&limit=100");
+    const context = await getPrintfulStoreContext(env);
+    if (!context.ok) return json({ error: context.error }, context.status);
+    const result = await printfulRequest(
+      env,
+      "/store/products?status=all&offset=0&limit=100",
+      context.store.id
+    );
     if (!result.ok) return json({ error: result.error }, result.status);
 
     const products = Array.isArray(result.data?.result) ? result.data.result : [];
@@ -1173,7 +1191,13 @@ async function handlePrintfulApi(request, env, current, path, method) {
 
   const detailMatch = path.match(/^\/api\/admin\/shop\/printful\/products\/(\d+)$/);
   if (method === "GET" && detailMatch) {
-    const result = await printfulRequest(env, "/store/products/" + detailMatch[1]);
+    const context = await getPrintfulStoreContext(env);
+    if (!context.ok) return json({ error: context.error }, context.status);
+    const result = await printfulRequest(
+      env,
+      "/store/products/" + detailMatch[1],
+      context.store.id
+    );
     if (!result.ok) return json({ error: result.error }, result.status);
 
     const payload = result.data?.result || {};
@@ -1222,7 +1246,13 @@ async function handlePrintfulApi(request, env, current, path, method) {
       }, 409);
     }
 
-    const detail = await printfulRequest(env, "/store/products/" + syncProductId);
+    const context = await getPrintfulStoreContext(env);
+    if (!context.ok) return json({ error: context.error }, context.status);
+    const detail = await printfulRequest(
+      env,
+      "/store/products/" + syncProductId,
+      context.store.id
+    );
     if (!detail.ok) return json({ error: detail.error }, detail.status);
 
     const payload = detail.data?.result || {};
