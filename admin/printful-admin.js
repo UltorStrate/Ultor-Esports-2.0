@@ -227,10 +227,9 @@
     const priceLabel = document.createElement("label");
     priceLabel.textContent = "ULTOR-Verkaufspreis (€)";
     const priceInput = document.createElement("input");
-    priceInput.type = "number";
-    priceInput.min = "0.01";
-    priceInput.max = "1000000";
-    priceInput.step = "0.01";
+    priceInput.type = "text";
+    priceInput.inputMode = "decimal";
+    priceInput.autocomplete = "off";
     priceInput.placeholder = "z. B. 49,99";
     priceInput.required = true;
     priceField.append(priceLabel, priceInput);
@@ -260,7 +259,7 @@
 
     try {
       const categories = await loadCategories();
-      categories.forEach(category => {
+      categories.filter(category => category.status === "active").forEach(category => {
         const option = document.createElement("option");
         option.value = category.id;
         option.textContent = category.name;
