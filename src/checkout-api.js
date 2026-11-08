@@ -31,7 +31,13 @@ function testAccessConfigured(env) {
     env.SHOP_TEST_ACCESS_CODE.length <= 256;
 }
 
-function testAccessConfiguredForStatus(env) {\n  return typeof env.SHOP_TEST_ACCESS_CODE === "string" &&\n    env.SHOP_TEST_ACCESS_CODE.length >= 32 &&\n    env.SHOP_TEST_ACCESS_CODE.length <= 256;\n}\n\nfunction constantTimeEqual(a, b) {
+function testAccessConfiguredForStatus(env) {
+  return typeof env.SHOP_TEST_ACCESS_CODE === "string" &&
+    env.SHOP_TEST_ACCESS_CODE.length >= 32 &&
+    env.SHOP_TEST_ACCESS_CODE.length <= 256;
+}
+
+function constantTimeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
     return false;
   }
