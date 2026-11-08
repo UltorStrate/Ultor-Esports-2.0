@@ -16,6 +16,7 @@ import {
   handleShopApi,
   handlePublicShopApi
 } from "./shop-api.js";
+import { handleAdminOrdersApi } from "./orders-api.js";
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
@@ -183,6 +184,22 @@ if (
     // =========================================
     // GESCHÜTZTE CMS-API
     // =========================================
+
+    if (
+      normalizedPath === "/api/admin/shop/orders" ||
+      normalizedPath.startsWith("/api/admin/shop/orders/")
+    ) {
+      try {
+        const auth = createAuth(env);
+        return await handleAdminOrdersApi(request, env, auth);
+      } catch (error) {
+        console.error("Shop orders API error:", error);
+        return Response.json(
+          { error: "Interner Fehler in der Bestellverwaltung." },
+          { status: 500 }
+        );
+      }
+    }
 
     if (
       normalizedPath === "/api/admin" ||
