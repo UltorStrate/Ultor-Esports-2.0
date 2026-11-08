@@ -3,24 +3,22 @@
   "name": "ultor-esports-2-0",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-06",
-
   "vars": {
-    "BETTER_AUTH_URL": "https://ultor-esports-2-0.yoriba03.workers.dev"
+    "BETTER_AUTH_URL": "https://ultor-esports-2-0.yoriba03.workers.dev",
+    "SHOP_CHECKOUT_MODE": "test",
+    "SHOP_TEST_SHIPPING_CENTS": "389"
   },
-
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
     "run_worker_first": true
   },
-
   "r2_buckets": [
     {
       "binding": "MEDIA",
       "bucket_name": "ultor-media"
     }
   ],
-
   "d1_databases": [
     {
       "binding": "DB",
