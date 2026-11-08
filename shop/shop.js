@@ -1157,7 +1157,30 @@ function renderProductDetails(product) {
     const numberLabel = document.createElement("label"); numberLabel.textContent = "Nummer (optional)";
     const numberInput = document.createElement("input"); numberInput.type = "text"; numberInput.inputMode = "numeric"; numberInput.maxLength = 2; numberInput.pattern = "[0-9]{1,2}"; numberInput.placeholder = "z. B. 07"; numberInput.className = "ultor-personalization-input"; numberLabel.appendChild(numberInput);
     const personalizationHint = document.createElement("small"); personalizationHint.textContent = "Weiße ULTOR-Schrift · Aufpreis 5,00 € pro Trikot";
-    personalizationFields.append(nameLabel, numberLabel, personalizationHint);
+    const preview = document.createElement("div");
+    preview.className = "ultor-jersey-preview";
+    preview.setAttribute("aria-label", "Ungefähre Vorschau der Rückenpersonalisierung");
+    preview.style.cssText = "margin-top:10px;min-height:116px;padding:18px 12px;background:linear-gradient(160deg,#17131f,#08070b 58%,#211033);border:1px solid rgba(166,106,255,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center";
+    const previewName = document.createElement("strong");
+    previewName.textContent = "DEIN NAME";
+    previewName.style.cssText = "font-family:'Barlow Condensed',Impact,sans-serif;font-size:clamp(22px,4vw,30px);font-style:italic;font-weight:900;letter-spacing:.16em;color:#fff;text-shadow:0 1px 5px rgba(255,255,255,.3)";
+    const previewNumber = document.createElement("strong");
+    previewNumber.textContent = "07";
+    previewNumber.style.cssText = "font-family:'Barlow Condensed',Impact,sans-serif;font-size:42px;font-style:italic;font-weight:900;line-height:1;color:#fff;text-shadow:0 1px 8px rgba(255,255,255,.25)";
+    const previewCaption = document.createElement("small");
+    previewCaption.textContent = "VORSCHAU · WEISSE ULTOR-SCHRIFT";
+    previewCaption.style.cssText = "font-size:9px;letter-spacing:.12em;color:#bda4dd";
+    preview.append(previewName, previewNumber, previewCaption);
+    function updatePersonalizationPreview() {
+        const name = nameInput.value.trim().toUpperCase();
+        const number = numberInput.value.trim();
+        previewName.textContent = name || "DEIN NAME";
+        previewNumber.textContent = number || "07";
+        previewNumber.hidden = !number;
+    }
+    nameInput.addEventListener("input", updatePersonalizationPreview);
+    numberInput.addEventListener("input", updatePersonalizationPreview);
+    personalizationFields.append(nameLabel, numberLabel, personalizationHint, preview);
     personalizationCheckbox.addEventListener("change", () => { personalizationFields.hidden = !personalizationCheckbox.checked; });
     if (personalizable) personalizationBox.append(personalizationToggle, personalizationFields); else personalizationBox.hidden = true;
 
