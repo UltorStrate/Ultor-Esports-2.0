@@ -224,11 +224,33 @@ export async function handleCheckoutApi(request, env) {
       return json({ error: `Für ${product.name} ist die gewünschte Menge nicht verfügbar.` }, 409);
     }
 
-    const priceCents = variant?.price_cents ?? product.price_cents;
-    if (!Number.isInteger(priceCents) || priceCents < 0) {
+    const basePriceCents = variant?.price_cents ?? product.price_cents;
+    if (!Number.isInteger(basePriceCents) || basePriceCents < 0) {
       return json({ error: `Für ${product.name} ist kein gültiger Verkaufspreis hinterlegt.` }, 409);
     }
 
+    const rawPersonalization = raw?.personalization;
+    let personalization = null;
+    if (rawPersonalization && rawPersonalization.enabled === true) {
+      const isJersey = /jersey|trikot/i.test(String(product.slug || "") + " " + String(product.name || ""));
+      const customName = clean(rawPersonalization.name, 14).toUpperCase();
+      const customNumber = clean(rawPersonalization.number, 2);
+      if (!isJersey || (!customName && !customNumber) ||
+          !/^[\\p{L}0-9 .'-]*$/u.test(customName) ||
+          !/^\\d{0,2}$/.test(customNumber)) {
+        return json({ error: "Die Trikot-Personalisierung ist ungültig." }, 400);
+      }
+      personalization = {
+        enabled: true,
+        name: customName,
+        number: customNumber,
+        font: "ultor",
+        color: "white",
+        surcharge_cents: 500
+      };
+    }
+
+    const priceCents = basePriceCents + (personalization ? 500 : 0);
     const lineTotal = priceCents * quantity;
     subtotalCents += lineTotal;
     if (!Number.isSafeInteger(subtotalCents) || subtotalCents > 100000000) {
@@ -255,7 +277,10 @@ export async function handleCheckoutApi(request, env) {
       unit_price_cents: priceCents,
       line_total_cents: lineTotal,
       product_snapshot_json: JSON.stringify({ id: product.id, name: product.name, slug: product.slug }),
-      variant_snapshot_json: variant ? JSON.stringify(variant) : null
+      variant_snapshot_json: JSON.stringify({
+        ...(variant || {}),
+        ...(personalization ? { personalization } : {})
+      })
     });
   }
 
