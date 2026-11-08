@@ -1238,7 +1238,7 @@ async function handlePrintfulApi(request, env, current, path, method) {
       variant.id !== undefined &&
       variant.variant_id !== undefined &&
       variant.is_ignored !== true &&
-      variant.synced !== false
+      variant.is_discontinued !== true
     );
 
     if (!usableVariants.length) {
@@ -1353,29 +1353,6 @@ async function handlePrintfulApi(request, env, current, path, method) {
         options[1]?.value || null,
         options[2]?.name || null,
         options[2]?.value || null,
-        body.price_cents,
-        index
-      ));
-
-      statements.push(env.DB.prepare(`
-        INSERT INTO shop_product_variants (
-          id, product_id, variant_name, sku,
-          option1_name, option1_value,
-          option2_name, option2_value,
-          option3_name, option3_value,
-          price_cents, compare_at_price_cents,
-          stock_quantity, track_inventory, status, sort_order
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, NULL, 0, 0, 'active', ?)
-      `).bind(
-        variantId,
-        productId,
-        variantName,
-        sku,
-        option1Name,
-        option1Value,
-        option2Name,
-        color,
         body.price_cents,
         index
       ));
