@@ -233,13 +233,14 @@ export async function handleCheckoutApi(request, env) {
     let personalization = null;
     if (rawPersonalization && rawPersonalization.enabled === true) {
       const isJersey = /jersey|trikot/i.test(String(product.slug || "") + " " + String(product.name || ""));
-      const customName = clean(rawPersonalization.name, 14).toUpperCase();
-      const customNumber = clean(rawPersonalization.number, 2);
-      if (!isJersey || (!customName && !customNumber) ||
-          !/^[\\p{L}0-9 .'-]*$/u.test(customName) ||
-          !/^\\d{0,2}$/.test(customNumber)) {
-        return json({ error: "Die Trikot-Personalisierung ist ungültig." }, 400);
-      }
+      const rawName = typeof rawPersonalization.name === "string" ? rawPersonalization.name.trim() : "";
+      const rawNumber = typeof rawPersonalization.number === "string" ? rawPersonalization.number.trim() : "";
+      const customName = rawName.toUpperCase();
+      const customNumber = rawNumber;
+      if (!isJersey || rawName.length > 14 || rawNumber.length > 2 ||
+          (!customName && !customNumber) ||
+          !/^[\p{L}0-9 .'-]*$/u.test(customName) ||
+          !/^\d{0,2}$/.test(customNumber)) 
       personalization = {
         enabled: true,
         name: customName,
