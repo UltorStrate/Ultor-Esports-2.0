@@ -149,7 +149,7 @@ export async function handleAdminOrdersApi(request, env, auth) {
   }
 
 
-  const orderActionMatch = path.match(/^\\/api\\/admin\\/shop\\/orders\\/([0-9a-f-]+)\\/(cancel|delete)$/i);
+  const orderActionMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)\/(cancel|delete)$/i);
   if (orderActionMatch && method === "POST") {
     if (!can(current, "shop.orders.manage")) {
       return json({ error: "Keine Berechtigung zum Verwalten von Bestellungen." }, 403);
