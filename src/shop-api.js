@@ -1346,23 +1346,24 @@ async function handlePrintfulApi(request, env, current, path, method) {
         else usedSkus.add(normalizedSku);
       }
 
-      const rawOptions = Array.isArray(variant.options) ? variant.options : [];
-      const options = rawOptions.slice(0, 3).map(option => {
-        const optionId = String(option?.id || option?.name || "").toLowerCase();
-        const label = optionId === "size" ? "Größe"
-          : optionId === "color" ? "Farbe"
-          : optionId === "variant" ? "Ausführung"
-          : String(option?.name || option?.id || "Option").slice(0, 80);
-        const value = String(option?.value ?? "").trim().slice(0, 80);
-        return value ? { name: label, value } : null;
-      }).filter(Boolean);
+      const options = [];
+      const size = typeof variant.size === "string" ? variant.size.trim() : "";
+      const color = typeof variant.color === "string" ? variant.color.trim() : "";
+      if (size) options.push({ name: "Größe", value: size.slice(0, 80) });
+      if (color) options.push({ name: "Farbe", value: color.slice(0, 80) });
 
-      if (!options.length) {
-        const size = typeof variant.size === "string" ? variant.size.trim() : "";
-        const color = typeof variant.color === "string" ? variant.color.trim() : "";
-        if (size) options.push({ name: "Größe", value: size.slice(0, 80) });
-        if (color) options.push({ name: "Farbe", value: color.slice(0, 80) });
+      const rawOptions = Array.isArray(variant.options) ? variant.options : [];
+      for (const option of rawOptions) {
+        if (options.length >= 3) break;
+        const optionId = String(option?.id || option?.name || "").toLowerCase();
+        if (optionId === "size" || optionId === "color") continue;
+        const value = String(option?.value ?? "").trim().slice(0, 80);
+        if (!value) continue;
+        const label = optionId === "variant" ? "Ausführung"
+          : String(option?.name || option?.id || "Option").slice(0, 80);
+        options.push({ name: label, value });
       }
+
       if (!options.length) options.push({ name: "Ausführung", value: variantName });
 
       statements.push(env.DB.prepare(
