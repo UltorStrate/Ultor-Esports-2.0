@@ -1124,7 +1124,7 @@ async function savePrintfulThumbnail(env, sourceUrl) {
     return null;
   }
 
-  const key = "shop/printful-" + crypto.randomUUID() + "." + extension;
+  const key = "shop/" + crypto.randomUUID() + "." + extension;
   await env.MEDIA.put(key, bytes, {
     httpMetadata: {
       contentType: mime,
