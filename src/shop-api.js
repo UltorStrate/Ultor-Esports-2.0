@@ -1337,7 +1337,15 @@ async function handlePrintfulApi(request, env, current, path, method) {
     const productName = body.name.trim();
     const baseSlug = slugify(productName);
     if (!baseSlug) return json({ error: "Aus dem Produktnamen konnte kein gültiger URL-Slug erstellt werden." }, 400);
-    const slug = baseSlug + "-" + syncProductId;
+
+    // Import kann nach vorherigem Löschen erneut erfolgen. Slugs bleiben
+    // unabhängig von Printful-Mappings eindeutig, auch falls ein alter
+    // Shop-Datensatz oder ein früherer Import denselben Slug hinterlassen hat.
+    let slug = baseSlug + "-" + syncProductId;
+    const slugExists = await env.DB.prepare(
+      "SELECT id FROM shop_products WHERE slug = ? LIMIT 1"
+    ).bind(slug).first();
+    if (slugExists) slug = slug + "-" + crypto.randomUUID().slice(0, 8);
 
     let thumbnailKey = null;
     try {
@@ -1383,6 +1391,16 @@ async function handlePrintfulApi(request, env, current, path, method) {
         productName + " – Printful-Produktbild"
       ));
     }
+
+    // Alte, verwaiste Variantenzuordnungen entfernen, damit ein erneuter
+    // Import nicht an einer früheren Printful-Variant-ID scheitert.
+    await env.DB.prepare(`
+      DELETE FROM shop_printful_variant_map
+      WHERE NOT EXISTS (
+        SELECT 1 FROM shop_product_variants
+        WHERE shop_product_variants.id = shop_printful_variant_map.shop_variant_id
+      )
+    `).run();
 
     const usedSkus = new Set();
     for (let index = 0; index < usableVariants.length; index++) {
