@@ -1079,12 +1079,40 @@ async function getPrintfulStoreContext(env) {
   const result = await printfulRequest(env, "/stores");
   if (!result.ok) return result;
 
-  const stores = Array.isArray(result.data?.result) ? result.data.result : [];
-  const store = stores.find(item => item && item.id !== undefined) || null;
-  if (!store) {
-    return { ok: false, status: 404, error: "Im Printful-Konto wurde kein Store gefunden." };
+  const stores = Array.isArray(result.data?.result)
+    ? result.data.result.filter(item => item && item.id !== undefined)
+    : [];
+  const configuredStoreId = String(env.PRINTFUL_STORE_ID || "").trim();
+
+  if (configuredStoreId) {
+    const store = stores.find(item => String(item.id) === configuredStoreId) || null;
+    if (!store) {
+      return {
+        ok: false,
+        status: 404,
+        error: "Der konfigurierte PRINTFUL_STORE_ID wurde im verbundenen Printful-Konto nicht gefunden."
+      };
+    }
+    return { ok: true, store };
   }
-  return { ok: true, store };
+
+  if (stores.length === 1) {
+    return { ok: true, store: stores[0] };
+  }
+
+  if (stores.length > 1) {
+    return {
+      ok: false,
+      status: 409,
+      error: "Mehrere Printful-Stores gefunden. Bitte den gewünschten Store über PRINTFUL_STORE_ID in Cloudflare festlegen."
+    };
+  }
+
+  return {
+    ok: false,
+    status: 404,
+    error: "Im Printful-Konto wurde kein Store gefunden."
+  };
 }
 
 async function savePrintfulThumbnail(env, sourceUrl) {
