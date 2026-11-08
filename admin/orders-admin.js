@@ -136,6 +136,34 @@
       );
       detailBody.append(grid);
 
+      if (canManage && order.order_status !== "cancelled") {
+        const statusPanel = node("div", null, "ultor-order-status-editor");
+        statusPanel.append(node("h4", "Bestellstatus bearbeiten"));
+        const controls = node("div", null, "ultor-order-status-controls");
+        const select = node("select");
+        select.setAttribute("aria-label", "Neuer Bestellstatus");
+        const statusOptions = [
+          ["pending_payment", "Zahlung ausstehend"],
+          ["confirmed", "Bestätigt"],
+          ["processing", "In Bearbeitung"],
+          ["completed", "Abgeschlossen"],
+          ["on_hold", "Zurückgestellt"]
+        ];
+        statusOptions.forEach(([value, text]) => {
+          const option = node("option", text);
+          option.value = value;
+          select.append(option);
+        });
+        select.value = order.order_status;
+        const saveStatus = node("button", "Status speichern", "primary-button");
+        saveStatus.type = "button";
+        saveStatus.addEventListener("click", () => updateOrderStatus(select.value, order.order_number));
+        controls.append(select, saveStatus);
+        statusPanel.append(controls);
+        statusPanel.append(node("p", "Zahlungs- und Versandstatus werden automatisch aus verifizierten Systemmeldungen übernommen.", "muted"));
+        detailBody.append(statusPanel);
+      }
+
       if (canManage) {
         const actions = node("div", null, "ultor-order-admin-actions");
         const cancelButton = node("button", "Bestellung stornieren", "secondary-button");
@@ -185,6 +213,23 @@
       noteForm.hidden = !canManage;
       detail.hidden = false;
       detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      setMessage(error.message, "error");
+    }
+  }
+
+  async function updateOrderStatus(orderStatus, orderNumber) {
+    if (!selectedOrderId || !canManage) return;
+    if (!window.confirm(`Bestellstatus für ${orderNumber} auf „${label(orderStatus)}“ ändern?`)) return;
+    try {
+      const result = await api("/api/admin/shop/orders/" + encodeURIComponent(selectedOrderId) + "/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_status: orderStatus })
+      });
+      setMessage(result.message || "Bestellstatus aktualisiert.", "success");
+      await loadOrderDetail(selectedOrderId);
+      await loadOrders();
     } catch (error) {
       setMessage(error.message, "error");
     }
