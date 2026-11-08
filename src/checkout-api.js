@@ -25,8 +25,27 @@ function orderNumber() {
   return `ULT-${date}-${suffix}`;
 }
 
+function testAccessConfigured(env) {
+  return typeof env.SHOP_TEST_ACCESS_CODE === "string" &&
+    env.SHOP_TEST_ACCESS_CODE.length >= 32 &&
+    env.SHOP_TEST_ACCESS_CODE.length <= 256;
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
+    return false;
+  }
+  let difference = 0;
+  for (let i = 0; i < a.length; i++) {
+    difference |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return difference === 0;
+}
+
 function checkoutMode(env) {
-  return env.SHOP_CHECKOUT_MODE === "test" ? "test" : "disabled";
+  return env.SHOP_CHECKOUT_MODE === "test" && testAccessConfigured(env)
+    ? "test"
+    : "disabled";
 }
 
 export async function handleCheckoutApi(request, env) {
@@ -58,6 +77,14 @@ export async function handleCheckoutApi(request, env) {
       error: "Der Checkout ist aktuell noch nicht freigeschaltet.",
       code: "CHECKOUT_DISABLED"
     }, 503);
+  }
+
+  const suppliedTestCode = request.headers.get("X-Shop-Test-Code") || "";
+  if (!constantTimeEqual(suppliedTestCode, env.SHOP_TEST_ACCESS_CODE)) {
+    return json({
+      error: "Der Testzugang ist ungültig oder fehlt.",
+      code: "TEST_ACCESS_DENIED"
+    }, 403);
   }
 
   const shippingCents = Number(env.SHOP_TEST_SHIPPING_CENTS);
