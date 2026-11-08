@@ -1074,6 +1074,54 @@ async function printfulRequest(env, endpoint) {
   return { ok: true, data };
 }
 
+async function savePrintfulThumbnail(env, sourceUrl) {
+  if (!env.MEDIA || typeof sourceUrl !== "string" || !sourceUrl) return null;
+
+  let url;
+  try { url = new URL(sourceUrl); } catch { return null; }
+  if (url.protocol !== "https:" || url.hostname !== "files.cdn.printful.com") return null;
+
+  let response;
+  try { response = await fetch(url.toString(), { redirect: "manual" }); }
+  catch { return null; }
+  if (!response.ok) return null;
+
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > 8 * 1024 * 1024) return null;
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (!bytes.length || bytes.length > 8 * 1024 * 1024) return null;
+
+  let extension = null;
+  let mime = null;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    extension = "jpg"; mime = "image/jpeg";
+  } else if (
+    bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 &&
+    bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d &&
+    bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+  ) {
+    extension = "png"; mime = "image/png";
+  } else if (
+    bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+  ) {
+    extension = "webp"; mime = "image/webp";
+  } else {
+    return null;
+  }
+
+  const key = "shop/printful-" + crypto.randomUUID() + "." + extension;
+  await env.MEDIA.put(key, bytes, {
+    httpMetadata: {
+      contentType: mime,
+      cacheControl: "public, max-age=31536000, immutable"
+    },
+    customMetadata: { source: "printful" }
+  });
+  return key;
+}
+
 async function handlePrintfulApi(request, env, current, path, method) {
   if (method === "GET" && !can(current, "shop.view")) {
     return json({ error: "Keine Berechtigung zum Anzeigen des Shops." }, 403);
@@ -1098,7 +1146,7 @@ async function handlePrintfulApi(request, env, current, path, method) {
   }
 
   if (method === "GET" && path === "/api/admin/shop/printful/products") {
-    const result = await printfulRequest(env, "/store/products?offset=0&limit=100");
+    const result = await printfulRequest(env, "/store/products?status=all&offset=0&limit=100");
     if (!result.ok) return json({ error: result.error }, result.status);
 
     const products = Array.isArray(result.data?.result) ? result.data.result : [];
@@ -1206,15 +1254,22 @@ async function handlePrintfulApi(request, env, current, path, method) {
     if (!baseSlug) return json({ error: "Aus dem Produktnamen konnte kein gültiger URL-Slug erstellt werden." }, 400);
     const slug = baseSlug + "-" + syncProductId;
 
+    let thumbnailKey = null;
+    try {
+      thumbnailKey = await savePrintfulThumbnail(env, syncProduct.thumbnail_url);
+    } catch (imageError) {
+      console.error("Printful thumbnail import failed:", imageError);
+    }
+
     const statements = [];
-    statements.push(env.DB.prepare(\`
+    statements.push(env.DB.prepare(`
       INSERT INTO shop_products (
         id, name, slug, short_description, description,
         price_cents, compare_at_price_cents, currency,
         status, is_featured, sort_order, created_by, updated_by
       )
       VALUES (?, ?, ?, ?, ?, ?, NULL, 'EUR', 'draft', 0, 0, ?, ?)
-    \`).bind(
+    `).bind(
       productId,
       productName,
       slug,
@@ -1229,6 +1284,19 @@ async function handlePrintfulApi(request, env, current, path, method) {
       statements.push(env.DB.prepare(
         "INSERT INTO shop_product_categories (product_id, category_id) VALUES (?, ?)"
       ).bind(productId, body.category_id));
+    }
+
+    if (thumbnailKey) {
+      statements.push(env.DB.prepare(
+        "INSERT INTO shop_product_images " +
+        "(id, product_id, image_key, alt_text, sort_order, is_primary) " +
+        "VALUES (?, ?, ?, ?, 0, 1)"
+      ).bind(
+        crypto.randomUUID(),
+        productId,
+        thumbnailKey,
+        productName + " – Printful-Produktbild"
+      ));
     }
 
     const usedSkus = new Set();
@@ -1248,13 +1316,48 @@ async function handlePrintfulApi(request, env, current, path, method) {
         else usedSkus.add(normalizedSku);
       }
 
-      const size = typeof variant.size === "string" && variant.size.trim() ? variant.size.trim().slice(0, 80) : null;
-      const color = typeof variant.color === "string" && variant.color.trim() ? variant.color.trim().slice(0, 80) : null;
-      const option1Name = size ? "Größe" : (!color ? "Ausführung" : null);
-      const option1Value = size || (!color ? variantName : null);
-      const option2Name = color ? "Farbe" : null;
+      const rawOptions = Array.isArray(variant.options) ? variant.options : [];
+      const options = rawOptions.slice(0, 3).map(option => {
+        const optionId = String(option?.id || option?.name || "").toLowerCase();
+        const label = optionId === "size" ? "Größe"
+          : optionId === "color" ? "Farbe"
+          : optionId === "variant" ? "Ausführung"
+          : String(option?.name || option?.id || "Option").slice(0, 80);
+        const value = String(option?.value ?? "").trim().slice(0, 80);
+        return value ? { name: label, value } : null;
+      }).filter(Boolean);
 
-      statements.push(env.DB.prepare(\`
+      if (!options.length) {
+        const size = typeof variant.size === "string" ? variant.size.trim() : "";
+        const color = typeof variant.color === "string" ? variant.color.trim() : "";
+        if (size) options.push({ name: "Größe", value: size.slice(0, 80) });
+        if (color) options.push({ name: "Farbe", value: color.slice(0, 80) });
+      }
+      if (!options.length) options.push({ name: "Ausführung", value: variantName });
+
+      statements.push(env.DB.prepare(
+        "INSERT INTO shop_product_variants (" +
+        "id, product_id, variant_name, sku, " +
+        "option1_name, option1_value, option2_name, option2_value, " +
+        "option3_name, option3_value, price_cents, compare_at_price_cents, " +
+        "stock_quantity, track_inventory, status, sort_order) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 0, 'active', ?)"
+      ).bind(
+        variantId,
+        productId,
+        variantName,
+        sku,
+        options[0]?.name || null,
+        options[0]?.value || null,
+        options[1]?.name || null,
+        options[1]?.value || null,
+        options[2]?.name || null,
+        options[2]?.value || null,
+        body.price_cents,
+        index
+      ));
+
+      statements.push(env.DB.prepare(`
         INSERT INTO shop_product_variants (
           id, product_id, variant_name, sku,
           option1_name, option1_value,
@@ -1264,7 +1367,7 @@ async function handlePrintfulApi(request, env, current, path, method) {
           stock_quantity, track_inventory, status, sort_order
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, NULL, 0, 0, 'active', ?)
-      \`).bind(
+      `).bind(
         variantId,
         productId,
         variantName,
@@ -1277,13 +1380,13 @@ async function handlePrintfulApi(request, env, current, path, method) {
         index
       ));
 
-      statements.push(env.DB.prepare(\`
+      statements.push(env.DB.prepare(`
         INSERT INTO shop_printful_variant_map (
           shop_variant_id, printful_sync_variant_id,
           printful_catalog_variant_id, printful_variant_json
         )
         VALUES (?, ?, ?, ?)
-      \`).bind(
+      `).bind(
         variantId,
         Number(variant.id),
         Number(variant.variant_id),
@@ -1291,13 +1394,13 @@ async function handlePrintfulApi(request, env, current, path, method) {
       ));
     }
 
-    statements.push(env.DB.prepare(\`
+    statements.push(env.DB.prepare(`
       INSERT INTO shop_printful_product_map (
         shop_product_id, printful_sync_product_id,
         printful_external_id, printful_product_json
       )
       VALUES (?, ?, ?, ?)
-    \`).bind(
+    `).bind(
       productId,
       syncProductId,
       syncProduct.external_id || null,
@@ -1307,6 +1410,9 @@ async function handlePrintfulApi(request, env, current, path, method) {
     try {
       await env.DB.batch(statements);
     } catch (error) {
+      if (thumbnailKey && env.MEDIA) {
+        try { await env.MEDIA.delete(thumbnailKey); } catch {}
+      }
       if (error.message?.includes("UNIQUE")) {
         return json({ error: "Das Produkt oder eine Variante existiert bereits. Prüfe Slug und SKUs in der Shopverwaltung." }, 409);
       }
