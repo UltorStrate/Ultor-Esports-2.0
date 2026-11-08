@@ -360,20 +360,7 @@ function ensureShopPriceStyles() {
       .product-price-line .product-compare-price{display:inline-block;color:#93899f;font-size:.88em;font-weight:600;line-height:1.3;text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.85}
       .product-detail-price.product-price-line{margin:0 0 18px}
       .product-detail-price .product-price{color:inherit}
-      .ultor-product-visual{display:flex;flex-direction:column;gap:12px;padding:12px}
-      .ultor-product-visual-stage{position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:360px;flex:1;overflow:hidden;background:#f4f3f5}
-      .ultor-product-visual-front,.ultor-product-visual-back{width:100%;height:100%;min-height:360px;display:flex;align-items:center;justify-content:center}
-      .ultor-product-visual-front[hidden],.ultor-product-visual-back[hidden]{display:none!important}
-      .ultor-product-visual-front img{display:block;width:100%;height:100%;min-height:360px;object-fit:contain}
-      .product-detail-image.ultor-product-visual.is-back-view{aspect-ratio:auto;min-height:0;height:auto;overflow:visible;background:#252525}
-      .ultor-product-visual.is-back-view .ultor-product-visual-stage{min-height:0;height:auto;flex:none;overflow:visible;background:transparent}
-      .ultor-product-visual-back{position:relative;display:block;width:100%;max-width:420px;aspect-ratio:3/4;height:auto;min-height:0;overflow:hidden;background:#252525;flex:none}
-      .ultor-back-jersey-image{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain}
-      .ultor-product-visual-controls{flex:none}
-      .ultor-product-visual-controls{display:flex;justify-content:center;gap:8px}
-      .ultor-product-visual-controls button{min-width:125px;padding:10px 16px;background:#130f1b;border:1px solid #59436f;color:#d8cce5;font:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:background .18s,border-color .18s}
-      .ultor-product-visual-controls button.is-active{background:#8735f5;border-color:#a66aff;color:#fff}
-      @media(max-width:600px){.ultor-product-visual-stage,.ultor-product-visual-front,.ultor-product-visual-back{min-height:300px}.ultor-back-jersey-svg{min-height:290px}}
+      .product-detail-image img{width:100%;height:100%;object-fit:contain}
     `;
     document.head.appendChild(style);
 }
@@ -1095,80 +1082,18 @@ function renderProductDetails(product) {
     const layout = document.createElement("div");
     layout.className = "product-detail-layout";
 
-    const hasRearView = /jersey|trikot/i.test(
-        String(product.slug || "") + " " + String(product.name || "")
-    );
-
-    /* IMAGE + FRONT/BACK VIEW */
-
+    /* PRINTFUL PRODUCT IMAGE ONLY */
     const imageArea = document.createElement("div");
-    imageArea.className = "product-detail-image ultor-product-visual";
-
-    const visualStage = document.createElement("div");
-    visualStage.className = "ultor-product-visual-stage";
-
-    const frontView = document.createElement("div");
-    frontView.className = "ultor-product-visual-front";
+    imageArea.className = "product-detail-image";
 
     const imageUrl = getProductImage(product);
     if (imageUrl) {
         const image = document.createElement("img");
         image.src = imageUrl;
-        image.alt = product.name || "ULTOR Produkt – Vorderseite";
+        image.alt = product.name || "ULTOR Produkt";
         image.loading = "eager";
-        frontView.appendChild(image);
-    } else {
-        const placeholder = document.createElement("span");
-        placeholder.textContent = "ULTOR";
-        placeholder.className = "product-image-placeholder";
-        frontView.appendChild(placeholder);
-    }
-
-    const backView = document.createElement("div");
-    backView.className = "ultor-product-visual-back";
-    backView.hidden = true;
-    backView.setAttribute("aria-label", "Rückansicht des originalen ULTOR-Trikots");
-    const backImage = document.createElement("img");
-    backImage.className = "ultor-back-jersey-image";
-    backImage.src = "/shop/jersey-back-nokto.webp";
-    backImage.alt = "Originale Rückansicht des schwarzen ULTOR ESPORTS Trikots";
-    backImage.loading = "eager";
-    backImage.decoding = "async";
-    backView.appendChild(backImage);
-    visualStage.append(frontView, backView);
-
-    if (hasRearView) {
-        const visualControls = document.createElement("div");
-        visualControls.className = "ultor-product-visual-controls";
-
-        const frontButton = document.createElement("button");
-        frontButton.type = "button";
-        frontButton.className = "is-active";
-        frontButton.textContent = "Vorderseite";
-        frontButton.setAttribute("aria-pressed", "true");
-
-        const backButton = document.createElement("button");
-        backButton.type = "button";
-        backButton.textContent = "Rückseite";
-        backButton.setAttribute("aria-pressed", "false");
-
-        const setVisualSide = side => {
-            const showBack = side === "back";
-            frontView.hidden = showBack;
-            backView.hidden = !showBack;
-            imageArea.classList.toggle("is-back-view", showBack);
-            frontButton.classList.toggle("is-active", !showBack);
-            backButton.classList.toggle("is-active", showBack);
-            frontButton.setAttribute("aria-pressed", String(!showBack));
-            backButton.setAttribute("aria-pressed", String(showBack));
-        };
-
-        frontButton.addEventListener("click", () => setVisualSide("front"));
-        backButton.addEventListener("click", () => setVisualSide("back"));
-        visualControls.append(frontButton, backButton);
-        imageArea.append(visualStage, visualControls);
-    } else {
-        imageArea.appendChild(visualStage);
+        image.decoding = "async";
+        imageArea.appendChild(image);
     }
 
     /* INFORMATION */
