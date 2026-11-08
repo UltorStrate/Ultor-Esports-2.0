@@ -58,7 +58,26 @@ export async function handleCheckoutApi(request, env) {
     const shippingCents = Number(env.SHOP_TEST_SHIPPING_CENTS);
     const shippingConfigured = Number.isInteger(shippingCents) &&
       shippingCents >= 0 && shippingCents <= 50000;
-    const available = testModeRequested && testAccessReady && shippingConfigured;
+    let databaseReady = false;
+    try {
+      const requiredTables = [
+        "shop_orders",
+        "shop_order_items",
+        "shop_order_events",
+        "shop_printful_fulfillments",
+        "shop_printful_variant_map"
+      ];
+      const placeholders = requiredTables.map(() => "?").join(", ");
+      const tables = await env.DB.prepare(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${placeholders})`
+      ).bind(...requiredTables).all();
+      const found = new Set((tables.results || []).map(row => row.name));
+      databaseReady = requiredTables.every(name => found.has(name));
+    } catch (error) {
+      console.error("Checkout database readiness check failed:", error);
+    }
+
+    const available = testModeRequested && testAccessReady && shippingConfigured && databaseReady;
 
     return json({
       success: true,
@@ -67,11 +86,12 @@ export async function handleCheckoutApi(request, env) {
       shipping_cents: shippingConfigured ? shippingCents : null,
       test_access_configured: testAccessReady,
       shipping_configured: shippingConfigured,
+      database_ready: databaseReady,
       payments_enabled: false,
       printful_submission_enabled: false,
       message: available
         ? "Der technische Test-Checkout ist aktiv. Es werden weder Zahlungen ausgelöst noch Aufträge an Printful übermittelt."
-        : "Der Test-Checkout ist noch nicht vollständig konfiguriert. Prüfe SHOP_CHECKOUT_MODE, SHOP_TEST_ACCESS_CODE und SHOP_TEST_SHIPPING_CENTS."
+        : "Der Test-Checkout ist noch nicht vollständig konfiguriert. Prüfe Testmodus, SHOP_TEST_ACCESS_CODE, Versandkosten und die D1-Shopmigrationen."
     });
   }
 
