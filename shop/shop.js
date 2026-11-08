@@ -1289,7 +1289,7 @@ function renderProductDetails(product) {
         if (personalizationCheckbox.checked) {
             const customName = nameInput.value.trim().toUpperCase();
             const customNumber = numberInput.value.trim();
-            if ((!customName && !customNumber) || customName.length > 14 || !/^[\p{L}0-9 .\'-]*$/u.test(customName) || !/^\d{0,2}$/.test(customNumber)) {
+            if ((!customName && !customNumber) || customName.length > 14 || !/^[\p{L}0-9 .'-]*$/u.test(customName) || !/^\d{0,2}$/.test(customNumber)) {
                 showCartFeedback("Bitte gib einen Namen oder eine Nummer ein. Name max. 14 Zeichen, Nummer max. 2 Ziffern."); return;
             }
             personalization = { enabled: true, name: customName, number: customNumber };
