@@ -8,7 +8,7 @@ const SHOP_API = "/api/shop";
 
 let shopProducts = [];
 let shopCategories = [];
-let activeCategory = null; // Hidden until a category is selected.
+let activeCategory = "all"; // Show all published products by default.
 
 /* =========================================
    API
@@ -218,7 +218,7 @@ function renderShopCategories() {
 function setActiveCategory(categoryId) {
     if (!categoryId) return;
 
-    activeCategory = categoryId;
+    activeCategory = categoryId || "all";
     setProductSectionVisible(true);
 
     document.querySelectorAll(".category-card").forEach(card => {
@@ -394,19 +394,25 @@ function renderShopProducts() {
 
     if (!productGrid || !emptyState) return;
 
-    // Initial state: no product list until the visitor chooses a category.
-    if (!activeCategory) {
-        productGrid.replaceChildren();
-        emptyState.hidden = true;
-        setProductSectionVisible(false);
-        return;
-    }
-
+    // The collection must be visible immediately. Category selection is an
+    // optional filter, not a prerequisite for discovering published products.
     setProductSectionVisible(true);
 
-    const filteredProducts = shopProducts.filter(product =>
-        getProductCategories(product).includes(activeCategory)
-    );
+    const filteredProducts = activeCategory && activeCategory !== "all"
+        ? shopProducts.filter(product => {
+            const productCategories = getProductCategories(product).map(value =>
+                normalizeCategoryToken(value)
+            );
+            const selected = normalizeCategoryToken(activeCategory);
+            const selectedCategory = shopCategories.find(category =>
+                normalizeCategoryToken(category.slug) === selected ||
+                normalizeCategoryToken(category.id) === selected
+            );
+            return productCategories.includes(selected) ||
+                (selectedCategory && productCategories.includes(normalizeCategoryToken(selectedCategory.id))) ||
+                (selectedCategory && productCategories.includes(normalizeCategoryToken(selectedCategory.slug));
+        })
+        : shopProducts;
 
     productGrid.replaceChildren();
 
