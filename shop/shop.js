@@ -682,6 +682,7 @@ async function submitCheckout(event) {
  const form=document.getElementById("ultorCheckoutForm"), submit=document.getElementById("ultorCheckoutSubmit"), status=document.getElementById("ultorCheckoutStatus");
  if(!form.reportValidity())return;
  const data=new FormData(form), customerName=String(data.get("customer_name")||"").trim();
+ const testAccessCode=String(data.get("test_access_code")||"");
  const payload={
   customer:{name:customerName,email:String(data.get("customer_email")||"").trim(),phone:String(data.get("customer_phone")||"").trim()},
   shipping:{name:String(data.get("shipping_name")||"").trim()||customerName,company:String(data.get("shipping_company")||"").trim(),address1:String(data.get("address1")||"").trim(),address2:String(data.get("address2")||"").trim(),postal_code:String(data.get("postal_code")||"").trim(),city:String(data.get("city")||"").trim(),state:String(data.get("state")||"").trim(),country_code:String(data.get("country_code")||"DE"),phone:String(data.get("shipping_phone")||"").trim()},
@@ -691,7 +692,7 @@ async function submitCheckout(event) {
  if(payload.items.some(item=>!item.product_id)){status.textContent="Ein Produkt im Warenkorb ist nicht eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";return;}
  ultorCheckoutBusy=true;submit.disabled=true;status.textContent="Testbestellung wird sicher gespeichert …";
  try{
-  const response=await fetch("/api/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});
+  const response=await fetch("/api/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json","X-Shop-Test-Code":testAccessCode},body:JSON.stringify(payload)});
   const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"Bestellung konnte nicht gespeichert werden.");
   ultorCart=[];persistCart();form.hidden=true;
   const success=document.getElementById("ultorCheckoutSuccess");success.hidden=false;success.replaceChildren();
@@ -833,6 +834,7 @@ function createCartInterface() {
               <div class="ultor-checkout-total"><span>Versand</span><strong id="ultorCheckoutShipping">Noch nicht festgelegt</strong></div>
               <div class="ultor-checkout-total grand"><span>Gesamtbetrag</span><strong id="ultorCheckoutTotal">–</strong></div>
             </div>
+            <label class="ultor-checkout-note-label">Interner Testzugangscode<input name="test_access_code" type="password" autocomplete="off" required minlength="32" maxlength="256" placeholder="Testcode eingeben"></label>
             <label class="ultor-checkout-note-label">Anmerkung zur Bestellung (optional)<textarea name="customer_note" rows="3" maxlength="1000"></textarea></label>
             <label class="ultor-checkout-test-ack"><input type="checkbox" name="test_ack" required><span>Ich bestätige, dass dies ausschließlich eine technische Testbestellung ohne Zahlung und ohne Versand ist.</span></label>
             <button id="ultorCheckoutSubmit" class="ultor-checkout-submit" type="submit" disabled>TESTBESTELLUNG ABSENDEN</button>
