@@ -782,6 +782,42 @@
 
         <div id="shopMessage" class="message" role="status" aria-live="polite"></div>
 
+        <section class="content-panel ultor-orders-panel" id="ultorOrdersPanel">
+          <div class="section-heading">
+            <div>
+              <h2>Bestellungen</h2>
+              <p class="muted">Eingegangene Shopbestellungen und deren Bearbeitungsstand.</p>
+            </div>
+            <button id="ultorOrdersRefresh" class="secondary-button" type="button">Aktualisieren</button>
+          </div>
+          <div class="ultor-orders-toolbar">
+            <input id="ultorOrdersSearch" type="search" placeholder="Bestellnummer, Kunde oder E-Mail …" aria-label="Bestellungen suchen">
+            <select id="ultorOrdersStatus" aria-label="Bestellstatus filtern">
+              <option value="">Alle Bestellstatus</option>
+              <option value="pending_payment">Zahlung ausstehend</option>
+              <option value="confirmed">Bestätigt</option>
+              <option value="processing">In Bearbeitung</option>
+              <option value="completed">Abgeschlossen</option>
+              <option value="cancelled">Storniert</option>
+              <option value="on_hold">Zurückgestellt</option>
+            </select>
+          </div>
+          <p id="ultorOrdersMessage" class="message" role="status" aria-live="polite"></p>
+          <div id="ultorOrdersList" class="ultor-orders-list"><p class="muted">Bestellungen werden geladen …</p></div>
+          <section id="ultorOrderDetail" class="ultor-order-detail" hidden>
+            <div class="section-heading">
+              <div><p class="eyebrow">ORDER DETAILS</p><h3 id="ultorOrderDetailTitle">Bestellung</h3></div>
+              <button id="ultorOrderDetailClose" class="secondary-button" type="button">Schließen</button>
+            </div>
+            <div id="ultorOrderDetailBody"></div>
+            <form id="ultorOrderNoteForm" class="ultor-order-note-form">
+              <label for="ultorOrderInternalNote">Interne Notiz</label>
+              <textarea id="ultorOrderInternalNote" rows="3" maxlength="4000" placeholder="Nur für das ULTOR-Team sichtbar …"></textarea>
+              <button class="primary-button" type="submit">Notiz speichern</button>
+            </form>
+          </section>
+        </section>
+
         <div class="content-panel">
           <div class="section-heading shop-toolbar">
             <div>
@@ -1177,7 +1213,8 @@
 
   <script src="/admin/admin.js?v=20261107-homepage-slot1" defer
     onerror="document.getElementById('dashboardMessage').textContent='admin.js konnte nicht geladen werden. Prüfe den Pfad /admin/admin.js.';document.getElementById('dashboardMessage').className='message error';"></script>
-  <script src="/admin/printful-admin.js?v=20261108-phase1" defer></script>
+  <script src="/admin/printful-admin.js?v=20261108-phase1" defer>
+  <script src="/admin/orders-admin.js?v=20261108-phase1" defer></script></script>
 
   <!-- Fallback: Navigation und Benutzerprofil funktionieren auch dann,
        wenn das externe admin.js fehlt oder vorzeitig abbricht. -->
