@@ -516,12 +516,15 @@ function persistCart() {
     renderCart();
 }
 
-function cartItemKey(product, variant) {
+function cartItemKey(product, variant, personalization = null) {
     const productKey = product.id || product.slug;
-    return `${productKey}::${variant?.id || "default"}`;
+    const customKey = personalization?.enabled
+        ? (personalization.name || "") + "::" + (personalization.number || "")
+        : "standard";
+    return productKey + "::" + (variant?.id || "default") + "::" + customKey;
 }
 
-function addProductToCart(product, variant = null) {
+function addProductToCart(product, variant = null, personalization = null) {
     const variants = Array.isArray(product.variants)
         ? product.variants.filter(item => !item.status || ["active", "published"].includes(item.status))
         : [];
@@ -534,9 +537,23 @@ function addProductToCart(product, variant = null) {
     const rawPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
         ? variant.price_cents
         : product.price_cents;
-    const unitPrice = Number(rawPrice);
+    const baseUnitPrice = Number(rawPrice);
+    const personalizationEnabled = Boolean(personalization?.enabled);
+    const personalizationName = String(personalization?.name || "").trim().toUpperCase();
+    const personalizationNumber = String(personalization?.number || "").trim();
+    const validName = /^[\p{L}0-9 .'-]*$/u.test(personalizationName);
+    const validNumber = /^\d{0,2}$/.test(personalizationNumber);
 
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+    if (personalizationEnabled &&
+        ((!personalizationName && !personalizationNumber) ||
+         personalizationName.length > 14 || !validName || !validNumber)) {
+        showCartFeedback("Bitte prüfe Name (max. 14 Zeichen) und Nummer (max. 2 Ziffern).");
+        return false;
+    }
+
+    const personalizationCents = personalizationEnabled ? 500 : 0;
+    const unitPrice = baseUnitPrice + personalizationCents;
+    if (!Number.isFinite(baseUnitPrice) || baseUnitPrice < 0) {
         showCartFeedback("Für dieses Produkt ist noch kein gültiger Preis hinterlegt.");
         return false;
     }
@@ -545,18 +562,24 @@ function addProductToCart(product, variant = null) {
     const stockQuantity = variant && variant.stock_quantity !== null && variant.stock_quantity !== undefined
         ? Number(variant.stock_quantity)
         : null;
-
     if (tracksInventory && (!Number.isFinite(stockQuantity) || stockQuantity <= 0)) {
         showCartFeedback("Diese Variante ist aktuell nicht verfügbar.");
         return false;
     }
 
-    const key = cartItemKey(product, variant);
+    const custom = personalizationEnabled ? {
+        enabled: true,
+        name: personalizationName,
+        number: personalizationNumber,
+        font: "ultor",
+        color: "white",
+        surcharge_cents: personalizationCents
+    } : null;
+    const key = cartItemKey(product, variant, custom);
     const existing = ultorCart.find(item => item.key === key);
     const nextQuantity = (existing?.quantity || 0) + 1;
-
     if (tracksInventory && nextQuantity > stockQuantity) {
-        showCartFeedback(`Es sind nur ${stockQuantity} Stück verfügbar.`);
+        showCartFeedback("Es sind nur " + stockQuantity + " Stück verfügbar.");
         return false;
     }
 
@@ -569,6 +592,9 @@ function addProductToCart(product, variant = null) {
         variant_name: variant ? getVariantLabel(variant) : null,
         sku: variant?.sku || null,
         unit_price_cents: unitPrice,
+        base_unit_price_cents: baseUnitPrice,
+        personalization_cents: personalizationCents,
+        personalization: custom,
         currency: product.currency || "EUR",
         quantity: nextQuantity,
         image_url: getProductImage(product),
@@ -578,13 +604,11 @@ function addProductToCart(product, variant = null) {
 
     if (existing) Object.assign(existing, line);
     else ultorCart.push(line);
-
     persistCart();
     setCartOpen(true);
     showCartFeedback("Zum Warenkorb hinzugefügt.");
     return true;
 }
-
 function showCartFeedback(message) {
     const status = document.getElementById("ultorCartStatus");
     if (status) status.textContent = message;
