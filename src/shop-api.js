@@ -1039,6 +1039,298 @@ async function deleteVariant(env, current, variantId) {
   return json({ success: true, message: "Variante wurde gelöscht." });
 }
 
+
+async function printfulRequest(env, endpoint) {
+  if (!env.PRINTFUL_API_TOKEN) {
+    return { ok: false, status: 503, error: "Printful ist nicht konfiguriert. Der Worker-Secret PRINTFUL_API_TOKEN fehlt." };
+  }
+
+  const response = await fetch("https://api.printful.com" + endpoint, {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer " + env.PRINTFUL_API_TOKEN,
+      "Accept": "application/json"
+    }
+  });
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const reason = data?.error?.message ||
+      (typeof data?.result === "string" ? data.result : null) ||
+      "Printful API request failed.";
+    return {
+      ok: false,
+      status: response.status === 401 || response.status === 403 ? 502 : response.status,
+      error: String(reason).slice(0, 240)
+    };
+  }
+
+  return { ok: true, data };
+}
+
+async function handlePrintfulApi(request, env, current, path, method) {
+  if (method === "GET" && !can(current, "shop.view")) {
+    return json({ error: "Keine Berechtigung zum Anzeigen des Shops." }, 403);
+  }
+
+  if (method === "GET" && path === "/api/admin/shop/printful/status") {
+    const result = await printfulRequest(env, "/stores");
+    if (!result.ok) {
+      return json({ connected: false, error: result.error }, result.status);
+    }
+
+    const stores = Array.isArray(result.data?.result) ? result.data.result : [];
+    const store = stores[0] || null;
+    return json({
+      connected: true,
+      store: store ? {
+        id: store.id,
+        name: store.name,
+        type: store.type
+      } : null
+    });
+  }
+
+  if (method === "GET" && path === "/api/admin/shop/printful/products") {
+    const result = await printfulRequest(env, "/store/products?offset=0&limit=100");
+    if (!result.ok) return json({ error: result.error }, result.status);
+
+    const products = Array.isArray(result.data?.result) ? result.data.result : [];
+    const importedRows = await env.DB.prepare(
+      "SELECT printful_sync_product_id FROM shop_printful_product_map"
+    ).all();
+    const importedIds = new Set(
+      (importedRows.results || []).map(row => Number(row.printful_sync_product_id))
+    );
+
+    return json({
+      success: true,
+      products: products.map(product => ({
+        id: product.id,
+        name: product.name,
+        variants: product.variants,
+        synced: product.synced,
+        thumbnail_url: product.thumbnail_url,
+        imported: importedIds.has(Number(product.id))
+      })),
+      paging: result.data?.paging || null
+    });
+  }
+
+  const detailMatch = path.match(/^\/api\/admin\/shop\/printful\/products\/(\d+)$/);
+  if (method === "GET" && detailMatch) {
+    const result = await printfulRequest(env, "/store/products/" + detailMatch[1]);
+    if (!result.ok) return json({ error: result.error }, result.status);
+
+    const payload = result.data?.result || {};
+    return json({
+      success: true,
+      sync_product: payload.sync_product || null,
+      sync_variants: Array.isArray(payload.sync_variants) ? payload.sync_variants : []
+    });
+  }
+
+  const importMatch = path.match(/^\/api\/admin\/shop\/printful\/products\/(\d+)\/import$/);
+  if (method === "POST" && importMatch) {
+    if (!can(current, "shop.products.create")) {
+      return json({ error: "Keine Berechtigung zum Erstellen von Produkten." }, 403);
+    }
+
+    const syncProductId = Number(importMatch[1]);
+    const body = await readBody(request);
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return json({ error: "Ungültige Anfrage." }, 400);
+    }
+    if (!validText(body.name, 160, true)) {
+      return json({ error: "Der Produktname muss zwischen 1 und 160 Zeichen lang sein." }, 400);
+    }
+    if (!Number.isInteger(body.price_cents) || body.price_cents < 1 || body.price_cents > 100000000) {
+      return json({ error: "Bitte gib einen gültigen Verkaufspreis in Euro an." }, 400);
+    }
+    if (body.category_id !== undefined && body.category_id !== null && body.category_id !== "") {
+      if (!validId(body.category_id)) {
+        return json({ error: "Ungültige Kategorie." }, 400);
+      }
+      const category = await env.DB.prepare(
+        "SELECT id FROM shop_categories WHERE id = ? AND status = 'active'"
+      ).bind(body.category_id).first();
+      if (!category) return json({ error: "Die ausgewählte Kategorie wurde nicht gefunden." }, 404);
+    }
+
+    const existingMap = await env.DB.prepare(
+      "SELECT shop_product_id FROM shop_printful_product_map WHERE printful_sync_product_id = ?"
+    ).bind(syncProductId).first();
+    if (existingMap) {
+      return json({
+        error: "Dieses Printful-Produkt wurde bereits importiert.",
+        product_id: existingMap.shop_product_id
+      }, 409);
+    }
+
+    const detail = await printfulRequest(env, "/store/products/" + syncProductId);
+    if (!detail.ok) return json({ error: detail.error }, detail.status);
+
+    const payload = detail.data?.result || {};
+    const syncProduct = payload.sync_product || {};
+    const syncVariants = Array.isArray(payload.sync_variants) ? payload.sync_variants : [];
+
+    if (Number(syncProduct.id) !== syncProductId) {
+      return json({ error: "Printful hat ein unerwartetes Produkt zurückgegeben." }, 502);
+    }
+
+    const usableVariants = syncVariants.filter(variant =>
+      variant &&
+      variant.id !== undefined &&
+      variant.variant_id !== undefined &&
+      variant.is_ignored !== true &&
+      variant.synced !== false
+    );
+
+    if (!usableVariants.length) {
+      return json({ error: "Das Printful-Produkt enthält keine importierbaren Varianten." }, 400);
+    }
+    if (usableVariants.length > 100) {
+      return json({ error: "Das Produkt enthält mehr als 100 Varianten. Bitte reduziere die Varianten in Printful." }, 400);
+    }
+
+    const productId = crypto.randomUUID();
+    const productName = body.name.trim();
+    const baseSlug = slugify(productName);
+    if (!baseSlug) return json({ error: "Aus dem Produktnamen konnte kein gültiger URL-Slug erstellt werden." }, 400);
+    const slug = baseSlug + "-" + syncProductId;
+
+    const statements = [];
+    statements.push(env.DB.prepare(\`
+      INSERT INTO shop_products (
+        id, name, slug, short_description, description,
+        price_cents, compare_at_price_cents, currency,
+        status, is_featured, sort_order, created_by, updated_by
+      )
+      VALUES (?, ?, ?, ?, ?, ?, NULL, 'EUR', 'draft', 0, 0, ?, ?)
+    \`).bind(
+      productId,
+      productName,
+      slug,
+      "Offizielles ULTOR ESPORTS Merchandise.",
+      null,
+      body.price_cents,
+      current.user.id,
+      current.user.id
+    ));
+
+    if (body.category_id) {
+      statements.push(env.DB.prepare(
+        "INSERT INTO shop_product_categories (product_id, category_id) VALUES (?, ?)"
+      ).bind(productId, body.category_id));
+    }
+
+    const usedSkus = new Set();
+    for (let index = 0; index < usableVariants.length; index++) {
+      const variant = usableVariants[index];
+      const variantId = crypto.randomUUID();
+      const variantName = String(variant.name || variant.product?.name || ("Variante " + (index + 1))).slice(0, 160);
+      let sku = typeof variant.sku === "string" && variant.sku.trim()
+        ? variant.sku.trim().slice(0, 120)
+        : null;
+
+      if (sku) {
+        const normalizedSku = sku.toLowerCase();
+        const duplicateSku = usedSkus.has(normalizedSku) ||
+          await env.DB.prepare("SELECT id FROM shop_product_variants WHERE sku = ?").bind(sku).first();
+        if (duplicateSku) sku = null;
+        else usedSkus.add(normalizedSku);
+      }
+
+      const size = typeof variant.size === "string" && variant.size.trim() ? variant.size.trim().slice(0, 80) : null;
+      const color = typeof variant.color === "string" && variant.color.trim() ? variant.color.trim().slice(0, 80) : null;
+      const option1Name = size ? "Größe" : (!color ? "Ausführung" : null);
+      const option1Value = size || (!color ? variantName : null);
+      const option2Name = color ? "Farbe" : null;
+
+      statements.push(env.DB.prepare(\`
+        INSERT INTO shop_product_variants (
+          id, product_id, variant_name, sku,
+          option1_name, option1_value,
+          option2_name, option2_value,
+          option3_name, option3_value,
+          price_cents, compare_at_price_cents,
+          stock_quantity, track_inventory, status, sort_order
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, NULL, 0, 0, 'active', ?)
+      \`).bind(
+        variantId,
+        productId,
+        variantName,
+        sku,
+        option1Name,
+        option1Value,
+        option2Name,
+        color,
+        body.price_cents,
+        index
+      ));
+
+      statements.push(env.DB.prepare(\`
+        INSERT INTO shop_printful_variant_map (
+          shop_variant_id, printful_sync_variant_id,
+          printful_catalog_variant_id, printful_variant_json
+        )
+        VALUES (?, ?, ?, ?)
+      \`).bind(
+        variantId,
+        Number(variant.id),
+        Number(variant.variant_id),
+        JSON.stringify(variant)
+      ));
+    }
+
+    statements.push(env.DB.prepare(\`
+      INSERT INTO shop_printful_product_map (
+        shop_product_id, printful_sync_product_id,
+        printful_external_id, printful_product_json
+      )
+      VALUES (?, ?, ?, ?)
+    \`).bind(
+      productId,
+      syncProductId,
+      syncProduct.external_id || null,
+      JSON.stringify(syncProduct)
+    ));
+
+    try {
+      await env.DB.batch(statements);
+    } catch (error) {
+      if (error.message?.includes("UNIQUE")) {
+        return json({ error: "Das Produkt oder eine Variante existiert bereits. Prüfe Slug und SKUs in der Shopverwaltung." }, 409);
+      }
+      throw error;
+    }
+
+    await audit(env, current.user.id, "shop.product.imported_from_printful", productId, {
+      printful_sync_product_id: syncProductId,
+      variant_count: usableVariants.length
+    });
+
+    return json({
+      success: true,
+      message: "Printful-Produkt wurde als ULTOR-Entwurf importiert.",
+      product_id: productId,
+      variant_count: usableVariants.length,
+      image_url: syncProduct.thumbnail_url || null
+    }, 201);
+  }
+
+  return json({ error: "Printful-Endpunkt nicht gefunden." }, 404);
+}
+
+
 // =========================================
 // GESCHÜTZTE SHOP-API
 // =========================================
@@ -1049,6 +1341,13 @@ export async function handleShopApi(request, env, auth) {
 
   const current = await getUser(request, env, auth);
   if (current.error) return current.error;
+
+  if (path === "/api/admin/shop/printful/status" ||
+      path === "/api/admin/shop/printful/products" ||
+      path.startsWith("/api/admin/shop/printful/products/")) {
+    return handlePrintfulApi(request, env, current, path, method);
+  }
+
 
   if (path === "/api/admin/shop/categories" && method === "GET") {
     if (!can(current, "shop.view")) {
