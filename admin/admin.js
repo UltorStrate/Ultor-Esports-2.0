@@ -33,6 +33,8 @@ const PERMISSION_GROUPS = {
     ["partners.publish", "Partner veröffentlichen"]
   ],
   "Shop": [
+    ["shop.orders.view", "Bestellungen ansehen"],
+    ["shop.orders.manage", "Interne Bestellnotizen verwalten"],
     ["shop.view", "Shop ansehen"],
     ["shop.categories.manage", "Kategorien verwalten"],
     ["shop.products.create", "Produkte erstellen"],
