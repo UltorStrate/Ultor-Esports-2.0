@@ -164,6 +164,46 @@
       });
       if (!data.events?.length) events.append(node("p", "Noch keine Ereignisse.", "muted"));
       detailBody.append(events);
+
+      if (canManage) {
+        detailBody.append(node("h4", "Bestellung verwalten"));
+        const actions = node("div", null, "ultor-order-admin-actions");
+        const cancelButton = node("button", "Bestellung stornieren", "secondary-button");
+        cancelButton.type = "button";
+        cancelButton.disabled = order.order_status === "cancelled" || order.payment_status === "paid" ||
+          Boolean(order.printful_order_id) || ["submitted", "in_production", "shipped", "delivered"].includes(order.fulfillment_status);
+        cancelButton.addEventListener("click", async () => {
+          if (!confirm("Bestellung " + order.order_number + " wirklich stornieren?")) return;
+          const reason = prompt("Stornierungsgrund (optional):") || "";
+          try {
+            await api("/api/admin/shop/orders/" + encodeURIComponent(id) + "/cancel", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reason })
+            });
+            setMessage("Bestellung wurde storniert.", "success");
+            await loadOrders();
+            await loadOrderDetail(id);
+          } catch (error) { setMessage(error.message, "error"); }
+        });
+        const deleteButton = node("button", "Testbestellung löschen", "danger-button");
+        deleteButton.type = "button";
+        deleteButton.disabled = order.payment_status !== "unpaid" || Boolean(order.printful_order_id) ||
+          !["unfulfilled", "not_submitted"].includes(order.fulfillment_status) ||
+          !(data.events || []).some(event => event.event_type === "test_order_created");
+        deleteButton.addEventListener("click", async () => {
+          if (!confirm("Diese Testbestellung und alle zugehörigen Positionen und Ereignisse endgültig löschen?")) return;
+          try {
+            await api("/api/admin/shop/orders/" + encodeURIComponent(id), { method: "DELETE" });
+            detail.hidden = true; selectedOrderId = null;
+            setMessage("Testbestellung wurde gelöscht.", "success");
+            await loadOrders();
+          } catch (error) { setMessage(error.message, "error"); }
+        });
+        actions.append(cancelButton, deleteButton);
+        detailBody.append(actions);
+        const hint = node("p", "Löschen ist nur für unbezahlte Testbestellungen ohne übermittelten Printful-Auftrag möglich.", "muted");
+        detailBody.append(hint);
+      }
       if (data.fulfillment) {
         detailBody.append(node("h4", "Printful-Fulfillment"));
         detailBody.append(node("p", "Status: " + label(data.fulfillment.status) + " · Versuche: " + data.fulfillment.attempt_count));
