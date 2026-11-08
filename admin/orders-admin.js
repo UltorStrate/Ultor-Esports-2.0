@@ -179,21 +179,12 @@
       detailBody.append(node("h4", "Bestellpositionen"));
       const table = node("table", null, "ultor-order-items");
       const thead = node("thead"), header = node("tr");
-      ["Produkt", "Variante / SKU", "Personalisierung", "Menge", "Einzelpreis", "Gesamt"].forEach(t => header.append(node("th", t)));
+      ["Produkt", "Variante / SKU", "Menge", "Einzelpreis", "Gesamt"].forEach(t => header.append(node("th", t)));
       thead.append(header); table.append(thead);
       const tbody = node("tbody");
       (data.items || []).forEach(item => {
         const tr = node("tr");
-        let customization = "–";
-        try {
-          const snapshot = item.variant_snapshot_json ? JSON.parse(item.variant_snapshot_json) : null;
-          const custom = snapshot?.personalization;
-          if (custom?.enabled) {
-            customization = [custom.name, custom.number].filter(Boolean).join(" / ") +
-              " · ULTOR weiß · +" + money(custom.surcharge_cents || 500, order.currency);
-          }
-        } catch { /* Older order snapshots may not contain JSON. */ }
-        [item.product_name, [item.variant_name, item.sku].filter(Boolean).join(" · ") || "–", customization, String(item.quantity), money(item.unit_price_cents, order.currency), money(item.line_total_cents, order.currency)].forEach(v => tr.append(node("td", v)));
+        [item.product_name, [item.variant_name, item.sku].filter(Boolean).join(" · ") || "–", String(item.quantity), money(item.unit_price_cents, order.currency), money(item.line_total_cents, order.currency)].forEach(v => tr.append(node("td", v)));
         tbody.append(tr);
       });
       table.append(tbody); detailBody.append(table);
