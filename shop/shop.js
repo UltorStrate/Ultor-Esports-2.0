@@ -776,7 +776,7 @@ function createCartInterface() {
       #ultorCheckoutSuccess p{color:#cfc4dc;line-height:1.7}
       #ultorCheckoutSuccess button{margin-top:12px;padding:12px 20px;background:#8735f5;border:0;color:#fff;font-weight:800;cursor:pointer}
 
-      @media(max-width:600px){#ultorCartToggle{right:14px;bottom:14px;padding:13px 15px}#ultorCartHeader,#ultorCartItems{padding-left:18px;padding-right:18px}#ultorCartFooter{padding:17px 18px 20px}}
+      @media(max-width:600px){#ultorCartToggle{right:14px;bottom:14px;padding:13px 15px}#ultorCartHeader,#ultorCartItems{padding-left:18px;padding-right:18px}#ultorCartFooter{padding:17px 18px 20px}#ultorCheckoutLayer{padding:0}#ultorCheckoutPanel{width:100%;height:100%;max-height:100vh;padding:20px 16px}.ultor-checkout-grid{grid-template-columns:1fr}.ultor-checkout-grid .full{grid-column:auto}.ultor-checkout-line{font-size:11px}}
     `;
     document.head.appendChild(style);
 
