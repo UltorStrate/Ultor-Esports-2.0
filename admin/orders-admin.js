@@ -170,7 +170,7 @@
         const actions = node("div", null, "ultor-order-admin-actions");
         const cancelButton = node("button", "Bestellung stornieren", "secondary-button");
         cancelButton.type = "button";
-        cancelButton.disabled = order.order_status === "cancelled" || order.payment_status === "paid" ||
+        cancelButton.disabled = order.order_status === "cancelled" || ["paid", "partially_refunded"].includes(order.payment_status) ||
           Boolean(order.printful_order_id) || ["submitted", "in_production", "shipped", "delivered"].includes(order.fulfillment_status);
         cancelButton.addEventListener("click", async () => {
           if (!confirm("Bestellung " + order.order_number + " wirklich stornieren?")) return;
