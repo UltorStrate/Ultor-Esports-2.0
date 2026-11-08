@@ -1167,9 +1167,10 @@ function renderProductDetails(product) {
 
     function updateVariant(variant) {
         selectedVariant = variant || null;
-        const currentPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
+        const baseCurrentPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
             ? Number(variant.price_cents)
             : Number(product.price_cents);
+        const currentPrice = baseCurrentPrice + (personalizationCheckbox.checked ? 500 : 0);
         const comparePrice = variant && variant.compare_at_price_cents !== null && variant.compare_at_price_cents !== undefined
             ? Number(variant.compare_at_price_cents)
             : product.compare_at_price_cents;
@@ -1193,6 +1194,9 @@ function renderProductDetails(product) {
         addButton.disabled = soldOut || (activeVariants.length > 0 && !selectedVariant);
         addButton.textContent = soldOut ? "AUSVERKAUFT" : "IN DEN WARENKORB";
     }
+
+    personalizationCheckbox.addEventListener("change", () => updateVariant(selectedVariant));
+
 
     if (activeVariants.length) {
         const placeholder = document.createElement("option");
