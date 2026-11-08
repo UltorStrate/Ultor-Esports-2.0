@@ -240,7 +240,9 @@ export async function handleCheckoutApi(request, env) {
       if (!isJersey || rawName.length > 14 || rawNumber.length > 2 ||
           (!customName && !customNumber) ||
           !/^[\p{L}0-9 .'-]*$/u.test(customName) ||
-          !/^\d{0,2}$/.test(customNumber)) 
+          !/^\d{0,2}$/.test(customNumber)) {
+        return json({ error: "Die Trikot-Personalisierung ist ungültig." }, 400);
+      }
       personalization = {
         enabled: true,
         name: customName,
