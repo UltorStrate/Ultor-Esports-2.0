@@ -212,6 +212,8 @@
       const owner = profile.user?.is_owner === 1 || profile.user?.is_owner === true || profile.user?.is_owner === "1";
       canManage = owner || permissions.includes("*") || permissions.includes("shop.orders.manage");
       const canView = owner || permissions.includes("*") || permissions.includes("shop.orders.view");
+      const ordersNav = document.querySelector('.nav-item[data-view="orders"]');
+      if (ordersNav) ordersNav.hidden = !canView;
       if (!canView) {
         root.hidden = true;
         return;
