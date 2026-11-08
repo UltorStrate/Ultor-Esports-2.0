@@ -188,7 +188,8 @@
         const deleteButton = node("button", "Testbestellung löschen", "danger-button");
         deleteButton.type = "button";
         deleteButton.disabled = order.payment_status !== "unpaid" || Boolean(order.printful_order_id) ||
-          !["unfulfilled", "not_submitted"].includes(order.fulfillment_status) ||
+          order.fulfillment_status !== "unfulfilled" ||
+          (data.fulfillment && data.fulfillment.status !== "not_submitted") ||
           !(data.events || []).some(event => event.event_type === "test_order_created");
         deleteButton.addEventListener("click", async () => {
           if (!confirm("Diese Testbestellung und alle zugehörigen Positionen und Ereignisse endgültig löschen?")) return;
