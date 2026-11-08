@@ -135,7 +135,12 @@ export async function handleAdminOrdersApi(request, env, auth) {
     if (order.payment_status === "paid" || order.payment_status === "partially_refunded") {
       return json({ error: "Diese Bestellung wurde bereits bezahlt. Bitte zuerst eine Rückerstattung über den Zahlungsanbieter durchführen." }, 409);
     }
-    if (order.printful_order_id || ["submitted", "in_production", "shipped", "delivered"].includes(order.fulfillment_status)) {
+    const fulfillment = await env.DB.prepare(
+      "SELECT status, printful_order_id FROM shop_printful_fulfillments WHERE order_id = ?"
+    ).bind(orderId).first();
+    if (order.printful_order_id || fulfillment?.printful_order_id ||
+        ["submitted", "in_production", "shipped", "delivered"].includes(order.fulfillment_status) ||
+        ["submitting", "submitted", "in_production", "shipped"].includes(fulfillment?.status)) {
       return json({ error: "Die Bestellung wurde bereits an die Produktion übergeben. Bitte den Printful-Auftrag zuerst prüfen." }, 409);
     }
     await env.DB.batch([
