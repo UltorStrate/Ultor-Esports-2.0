@@ -360,6 +360,14 @@ function ensureShopPriceStyles() {
       .product-price-line .product-compare-price{display:inline-block;color:#93899f;font-size:.88em;font-weight:600;line-height:1.3;text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.85}
       .product-detail-price.product-price-line{margin:0 0 18px}
       .product-detail-price .product-price{color:inherit}
+      .ultor-personalization{margin:18px 0;padding:15px;background:#171120;border:1px solid rgba(181,138,255,.35)}
+      .ultor-personalization-toggle{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+      .ultor-personalization-toggle input{accent-color:#8735f5;width:17px;height:17px}
+      .ultor-personalization-fields{display:grid;gap:10px;margin-top:14px}
+      .ultor-personalization-fields[hidden]{display:none}
+      .ultor-personalization-fields label{display:grid;gap:6px;color:#d8cce5;font-size:11px;font-weight:700}
+      .ultor-personalization-input{width:100%;min-height:40px;padding:10px 12px;background:#09070e;border:1px solid #514064;border-radius:4px;color:#fff;font:inherit}
+      .ultor-personalization-fields small{color:#bba9d3;font-size:10px;line-height:1.5}
     `;
     document.head.appendChild(style);
 }
@@ -679,7 +687,8 @@ function renderCheckoutSummary(shippingCents=null) {
  items.replaceChildren();
  ultorCart.forEach(item=>{
   const line=document.createElement("div"); line.className="ultor-checkout-line";
-  const title=document.createElement("span"); title.textContent=`${item.product_name}${item.variant_name?` / ${item.variant_name}`:""} × ${item.quantity}`;
+  const customText = item.personalization?.enabled ? " · Rücken: " + [item.personalization.name, item.personalization.number].filter(Boolean).join(" / ") + " (+5,00 €)" : "";
+  const title=document.createElement("span"); title.textContent=`${item.product_name}${item.variant_name?` / ${item.variant_name}`:""}${customText} × ${item.quantity}`;
   const price=document.createElement("strong"); price.textContent=formatCartPrice(item.unit_price_cents*item.quantity,item.currency);
   line.append(title,price); items.appendChild(line);
  });
@@ -711,7 +720,7 @@ async function submitCheckout(event) {
   customer:{name:customerName,email:String(data.get("customer_email")||"").trim(),phone:String(data.get("customer_phone")||"").trim()},
   shipping:{name:String(data.get("shipping_name")||"").trim()||customerName,company:String(data.get("shipping_company")||"").trim(),address1:String(data.get("address1")||"").trim(),address2:String(data.get("address2")||"").trim(),postal_code:String(data.get("postal_code")||"").trim(),city:String(data.get("city")||"").trim(),state:String(data.get("state")||"").trim(),country_code:String(data.get("country_code")||"DE"),phone:String(data.get("shipping_phone")||"").trim()},
   customer_note:String(data.get("customer_note")||"").trim(),idempotency_key:crypto.randomUUID(),
-  items:ultorCart.map(item=>({product_id:item.product_id,variant_id:item.variant_id,quantity:item.quantity}))
+  items:ultorCart.map(item=>({product_id:item.product_id,variant_id:item.variant_id,quantity:item.quantity,personalization:item.personalization||null}))
  };
  if(payload.items.some(item=>!item.product_id)){status.textContent="Ein Produkt im Warenkorb ist nicht eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";return;}
  ultorCheckoutBusy=true;submit.disabled=true;status.textContent="Testbestellung wird sicher gespeichert …";
@@ -1135,6 +1144,22 @@ function renderProductDetails(product) {
     stockInfo.className = "product-stock-info";
     let selectedVariant = null;
 
+    const personalizable = /jersey|trikot/i.test(String(product.slug || "") + " " + String(product.name || ""));
+    const personalizationBox = document.createElement("div"); personalizationBox.className = "ultor-personalization";
+    const personalizationToggle = document.createElement("label"); personalizationToggle.className = "ultor-personalization-toggle";
+    const personalizationCheckbox = document.createElement("input"); personalizationCheckbox.type = "checkbox";
+    const personalizationTitle = document.createElement("span"); personalizationTitle.textContent = "Rücken personalisieren (+5,00 €)";
+    personalizationToggle.append(personalizationCheckbox, personalizationTitle);
+    const personalizationFields = document.createElement("div"); personalizationFields.className = "ultor-personalization-fields"; personalizationFields.hidden = true;
+    const nameLabel = document.createElement("label"); nameLabel.textContent = "Name auf dem Rücken (max. 14 Zeichen)";
+    const nameInput = document.createElement("input"); nameInput.type = "text"; nameInput.maxLength = 14; nameInput.autocomplete = "off"; nameInput.placeholder = "z. B. STRATE"; nameInput.className = "ultor-personalization-input"; nameInput.style.cssText = "font-family:Barlow Condensed,sans-serif;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff"; nameLabel.appendChild(nameInput);
+    const numberLabel = document.createElement("label"); numberLabel.textContent = "Nummer (optional)";
+    const numberInput = document.createElement("input"); numberInput.type = "text"; numberInput.inputMode = "numeric"; numberInput.maxLength = 2; numberInput.pattern = "[0-9]{1,2}"; numberInput.placeholder = "z. B. 07"; numberInput.className = "ultor-personalization-input"; numberLabel.appendChild(numberInput);
+    const personalizationHint = document.createElement("small"); personalizationHint.textContent = "Weiße ULTOR-Schrift · Aufpreis 5,00 € pro Trikot";
+    personalizationFields.append(nameLabel, numberLabel, personalizationHint);
+    personalizationCheckbox.addEventListener("change", () => { personalizationFields.hidden = !personalizationCheckbox.checked; });
+    if (personalizable) personalizationBox.append(personalizationToggle, personalizationFields); else personalizationBox.hidden = true;
+
     const addButton = document.createElement("button");
     addButton.type = "button";
     addButton.className = "product-detail-button shop-cart-add-button";
@@ -1217,7 +1242,16 @@ function renderProductDetails(product) {
             showCartFeedback("Bitte wähle zuerst eine Variante aus.");
             return;
         }
-        if (addProductToCart(product, selectedVariant)) {
+        let personalization = null;
+        if (personalizationCheckbox.checked) {
+            const customName = nameInput.value.trim().toUpperCase();
+            const customNumber = numberInput.value.trim();
+            if ((!customName && !customNumber) || customName.length > 14 || !/^[\\p{L}0-9 .\'-]*$/u.test(customName) || !/^\\d{0,2}$/.test(customNumber)) {
+                showCartFeedback("Bitte gib einen Namen oder eine Nummer ein. Name max. 14 Zeichen, Nummer max. 2 Ziffern."); return;
+            }
+            personalization = { enabled: true, name: customName, number: customNumber };
+        }
+        if (addProductToCart(product, selectedVariant, personalization)) {
             addButton.textContent = "HINZUGEFÜGT ✓";
             window.setTimeout(() => {
                 if (addButton.isConnected) addButton.textContent = "IN DEN WARENKORB";
@@ -1226,6 +1260,7 @@ function renderProductDetails(product) {
     });
 
     info.append(category, name, description, price);
+    if (personalizable) info.append(personalizationBox);
 
     if (activeVariants.length) {
         info.append(variantLabel, variantSelect);
