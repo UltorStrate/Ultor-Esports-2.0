@@ -17,6 +17,7 @@ import {
   handlePublicShopApi
 } from "./shop-api.js";
 import { handleAdminOrdersApi } from "./orders-api.js";
+import { handleCheckoutApi } from "./checkout-api.js";
 const BLOCKED_PREFIXES = [
   "/src",
   "/migrations",
@@ -161,6 +162,27 @@ export default {
         );
       }
     }
+    // =========================================
+    // GESCHÜTZTE SHOP-BESTELLVERWALTUNG
+    // Vor der allgemeinen Shop-Admin-Route platzieren.
+    // =========================================
+
+    if (
+      normalizedPath === "/api/admin/shop/orders" ||
+      normalizedPath.startsWith("/api/admin/shop/orders/")
+    ) {
+      try {
+        const auth = createAuth(env);
+        return await handleAdminOrdersApi(request, env, auth);
+      } catch (error) {
+        console.error("Shop orders API error:", error);
+        return Response.json(
+          { error: "Interner Fehler in der Bestellverwaltung." },
+          { status: 500 }
+        );
+      }
+    }
+
 // =========================================
 // GESCHÜTZTE SHOP-VERWALTUNG
 // =========================================
@@ -181,26 +203,6 @@ if (
     );
   }
 }
-    // =========================================
-    // GESCHÜTZTE CMS-API
-    // =========================================
-
-    if (
-      normalizedPath === "/api/admin/shop/orders" ||
-      normalizedPath.startsWith("/api/admin/shop/orders/")
-    ) {
-      try {
-        const auth = createAuth(env);
-        return await handleAdminOrdersApi(request, env, auth);
-      } catch (error) {
-        console.error("Shop orders API error:", error);
-        return Response.json(
-          { error: "Interner Fehler in der Bestellverwaltung." },
-          { status: 500 }
-        );
-      }
-    }
-
     if (
       normalizedPath === "/api/admin" ||
       normalizedPath.startsWith("/api/admin/")
@@ -257,6 +259,25 @@ if (
         );
       }
     }
+    // =========================================
+    // ÖFFENTLICHER TEST-CHECKOUT (ZAHLUNGEN BLEIBEN DEAKTIVIERT)
+    // =========================================
+
+    if (
+      normalizedPath === "/api/checkout" ||
+      normalizedPath.startsWith("/api/checkout/")
+    ) {
+      try {
+        return await handleCheckoutApi(request, env);
+      } catch (error) {
+        console.error("Checkout API error:", error);
+        return Response.json(
+          { error: "Checkout konnte nicht verarbeitet werden." },
+          { status: 500 }
+        );
+      }
+    }
+
 // =========================================
 // ÖFFENTLICHE SHOP-API
 // =========================================
