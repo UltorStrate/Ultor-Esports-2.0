@@ -77,52 +77,6 @@ async function loadShopData() {
                 <span>ULTOR</span>
                 <p>Produkte werden geladen ...</p>
             </div>
-      <div id="ultorCheckoutLayer" aria-hidden="true">
-        <div id="ultorCheckoutBackdrop"></div>
-        <section id="ultorCheckoutPanel" role="dialog" aria-modal="true" aria-labelledby="ultorCheckoutTitle">
-          <header class="ultor-checkout-header">
-            <div><span class="ultor-checkout-kicker">ULTOR ESPORTS STORE</span><h2 id="ultorCheckoutTitle">KASSE<span>.</span></h2></div>
-            <button id="ultorCheckoutClose" type="button" aria-label="Checkout schließen">×</button>
-          </header>
-          <div id="ultorCheckoutNotice" class="ultor-checkout-notice" role="status">Checkout wird vorbereitet …</div>
-          <form id="ultorCheckoutForm">
-            <div class="ultor-checkout-section">
-              <h3>Kontakt</h3>
-              <div class="ultor-checkout-grid">
-                <label>Vor- und Nachname<input name="customer_name" autocomplete="name" required maxlength="160"></label>
-                <label>E-Mail-Adresse<input name="customer_email" type="email" autocomplete="email" required maxlength="254"></label>
-                <label class="full">Telefon (optional)<input name="customer_phone" type="tel" autocomplete="tel" maxlength="40"></label>
-              </div>
-            </div>
-            <div class="ultor-checkout-section">
-              <h3>Lieferadresse</h3>
-              <div class="ultor-checkout-grid">
-                <label class="full">Name des Empfängers<input name="shipping_name" autocomplete="shipping name" required maxlength="160"></label>
-                <label class="full">Firma (optional)<input name="shipping_company" autocomplete="shipping organization" maxlength="160"></label>
-                <label class="full">Straße und Hausnummer<input name="address1" autocomplete="shipping address-line1" required maxlength="180"></label>
-                <label class="full">Adresszusatz (optional)<input name="address2" autocomplete="shipping address-line2" maxlength="180"></label>
-                <label>Postleitzahl<input name="postal_code" autocomplete="shipping postal-code" required maxlength="24"></label>
-                <label>Stadt<input name="city" autocomplete="shipping address-level2" required maxlength="120"></label>
-                <label>Bundesland (optional)<input name="state" autocomplete="shipping address-level1" maxlength="120"></label>
-                <label>Land<select name="country_code" autocomplete="shipping country" required><option value="DE" selected>Deutschland</option><option value="AT">Österreich</option><option value="CH">Schweiz</option><option value="BE">Belgien</option><option value="NL">Niederlande</option><option value="LU">Luxemburg</option><option value="FR">Frankreich</option><option value="IT">Italien</option><option value="ES">Spanien</option><option value="PL">Polen</option><option value="DK">Dänemark</option><option value="SE">Schweden</option><option value="GB">Vereinigtes Königreich</option></select></label>
-                <label class="full">Telefon für die Zustellung (optional)<input name="shipping_phone" type="tel" autocomplete="shipping tel" maxlength="40"></label>
-              </div>
-            </div>
-            <div class="ultor-checkout-section">
-              <h3>Bestellübersicht</h3>
-              <div id="ultorCheckoutItems"></div>
-              <div class="ultor-checkout-total"><span>Zwischensumme</span><strong id="ultorCheckoutSubtotal">–</strong></div>
-              <div class="ultor-checkout-total"><span>Versand</span><strong id="ultorCheckoutShipping">Wird ermittelt</strong></div>
-              <div class="ultor-checkout-total grand"><span>Gesamtbetrag</span><strong id="ultorCheckoutTotal">–</strong></div>
-            </div>
-            <label class="ultor-checkout-note-label">Anmerkung zur Bestellung (optional)<textarea name="customer_note" rows="3" maxlength="1000"></textarea></label>
-            <label class="ultor-checkout-test-ack"><input type="checkbox" name="test_ack" required><span>Ich bestätige, dass dies derzeit ausschließlich eine technische Testbestellung ohne Zahlung und ohne Versand ist.</span></label>
-            <button id="ultorCheckoutSubmit" class="ultor-checkout-submit" type="submit" disabled>TESTBESTELLUNG ABSENDEN</button>
-            <p id="ultorCheckoutStatus" aria-live="polite"></p>
-          </form>
-          <div id="ultorCheckoutSuccess" hidden></div>
-        </section>
-      </div>
         `;
     }
 
@@ -682,155 +636,72 @@ function formatCartPrice(cents, currency = "EUR") {
 
 let ultorCheckoutConfig = null;
 let ultorCheckoutBusy = false;
-
 function setCheckoutNotice(message, type = "") {
-    const notice = document.getElementById("ultorCheckoutNotice");
-    if (!notice) return;
-    notice.textContent = message;
-    notice.className = `ultor-checkout-notice${type ? ` is-${type}` : ""}`;
+ const el=document.getElementById("ultorCheckoutNotice"); if(!el)return;
+ el.textContent=message; el.className=`ultor-checkout-notice${type?` is-${type}`:""}`;
 }
-
 function openCheckout() {
-    if (!ultorCart.length) {
-        showCartFeedback("Dein Warenkorb ist noch leer.");
-        return;
-    }
-    const layer = document.getElementById("ultorCheckoutLayer");
-    if (!layer) return;
-    layer.classList.add("is-open");
-    layer.setAttribute("aria-hidden", "false");
-    renderCheckoutSummary();
-    loadCheckoutConfig();
+ if(!ultorCart.length){showCartFeedback("Dein Warenkorb ist noch leer.");return;}
+ const layer=document.getElementById("ultorCheckoutLayer"); if(!layer)return;
+ layer.classList.add("is-open"); layer.setAttribute("aria-hidden","false");
+ renderCheckoutSummary(); loadCheckoutConfig();
 }
-
 function closeCheckout() {
-    const layer = document.getElementById("ultorCheckoutLayer");
-    if (!layer) return;
-    layer.classList.remove("is-open");
-    layer.setAttribute("aria-hidden", "true");
+ const layer=document.getElementById("ultorCheckoutLayer"); if(!layer)return;
+ layer.classList.remove("is-open"); layer.setAttribute("aria-hidden","true");
 }
-
-function renderCheckoutSummary(shippingCents = null) {
-    const items = document.getElementById("ultorCheckoutItems");
-    if (!items) return;
-    items.replaceChildren();
-    ultorCart.forEach(item => {
-        const line = document.createElement("div");
-        line.className = "ultor-checkout-line";
-        const title = document.createElement("span");
-        title.textContent = `${item.product_name}${item.variant_name ? ` / ${item.variant_name}` : ""} × ${item.quantity}`;
-        const price = document.createElement("strong");
-        price.textContent = formatCartPrice(item.unit_price_cents * item.quantity, item.currency);
-        line.append(title, price);
-        items.appendChild(line);
-    });
-    const { subtotal, currency } = getCartTotals();
-    document.getElementById("ultorCheckoutSubtotal").textContent = formatCartPrice(subtotal, currency);
-    document.getElementById("ultorCheckoutShipping").textContent =
-        Number.isInteger(shippingCents) ? formatCartPrice(shippingCents, currency) : "Noch nicht festgelegt";
-    document.getElementById("ultorCheckoutTotal").textContent =
-        Number.isInteger(shippingCents) ? formatCartPrice(subtotal + shippingCents, currency) : "–";
+function renderCheckoutSummary(shippingCents=null) {
+ const items=document.getElementById("ultorCheckoutItems"); if(!items)return;
+ items.replaceChildren();
+ ultorCart.forEach(item=>{
+  const line=document.createElement("div"); line.className="ultor-checkout-line";
+  const title=document.createElement("span"); title.textContent=`${item.product_name}${item.variant_name?` / ${item.variant_name}`:""} × ${item.quantity}`;
+  const price=document.createElement("strong"); price.textContent=formatCartPrice(item.unit_price_cents*item.quantity,item.currency);
+  line.append(title,price); items.appendChild(line);
+ });
+ const {subtotal,currency}=getCartTotals();
+ document.getElementById("ultorCheckoutSubtotal").textContent=formatCartPrice(subtotal,currency);
+ document.getElementById("ultorCheckoutShipping").textContent=Number.isInteger(shippingCents)?formatCartPrice(shippingCents,currency):"Noch nicht festgelegt";
+ document.getElementById("ultorCheckoutTotal").textContent=Number.isInteger(shippingCents)?formatCartPrice(subtotal+shippingCents,currency):"–";
 }
-
 async function loadCheckoutConfig() {
-    const submit = document.getElementById("ultorCheckoutSubmit");
-    if (submit) submit.disabled = true;
-    setCheckoutNotice("Checkout-Einstellungen werden geprüft …");
-    try {
-        const response = await fetch("/api/checkout/config", { headers: { "Accept": "application/json" }, cache: "no-store" });
-        const config = await response.json();
-        if (!response.ok || !config.success) throw new Error(config.error || "Checkout-Konfiguration nicht verfügbar.");
-        ultorCheckoutConfig = config;
-        renderCheckoutSummary(Number.isInteger(config.shipping_cents) ? config.shipping_cents : null);
-        if (config.checkout_available && Number.isInteger(config.shipping_cents)) {
-            setCheckoutNotice("TESTMODUS AKTIV: Es wird keine Zahlung eingezogen und kein Auftrag an Printful übermittelt. Diese Bestellung dient nur zum technischen Test.", "success");
-            if (submit) submit.disabled = false;
-        } else {
-            setCheckoutNotice("Das Formular ist vorbereitet. Der Test-Checkout ist serverseitig noch nicht freigeschaltet oder die Test-Versandkosten fehlen. Es kann noch keine Bestellung abgesendet werden.");
-        }
-    } catch (error) {
-        console.error("Checkout-Konfiguration:", error);
-        setCheckoutNotice("Der Checkout ist momentan nicht erreichbar. Bitte versuche es später erneut.", "error");
-    }
+ const submit=document.getElementById("ultorCheckoutSubmit"); if(submit)submit.disabled=true;
+ setCheckoutNotice("Checkout-Einstellungen werden geprüft …");
+ try{
+  const response=await fetch("/api/checkout/config",{headers:{"Accept":"application/json"},cache:"no-store"});
+  const config=await response.json(); if(!response.ok||!config.success)throw new Error(config.error||"Checkout-Konfiguration nicht verfügbar.");
+  ultorCheckoutConfig=config; renderCheckoutSummary(Number.isInteger(config.shipping_cents)?config.shipping_cents:null);
+  if(config.checkout_available&&Number.isInteger(config.shipping_cents)){
+   setCheckoutNotice("TESTMODUS: Es wird kein Geld eingezogen und kein Auftrag an Printful übermittelt. Diese Bestellung dient ausschließlich technischen Tests.","success");
+   if(submit)submit.disabled=false;
+  }else setCheckoutNotice("Das Formular ist vorbereitet. Der Test-Checkout ist serverseitig noch nicht freigeschaltet oder die Test-Versandkosten fehlen. Es kann noch keine Bestellung abgesendet werden.");
+ }catch(error){console.error("Checkout-Konfiguration:",error);setCheckoutNotice("Der Checkout ist momentan nicht erreichbar. Bitte versuche es später erneut.","error");}
 }
-
 async function submitCheckout(event) {
-    event.preventDefault();
-    if (ultorCheckoutBusy || !ultorCheckoutConfig?.checkout_available || !ultorCart.length) return;
-    const form = document.getElementById("ultorCheckoutForm");
-    const submit = document.getElementById("ultorCheckoutSubmit");
-    const status = document.getElementById("ultorCheckoutStatus");
-    if (!form.reportValidity()) return;
-    const data = new FormData(form);
-    const customerName = String(data.get("customer_name") || "").trim();
-    const payload = {
-        customer: {
-            name: customerName,
-            email: String(data.get("customer_email") || "").trim(),
-            phone: String(data.get("customer_phone") || "").trim()
-        },
-        shipping: {
-            name: String(data.get("shipping_name") || "").trim() || customerName,
-            company: String(data.get("shipping_company") || "").trim(),
-            address1: String(data.get("address1") || "").trim(),
-            address2: String(data.get("address2") || "").trim(),
-            postal_code: String(data.get("postal_code") || "").trim(),
-            city: String(data.get("city") || "").trim(),
-            state: String(data.get("state") || "").trim(),
-            country_code: String(data.get("country_code") || "DE"),
-            phone: String(data.get("shipping_phone") || "").trim()
-        },
-        customer_note: String(data.get("customer_note") || "").trim(),
-        idempotency_key: crypto.randomUUID(),
-        items: ultorCart.map(item => ({
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity
-        }))
-    };
-    if (payload.items.some(item => !item.product_id)) {
-        status.textContent = "Ein Produkt im Warenkorb ist nicht mehr eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";
-        return;
-    }
-    ultorCheckoutBusy = true;
-    submit.disabled = true;
-    status.textContent = "Testbestellung wird sicher gespeichert …";
-    try {
-        const response = await fetch("/api/checkout/orders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error || "Bestellung konnte nicht gespeichert werden.");
-        ultorCart = [];
-        persistCart();
-        form.hidden = true;
-        const success = document.getElementById("ultorCheckoutSuccess");
-        success.hidden = false;
-        success.innerHTML = "";
-        const heading = document.createElement("h3");
-        heading.textContent = "TESTBESTELLUNG GESPEICHERT.";
-        const paragraph = document.createElement("p");
-        paragraph.textContent = `Deine Testbestellung ${result.order?.order_number || ""} wurde gespeichert. Es wurde kein Geld eingezogen und kein Auftrag an Printful übermittelt.`;
-        const close = document.createElement("button");
-        close.type = "button";
-        close.textContent = "Zurück zum Shop";
-        close.addEventListener("click", () => {
-            closeCheckout();
-            setCartOpen(false);
-            form.reset();
-            form.hidden = false;
-            success.hidden = true;
-        });
-        success.append(heading, paragraph, close);
-        setCheckoutNotice("Testbestellung erfolgreich gespeichert.", "success");
-    } catch (error) {
-        status.textContent = error.message || "Ein Fehler ist aufgetreten.";
-        submit.disabled = false;
-    } finally {
-        ultorCheckoutBusy = false;
-    }
+ event.preventDefault(); if(ultorCheckoutBusy||!ultorCheckoutConfig?.checkout_available||!ultorCart.length)return;
+ const form=document.getElementById("ultorCheckoutForm"), submit=document.getElementById("ultorCheckoutSubmit"), status=document.getElementById("ultorCheckoutStatus");
+ if(!form.reportValidity())return;
+ const data=new FormData(form), customerName=String(data.get("customer_name")||"").trim();
+ const payload={
+  customer:{name:customerName,email:String(data.get("customer_email")||"").trim(),phone:String(data.get("customer_phone")||"").trim()},
+  shipping:{name:String(data.get("shipping_name")||"").trim()||customerName,company:String(data.get("shipping_company")||"").trim(),address1:String(data.get("address1")||"").trim(),address2:String(data.get("address2")||"").trim(),postal_code:String(data.get("postal_code")||"").trim(),city:String(data.get("city")||"").trim(),state:String(data.get("state")||"").trim(),country_code:String(data.get("country_code")||"DE"),phone:String(data.get("shipping_phone")||"").trim()},
+  customer_note:String(data.get("customer_note")||"").trim(),idempotency_key:crypto.randomUUID(),
+  items:ultorCart.map(item=>({product_id:item.product_id,variant_id:item.variant_id,quantity:item.quantity}))
+ };
+ if(payload.items.some(item=>!item.product_id)){status.textContent="Ein Produkt im Warenkorb ist nicht eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";return;}
+ ultorCheckoutBusy=true;submit.disabled=true;status.textContent="Testbestellung wird sicher gespeichert …";
+ try{
+  const response=await fetch("/api/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});
+  const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"Bestellung konnte nicht gespeichert werden.");
+  ultorCart=[];persistCart();form.hidden=true;
+  const success=document.getElementById("ultorCheckoutSuccess");success.hidden=false;success.replaceChildren();
+  const heading=document.createElement("h3");heading.textContent="TESTBESTELLUNG GESPEICHERT.";
+  const paragraph=document.createElement("p");paragraph.textContent=`Testbestellung ${result.order?.order_number||""} gespeichert. Es wurde kein Geld eingezogen und kein Auftrag an Printful übermittelt.`;
+  const close=document.createElement("button");close.type="button";close.textContent="Zurück zum Shop";
+  close.addEventListener("click",()=>{closeCheckout();setCartOpen(false);form.reset();form.hidden=false;success.hidden=true;});
+  success.append(heading,paragraph,close);setCheckoutNotice("Testbestellung erfolgreich gespeichert.","success");
+ }catch(error){status.textContent=error.message||"Ein Fehler ist aufgetreten.";submit.disabled=false;}
+ finally{ultorCheckoutBusy=false;}
 }
 
 function createCartInterface() {
@@ -931,7 +802,46 @@ function createCartInterface() {
           </footer>
         </aside>
       </div>
-    `;
+          <div id="ultorCheckoutLayer" aria-hidden="true">
+        <div id="ultorCheckoutBackdrop"></div>
+        <section id="ultorCheckoutPanel" role="dialog" aria-modal="true" aria-labelledby="ultorCheckoutTitle">
+          <header class="ultor-checkout-header">
+            <div><span class="ultor-checkout-kicker">ULTOR ESPORTS STORE</span><h2 id="ultorCheckoutTitle">KASSE<span>.</span></h2></div>
+            <button id="ultorCheckoutClose" type="button" aria-label="Checkout schließen">×</button>
+          </header>
+          <div id="ultorCheckoutNotice" class="ultor-checkout-notice" role="status">Checkout wird vorbereitet …</div>
+          <form id="ultorCheckoutForm">
+            <div class="ultor-checkout-section"><h3>Kontakt</h3><div class="ultor-checkout-grid">
+              <label>Vor- und Nachname<input name="customer_name" autocomplete="name" required maxlength="160"></label>
+              <label>E-Mail-Adresse<input name="customer_email" type="email" autocomplete="email" required maxlength="254"></label>
+              <label class="full">Telefon (optional)<input name="customer_phone" type="tel" autocomplete="tel" maxlength="40"></label>
+            </div></div>
+            <div class="ultor-checkout-section"><h3>Lieferadresse</h3><div class="ultor-checkout-grid">
+              <label class="full">Name des Empfängers<input name="shipping_name" autocomplete="shipping name" required maxlength="160"></label>
+              <label class="full">Firma (optional)<input name="shipping_company" autocomplete="shipping organization" maxlength="160"></label>
+              <label class="full">Straße und Hausnummer<input name="address1" autocomplete="shipping address-line1" required maxlength="180"></label>
+              <label class="full">Adresszusatz (optional)<input name="address2" autocomplete="shipping address-line2" maxlength="180"></label>
+              <label>Postleitzahl<input name="postal_code" autocomplete="shipping postal-code" required maxlength="24"></label>
+              <label>Stadt<input name="city" autocomplete="shipping address-level2" required maxlength="120"></label>
+              <label>Bundesland (optional)<input name="state" autocomplete="shipping address-level1" maxlength="120"></label>
+              <label>Land<select name="country_code" autocomplete="shipping country" required><option value="DE" selected>Deutschland</option><option value="AT">Österreich</option><option value="CH">Schweiz</option><option value="BE">Belgien</option><option value="NL">Niederlande</option><option value="LU">Luxemburg</option><option value="FR">Frankreich</option><option value="IT">Italien</option><option value="ES">Spanien</option><option value="PL">Polen</option><option value="DK">Dänemark</option><option value="SE">Schweden</option><option value="GB">Vereinigtes Königreich</option></select></label>
+              <label class="full">Telefon für die Zustellung (optional)<input name="shipping_phone" type="tel" autocomplete="shipping tel" maxlength="40"></label>
+            </div></div>
+            <div class="ultor-checkout-section"><h3>Bestellübersicht</h3>
+              <div id="ultorCheckoutItems"></div>
+              <div class="ultor-checkout-total"><span>Zwischensumme</span><strong id="ultorCheckoutSubtotal">–</strong></div>
+              <div class="ultor-checkout-total"><span>Versand</span><strong id="ultorCheckoutShipping">Noch nicht festgelegt</strong></div>
+              <div class="ultor-checkout-total grand"><span>Gesamtbetrag</span><strong id="ultorCheckoutTotal">–</strong></div>
+            </div>
+            <label class="ultor-checkout-note-label">Anmerkung zur Bestellung (optional)<textarea name="customer_note" rows="3" maxlength="1000"></textarea></label>
+            <label class="ultor-checkout-test-ack"><input type="checkbox" name="test_ack" required><span>Ich bestätige, dass dies ausschließlich eine technische Testbestellung ohne Zahlung und ohne Versand ist.</span></label>
+            <button id="ultorCheckoutSubmit" class="ultor-checkout-submit" type="submit" disabled>TESTBESTELLUNG ABSENDEN</button>
+            <p id="ultorCheckoutStatus" aria-live="polite"></p>
+          </form>
+          <div id="ultorCheckoutSuccess" hidden></div>
+        </section>
+      </div>
+`;
     document.body.appendChild(root);
 
     document.getElementById("ultorCartToggle").addEventListener("click", () => setCartOpen(true));
