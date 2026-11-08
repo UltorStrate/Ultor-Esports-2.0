@@ -37,7 +37,13 @@ export async function handleCheckoutApi(request, env) {
     return json({
       success: true,
       mode: checkoutMode(env),
-      checkout_available: checkoutMode(env) === "test",
+      checkout_available: checkoutMode(env) === "test" &&
+        Number.isInteger(Number(env.SHOP_TEST_SHIPPING_CENTS)) &&
+        Number(env.SHOP_TEST_SHIPPING_CENTS) >= 0,
+      shipping_cents: Number.isInteger(Number(env.SHOP_TEST_SHIPPING_CENTS)) &&
+        Number(env.SHOP_TEST_SHIPPING_CENTS) >= 0
+          ? Number(env.SHOP_TEST_SHIPPING_CENTS)
+          : null,
       payments_enabled: false,
       message: "Der Checkout befindet sich im Vorbereitungsmodus. Es werden keine Zahlungen ausgelöst."
     });
