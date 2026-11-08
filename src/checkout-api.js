@@ -105,6 +105,27 @@ export async function handleCheckoutApi(request, env) {
     return json({ error: "Ungültiger Bestellschlüssel." }, 400);
   }
 
+  if (idempotencyKey) {
+    const previous = await env.DB.prepare(`
+      SELECT id, order_number, customer_email, total_cents, currency, order_status
+      FROM shop_orders WHERE idempotency_key = ?
+    `).bind(idempotencyKey).first();
+    if (previous) {
+      if (previous.customer_email !== customerEmail) {
+        return json({ error: "Dieser Bestellschlüssel wurde bereits verwendet." }, 409);
+      }
+      return json({
+        success: true,
+        mode: "test",
+        payments_enabled: false,
+        printful_submission_enabled: false,
+        order: previous,
+        idempotent_replay: true,
+        message: "Diese Testbestellung wurde bereits gespeichert."
+      });
+    }
+  }
+
   // Client prices, names and totals are deliberately ignored. All commercial
   // values are loaded again from D1 to prevent price manipulation.
   const normalizedItems = [];
