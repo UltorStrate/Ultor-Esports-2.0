@@ -939,7 +939,8 @@ function renderCart() {
         title.textContent = item.product_name;
         const variant = document.createElement("p");
         variant.className = "ultor-cart-line-variant";
-        variant.textContent = [item.variant_name, item.sku].filter(Boolean).join(" · ") || "Standard";
+        const customization = item.personalization?.enabled ? " · Rücken: " + [item.personalization.name, item.personalization.number].filter(Boolean).join(" / ") : "";
+        variant.textContent = ([item.variant_name, item.sku].filter(Boolean).join(" · ") || "Standard") + customization;
         const price = document.createElement("div");
         price.className = "ultor-cart-line-price";
         price.textContent = formatCartPrice(item.unit_price_cents * item.quantity, item.currency);
@@ -1250,7 +1251,7 @@ function renderProductDetails(product) {
         if (personalizationCheckbox.checked) {
             const customName = nameInput.value.trim().toUpperCase();
             const customNumber = numberInput.value.trim();
-            if ((!customName && !customNumber) || customName.length > 14 || !/^[\\p{L}0-9 .\'-]*$/u.test(customName) || !/^\\d{0,2}$/.test(customNumber)) {
+            if ((!customName && !customNumber) || customName.length > 14 || !/^[\p{L}0-9 .\'-]*$/u.test(customName) || !/^\d{0,2}$/.test(customNumber)) {
                 showCartFeedback("Bitte gib einen Namen oder eine Nummer ein. Name max. 14 Zeichen, Nummer max. 2 Ziffern."); return;
             }
             personalization = { enabled: true, name: customName, number: customNumber };
