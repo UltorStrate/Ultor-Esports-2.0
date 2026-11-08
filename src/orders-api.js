@@ -117,6 +117,35 @@ export async function handleAdminOrdersApi(request, env, auth) {
     });
   }
 
+  const statusMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)\/status$/i);
+  if (statusMatch && method === "POST") {
+    if (!can(current, "shop.orders.manage")) {
+      return json({ error: "Keine Berechtigung zum Bearbeiten von Bestellungen." }, 403);
+    }
+    let body;
+    try { body = await request.json(); } catch { body = null; }
+    const nextStatus = typeof body?.order_status === "string" ? body.order_status : "";
+    const allowedStatuses = ["pending_payment", "confirmed", "processing", "completed", "on_hold"];
+    if (!allowedStatuses.includes(nextStatus)) return json({ error: "Ungültiger Bestellstatus. Stornierungen bitte über die Stornoaktion ausführen." }, 400);
+    const orderId = statusMatch[1];
+    const order = await env.DB.prepare("SELECT id, order_number, order_status FROM shop_orders WHERE id = ?").bind(orderId).first();
+    if (!order) return json({ error: "Bestellung nicht gefunden." }, 404);
+    if (order.order_status === "cancelled") return json({ error: "Eine stornierte Bestellung kann nicht erneut aktiviert werden." }, 409);
+    if (order.order_status === nextStatus) return json({ success: true, message: "Der Bestellstatus ist bereits aktuell." });
+
+    const statusLabels = { pending_payment: "Zahlung ausstehend", confirmed: "Bestätigt", processing: "In Bearbeitung", completed: "Abgeschlossen", on_hold: "Zurückgestellt" };
+    await env.DB.batch([
+      env.DB.prepare("UPDATE shop_orders SET order_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(nextStatus, orderId),
+      env.DB.prepare("INSERT INTO shop_order_events (id, order_id, event_type, message, details_json, actor_user_id) VALUES (?, ?, 'admin_status_changed', ?, ?, ?)").bind(
+        crypto.randomUUID(), orderId,
+        "Bestellstatus geändert: " + (statusLabels[order.order_status] || order.order_status) + " → " + statusLabels[nextStatus] + ".",
+        JSON.stringify({ from: order.order_status, to: nextStatus }), current.user.id
+      )
+    ]);
+    await audit(env, current.user.id, "shop.order.status_updated", orderId, { order_number: order.order_number, from: order.order_status, to: nextStatus });
+    return json({ success: true, message: "Bestellstatus wurde aktualisiert." });
+  }
+
   const noteMatch = path.match(/^\/api\/admin\/shop\/orders\/([0-9a-f-]+)\/note$/i);
   if (noteMatch && method === "POST") {
     if (!can(current, "shop.orders.manage")) {
