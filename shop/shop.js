@@ -400,17 +400,26 @@ function renderShopProducts() {
 
     const filteredProducts = activeCategory && activeCategory !== "all"
         ? shopProducts.filter(product => {
-            const productCategories = getProductCategories(product).map(value =>
-                normalizeCategoryToken(value)
-            );
             const selected = normalizeCategoryToken(activeCategory);
             const selectedCategory = shopCategories.find(category =>
-                normalizeCategoryToken(category.slug) === selected ||
-                normalizeCategoryToken(category.id) === selected
+                [category.id, category.slug, category.name]
+                    .filter(Boolean)
+                    .some(value => normalizeCategoryToken(value) === selected)
             );
-            return productCategories.includes(selected) ||
-                (selectedCategory && productCategories.includes(normalizeCategoryToken(selectedCategory.id))) ||
-                (selectedCategory && productCategories.includes(normalizeCategoryToken(selectedCategory.slug));
+
+            return (Array.isArray(product.categories) ? product.categories : []).some(category => {
+                const values = typeof category === "string"
+                    ? [category]
+                    : [category?.id, category?.slug, category?.name];
+                return values.filter(Boolean).some(value =>
+                    normalizeCategoryToken(value) === selected ||
+                    (selectedCategory && (
+                        normalizeCategoryToken(value) === normalizeCategoryToken(selectedCategory.id) ||
+                        normalizeCategoryToken(value) === normalizeCategoryToken(selectedCategory.slug) ||
+                        normalizeCategoryToken(value) === normalizeCategoryToken(selectedCategory.name)
+                    ))
+                );
+            });
         })
         : shopProducts;
 
