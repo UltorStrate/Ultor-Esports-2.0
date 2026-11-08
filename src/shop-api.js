@@ -1196,8 +1196,21 @@ async function handlePrintfulApi(request, env, current, path, method) {
     if (!result.ok) return json({ error: result.error }, result.status);
 
     const products = Array.isArray(result.data?.result) ? result.data.result : [];
+    // Nur tatsächlich vorhandene Shop-Produkte gelten als importiert.
+    // Verwaiste Mapping-Einträge entstehen z. B. nach älteren Löschvorgängen
+    // und dürfen einen erneuten Import nicht dauerhaft blockieren.
+    await env.DB.prepare(`
+      DELETE FROM shop_printful_product_map
+      WHERE NOT EXISTS (
+        SELECT 1 FROM shop_products
+        WHERE shop_products.id = shop_printful_product_map.shop_product_id
+      )
+    `).run();
+
     const importedRows = await env.DB.prepare(
-      "SELECT printful_sync_product_id FROM shop_printful_product_map"
+      `SELECT m.printful_sync_product_id
+       FROM shop_printful_product_map m
+       INNER JOIN shop_products p ON p.id = m.shop_product_id`
     ).all();
     const importedIds = new Set(
       (importedRows.results || []).map(row => Number(row.printful_sync_product_id))
@@ -1264,8 +1277,22 @@ async function handlePrintfulApi(request, env, current, path, method) {
       if (!category) return json({ error: "Die ausgewählte Kategorie wurde nicht gefunden." }, 404);
     }
 
+    // Verwaiste Zuordnungen gezielt entfernen: Das Printful-Produkt ist
+    // nur dann bereits importiert, wenn das verknüpfte Shop-Produkt existiert.
+    await env.DB.prepare(`
+      DELETE FROM shop_printful_product_map
+      WHERE printful_sync_product_id = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM shop_products
+          WHERE shop_products.id = shop_printful_product_map.shop_product_id
+        )
+    `).bind(syncProductId).run();
+
     const existingMap = await env.DB.prepare(
-      "SELECT shop_product_id FROM shop_printful_product_map WHERE printful_sync_product_id = ?"
+      `SELECT m.shop_product_id
+       FROM shop_printful_product_map m
+       INNER JOIN shop_products p ON p.id = m.shop_product_id
+       WHERE m.printful_sync_product_id = ?`
     ).bind(syncProductId).first();
     if (existingMap) {
       return json({
