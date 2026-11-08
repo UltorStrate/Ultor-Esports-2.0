@@ -1316,8 +1316,13 @@ function renderProductDetails(product) {
         if (backPreviewName) {
             backPreviewName.textContent = name || "DEIN NAME";
             backPreviewName.setAttribute("font-size", name.length > 10 ? "24" : "32");
-            backPreviewName.setAttribute("textLength", name.length > 10 ? "205" : "0");
-            backPreviewName.setAttribute("lengthAdjust", "spacingAndGlyphs");
+            if (name.length > 10) {
+                backPreviewName.setAttribute("textLength", "205");
+                backPreviewName.setAttribute("lengthAdjust", "spacingAndGlyphs");
+            } else {
+                backPreviewName.removeAttribute("textLength");
+                backPreviewName.removeAttribute("lengthAdjust");
+            }
         }
         if (backPreviewNumber) {
             backPreviewNumber.textContent = number;
