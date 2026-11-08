@@ -135,6 +135,19 @@
         detailCard("Bestelldatum", date(order.created_at))
       );
       detailBody.append(grid);
+
+      if (canManage) {
+        const actions = node("div", null, "ultor-order-admin-actions");
+        const cancelButton = node("button", "Bestellung stornieren", "secondary-button");
+        cancelButton.type = "button";
+        cancelButton.addEventListener("click", () => changeOrderAction("cancel", order.order_number));
+        const deleteButton = node("button", "Endgültig löschen", "danger-button");
+        deleteButton.type = "button";
+        deleteButton.addEventListener("click", () => changeOrderAction("delete", order.order_number));
+        actions.append(cancelButton, deleteButton);
+        detailBody.append(actions);
+      }
+
       detailBody.append(node("h4", "Bestellpositionen"));
       const table = node("table", null, "ultor-order-items");
       const thead = node("thead"), header = node("tr");
@@ -172,6 +185,29 @@
       noteForm.hidden = !canManage;
       detail.hidden = false;
       detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      setMessage(error.message, "error");
+    }
+  }
+
+  async function changeOrderAction(action, orderNumber) {
+    if (!selectedOrderId || !canManage) return;
+    const isDelete = action === "delete";
+    const prompt = isDelete
+      ? `Bestellung ${orderNumber} endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden. Nur unbezahlte, nicht erfüllte Bestellungen sind löschbar.`
+      : `Bestellung ${orderNumber} stornieren? Die Bestellung bleibt danach im System dokumentiert.`;
+    if (!window.confirm(prompt)) return;
+
+    try {
+      const result = await api("/api/admin/shop/orders/" + encodeURIComponent(selectedOrderId) + "/" + action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+      detail.hidden = true;
+      selectedOrderId = null;
+      setMessage(result.message || (isDelete ? "Bestellung gelöscht." : "Bestellung storniert."), "success");
+      await loadOrders();
     } catch (error) {
       setMessage(error.message, "error");
     }
