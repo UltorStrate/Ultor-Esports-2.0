@@ -360,14 +360,6 @@ function ensureShopPriceStyles() {
       .product-price-line .product-compare-price{display:inline-block;color:#93899f;font-size:.88em;font-weight:600;line-height:1.3;text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.85}
       .product-detail-price.product-price-line{margin:0 0 18px}
       .product-detail-price .product-price{color:inherit}
-      .ultor-personalization{margin:18px 0;padding:15px;background:#171120;border:1px solid rgba(181,138,255,.35)}
-      .ultor-personalization-toggle{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px;font-weight:800;cursor:pointer}
-      .ultor-personalization-toggle input{accent-color:#8735f5;width:17px;height:17px}
-      .ultor-personalization-fields{display:grid;gap:10px;margin-top:14px}
-      .ultor-personalization-fields[hidden]{display:none}
-      .ultor-personalization-fields label{display:grid;gap:6px;color:#d8cce5;font-size:11px;font-weight:700}
-      .ultor-personalization-input{width:100%;min-height:40px;padding:10px 12px;background:#09070e;border:1px solid #514064;border-radius:4px;color:#fff;font:inherit}
-      .ultor-personalization-fields small{color:#bba9d3;font-size:10px;line-height:1.5}
       .ultor-product-visual{display:flex;flex-direction:column;gap:12px;padding:12px}
       .ultor-product-visual-stage{position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:360px;flex:1;overflow:hidden;background:#f4f3f5}
       .ultor-product-visual-front,.ultor-product-visual-back{width:100%;height:100%;min-height:360px;display:flex;align-items:center;justify-content:center}
@@ -377,11 +369,7 @@ function ensureShopPriceStyles() {
       .ultor-product-visual.is-back-view .ultor-product-visual-stage{min-height:0;height:auto;flex:none;overflow:visible;background:transparent}
       .ultor-product-visual-back{position:relative;display:block;width:100%;max-width:420px;aspect-ratio:3/4;height:auto;min-height:0;overflow:hidden;background:#252525;flex:none}
       .ultor-back-jersey-image{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain}
-      .ultor-back-personalized-name{position:absolute;z-index:2;top:27%;left:50%;transform:translateX(-50%);max-width:72%;overflow:hidden;white-space:nowrap;text-align:center;text-transform:uppercase;color:#fff;font-family:'Barlow Condensed',Impact,sans-serif;font-style:italic;font-weight:900;font-size:clamp(17px,2.8vw,31px);letter-spacing:.14em;line-height:1;text-shadow:0 2px 5px rgba(0,0,0,.72)}
-      .ultor-back-personalized-number{position:absolute;z-index:2;top:36%;left:50%;transform:translateX(-50%);white-space:nowrap;color:#fff;font-family:'Barlow Condensed',Impact,sans-serif;font-style:italic;font-weight:900;font-size:clamp(58px,9vw,104px);line-height:.95;text-shadow:0 3px 8px rgba(0,0,0,.65)}
-      .ultor-back-personalized-number[hidden]{display:none!important}
       .ultor-product-visual-controls{flex:none}
-      @media(max-width:600px){.ultor-product-visual-back{max-width:100%}.ultor-back-personalized-name{font-size:clamp(16px,5vw,26px)}.ultor-back-personalized-number{font-size:clamp(56px,16vw,90px)}}
       .ultor-product-visual-controls{display:flex;justify-content:center;gap:8px}
       .ultor-product-visual-controls button{min-width:125px;padding:10px 16px;background:#130f1b;border:1px solid #59436f;color:#d8cce5;font:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:background .18s,border-color .18s}
       .ultor-product-visual-controls button.is-active{background:#8735f5;border-color:#a66aff;color:#fff}
@@ -533,15 +521,38 @@ function readStoredCart() {
     try {
         const parsed = JSON.parse(localStorage.getItem(ULTOR_CART_STORAGE_KEY) || "[]");
         if (!Array.isArray(parsed)) return [];
-        return parsed.filter(item =>
-            item && item.key && item.product_name &&
+        const normalized = new Map();
+
+        parsed.filter(item =>
+            item && item.product_name &&
             Number.isInteger(Number(item.quantity)) && Number(item.quantity) > 0 &&
             Number.isFinite(Number(item.unit_price_cents))
-        ).map(item => ({
-            ...item,
-            quantity: Math.max(1, Number(item.quantity)),
-            unit_price_cents: Number(item.unit_price_cents)
-        }));
+        ).forEach(item => {
+            // Older cart entries may include the retired €5 customization surcharge.
+            const originalPrice = Number.isFinite(Number(item.base_unit_price_cents))
+                ? Number(item.base_unit_price_cents)
+                : Number(item.unit_price_cents);
+            const productKey = item.product_id || item.product_slug || item.product_name;
+            const variantKey = item.variant_id || "default";
+            const key = String(productKey) + "::" + String(variantKey) + "::standard";
+            const cleanItem = {
+                ...item,
+                key,
+                quantity: Math.max(1, Number(item.quantity)),
+                unit_price_cents: originalPrice
+            };
+            delete cleanItem.base_unit_price_cents;
+            delete cleanItem.personalization;
+            delete cleanItem.personalization_cents;
+
+            const existing = normalized.get(key);
+            if (existing) existing.quantity += cleanItem.quantity;
+            else normalized.set(key, cleanItem);
+        });
+
+        const cart = [...normalized.values()];
+        localStorage.setItem(ULTOR_CART_STORAGE_KEY, JSON.stringify(cart));
+        return cart;
     } catch (error) {
         console.warn("ULTOR Warenkorb konnte nicht gelesen werden:", error);
         return [];
@@ -557,15 +568,12 @@ function persistCart() {
     renderCart();
 }
 
-function cartItemKey(product, variant, personalization = null) {
+function cartItemKey(product, variant) {
     const productKey = product.id || product.slug;
-    const customKey = personalization?.enabled
-        ? (personalization.name || "") + "::" + (personalization.number || "")
-        : "standard";
-    return productKey + "::" + (variant?.id || "default") + "::" + customKey;
+    return String(productKey) + "::" + String(variant?.id || "default") + "::standard";
 }
 
-function addProductToCart(product, variant = null, personalization = null) {
+function addProductToCart(product, variant = null) {
     const variants = Array.isArray(product.variants)
         ? product.variants.filter(item => !item.status || ["active", "published"].includes(item.status))
         : [];
@@ -578,23 +586,8 @@ function addProductToCart(product, variant = null, personalization = null) {
     const rawPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
         ? variant.price_cents
         : product.price_cents;
-    const baseUnitPrice = Number(rawPrice);
-    const personalizationEnabled = Boolean(personalization?.enabled);
-    const personalizationName = String(personalization?.name || "").trim().toUpperCase();
-    const personalizationNumber = String(personalization?.number || "").trim();
-    const validName = /^[\p{L}0-9 .'-]*$/u.test(personalizationName);
-    const validNumber = /^\d{0,2}$/.test(personalizationNumber);
-
-    if (personalizationEnabled &&
-        ((!personalizationName && !personalizationNumber) ||
-         personalizationName.length > 14 || !validName || !validNumber)) {
-        showCartFeedback("Bitte prüfe Name (max. 14 Zeichen) und Nummer (max. 2 Ziffern).");
-        return false;
-    }
-
-    const personalizationCents = personalizationEnabled ? 500 : 0;
-    const unitPrice = baseUnitPrice + personalizationCents;
-    if (!Number.isFinite(baseUnitPrice) || baseUnitPrice < 0) {
+    const unitPrice = Number(rawPrice);
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
         showCartFeedback("Für dieses Produkt ist noch kein gültiger Preis hinterlegt.");
         return false;
     }
@@ -608,15 +601,7 @@ function addProductToCart(product, variant = null, personalization = null) {
         return false;
     }
 
-    const custom = personalizationEnabled ? {
-        enabled: true,
-        name: personalizationName,
-        number: personalizationNumber,
-        font: "ultor",
-        color: "white",
-        surcharge_cents: personalizationCents
-    } : null;
-    const key = cartItemKey(product, variant, custom);
+    const key = cartItemKey(product, variant);
     const existing = ultorCart.find(item => item.key === key);
     const nextQuantity = (existing?.quantity || 0) + 1;
     if (tracksInventory && nextQuantity > stockQuantity) {
@@ -633,9 +618,6 @@ function addProductToCart(product, variant = null, personalization = null) {
         variant_name: variant ? getVariantLabel(variant) : null,
         sku: variant?.sku || null,
         unit_price_cents: unitPrice,
-        base_unit_price_cents: baseUnitPrice,
-        personalization_cents: personalizationCents,
-        personalization: custom,
         currency: product.currency || "EUR",
         quantity: nextQuantity,
         image_url: getProductImage(product),
@@ -720,8 +702,7 @@ function renderCheckoutSummary(shippingCents=null) {
  items.replaceChildren();
  ultorCart.forEach(item=>{
   const line=document.createElement("div"); line.className="ultor-checkout-line";
-  const customText = item.personalization?.enabled ? " · Rücken: " + [item.personalization.name, item.personalization.number].filter(Boolean).join(" / ") + " (+5,00 €)" : "";
-  const title=document.createElement("span"); title.textContent=`${item.product_name}${item.variant_name?` / ${item.variant_name}`:""}${customText} × ${item.quantity}`;
+  const title=document.createElement("span"); title.textContent=`${item.product_name}${item.variant_name?` / ${item.variant_name}`:""} × ${item.quantity}`;
   const price=document.createElement("strong"); price.textContent=formatCartPrice(item.unit_price_cents*item.quantity,item.currency);
   line.append(title,price); items.appendChild(line);
  });
@@ -753,7 +734,7 @@ async function submitCheckout(event) {
   customer:{name:customerName,email:String(data.get("customer_email")||"").trim(),phone:String(data.get("customer_phone")||"").trim()},
   shipping:{name:String(data.get("shipping_name")||"").trim()||customerName,company:String(data.get("shipping_company")||"").trim(),address1:String(data.get("address1")||"").trim(),address2:String(data.get("address2")||"").trim(),postal_code:String(data.get("postal_code")||"").trim(),city:String(data.get("city")||"").trim(),state:String(data.get("state")||"").trim(),country_code:String(data.get("country_code")||"DE"),phone:String(data.get("shipping_phone")||"").trim()},
   customer_note:String(data.get("customer_note")||"").trim(),idempotency_key:crypto.randomUUID(),
-  items:ultorCart.map(item=>({product_id:item.product_id,variant_id:item.variant_id,quantity:item.quantity,personalization:item.personalization||null}))
+  items:ultorCart.map(item=>({product_id:item.product_id,variant_id:item.variant_id,quantity:item.quantity}))
  };
  if(payload.items.some(item=>!item.product_id)){status.textContent="Ein Produkt im Warenkorb ist nicht eindeutig zugeordnet. Bitte entferne es und füge es erneut hinzu.";return;}
  ultorCheckoutBusy=true;submit.disabled=true;status.textContent="Testbestellung wird sicher gespeichert …";
@@ -972,8 +953,7 @@ function renderCart() {
         title.textContent = item.product_name;
         const variant = document.createElement("p");
         variant.className = "ultor-cart-line-variant";
-        const customization = item.personalization?.enabled ? " · Rücken: " + [item.personalization.name, item.personalization.number].filter(Boolean).join(" / ") : "";
-        variant.textContent = ([item.variant_name, item.sku].filter(Boolean).join(" · ") || "Standard") + customization;
+        variant.textContent = [item.variant_name, item.sku].filter(Boolean).join(" · ") || "Standard";
         const price = document.createElement("div");
         price.className = "ultor-cart-line-price";
         price.textContent = formatCartPrice(item.unit_price_cents * item.quantity, item.currency);
@@ -1115,7 +1095,7 @@ function renderProductDetails(product) {
     const layout = document.createElement("div");
     layout.className = "product-detail-layout";
 
-    const personalizableProduct = /jersey|trikot/i.test(
+    const hasRearView = /jersey|trikot/i.test(
         String(product.slug || "") + " " + String(product.name || "")
     );
 
@@ -1147,24 +1127,17 @@ function renderProductDetails(product) {
     const backView = document.createElement("div");
     backView.className = "ultor-product-visual-back";
     backView.hidden = true;
-    backView.setAttribute("aria-label", "Rückansicht des originalen ULTOR-Trikots mit Live-Personalisierung");
+    backView.setAttribute("aria-label", "Rückansicht des originalen ULTOR-Trikots");
     const backImage = document.createElement("img");
     backImage.className = "ultor-back-jersey-image";
     backImage.src = "/shop/jersey-back-nokto.webp";
     backImage.alt = "Originale Rückansicht des schwarzen ULTOR ESPORTS Trikots";
     backImage.loading = "eager";
     backImage.decoding = "async";
-    const backPreviewName = document.createElement("strong");
-    backPreviewName.className = "ultor-back-personalized-name";
-    backPreviewName.textContent = "DEIN NAME";
-    const backPreviewNumber = document.createElement("strong");
-    backPreviewNumber.className = "ultor-back-personalized-number";
-    backPreviewNumber.textContent = "";
-    backPreviewNumber.hidden = true;
-    backView.append(backImage, backPreviewName, backPreviewNumber);
+    backView.appendChild(backImage);
     visualStage.append(frontView, backView);
 
-    if (personalizableProduct) {
+    if (hasRearView) {
         const visualControls = document.createElement("div");
         visualControls.className = "ultor-product-visual-controls";
 
@@ -1242,49 +1215,6 @@ function renderProductDetails(product) {
     stockInfo.className = "product-stock-info";
     let selectedVariant = null;
 
-    const personalizable = personalizableProduct;
-    const personalizationBox = document.createElement("div"); personalizationBox.className = "ultor-personalization";
-    const personalizationToggle = document.createElement("label"); personalizationToggle.className = "ultor-personalization-toggle";
-    const personalizationCheckbox = document.createElement("input"); personalizationCheckbox.type = "checkbox";
-    const personalizationTitle = document.createElement("span"); personalizationTitle.textContent = "Rücken personalisieren (+5,00 €)";
-    personalizationToggle.append(personalizationCheckbox, personalizationTitle);
-    const personalizationFields = document.createElement("div"); personalizationFields.className = "ultor-personalization-fields"; personalizationFields.hidden = true;
-    const nameLabel = document.createElement("label"); nameLabel.textContent = "Name auf dem Rücken (max. 14 Zeichen)";
-    const nameInput = document.createElement("input"); nameInput.type = "text"; nameInput.maxLength = 14; nameInput.autocomplete = "off"; nameInput.placeholder = "z. B. STRATE"; nameInput.className = "ultor-personalization-input"; nameInput.style.cssText = "font-family:Barlow Condensed,sans-serif;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff"; nameLabel.appendChild(nameInput);
-    const numberLabel = document.createElement("label"); numberLabel.textContent = "Nummer (optional)";
-    const numberInput = document.createElement("input"); numberInput.type = "text"; numberInput.inputMode = "numeric"; numberInput.maxLength = 2; numberInput.pattern = "[0-9]{1,2}"; numberInput.placeholder = "z. B. 07"; numberInput.className = "ultor-personalization-input"; numberLabel.appendChild(numberInput);
-    const personalizationHint = document.createElement("small"); personalizationHint.textContent = "Weiße ULTOR-Schrift · Aufpreis 5,00 € pro Trikot";
-    const preview = document.createElement("div");
-    preview.className = "ultor-jersey-preview";
-    preview.setAttribute("aria-label", "Ungefähre Vorschau der Rückenpersonalisierung");
-    preview.style.cssText = "margin-top:10px;min-height:116px;padding:18px 12px;background:linear-gradient(160deg,#17131f,#08070b 58%,#211033);border:1px solid rgba(166,106,255,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center";
-    const previewName = document.createElement("strong");
-    previewName.textContent = "DEIN NAME";
-    previewName.style.cssText = "font-family:'Barlow Condensed',Impact,sans-serif;font-size:clamp(22px,4vw,30px);font-style:italic;font-weight:900;letter-spacing:.16em;color:#fff;text-shadow:0 1px 5px rgba(255,255,255,.3)";
-    const previewNumber = document.createElement("strong");
-    previewNumber.textContent = "07";
-    previewNumber.style.cssText = "font-family:'Barlow Condensed',Impact,sans-serif;font-size:42px;font-style:italic;font-weight:900;line-height:1;color:#fff;text-shadow:0 1px 8px rgba(255,255,255,.25)";
-    const previewCaption = document.createElement("small");
-    previewCaption.textContent = "VORSCHAU · WEISSE ULTOR-SCHRIFT";
-    previewCaption.style.cssText = "font-size:9px;letter-spacing:.12em;color:#bda4dd";
-    preview.append(previewName, previewNumber, previewCaption);
-    function updatePersonalizationPreview() {
-        const name = nameInput.value.trim().toUpperCase();
-        const number = numberInput.value.trim();
-        previewName.textContent = name || "DEIN NAME";
-        previewNumber.textContent = number || "07";
-        previewNumber.hidden = !number;
-        backPreviewName.textContent = name || "DEIN NAME";
-        backPreviewName.style.fontSize = name.length > 10 ? "clamp(14px, 2.1vw, 23px)" : "clamp(17px, 2.8vw, 31px)";
-        backPreviewNumber.textContent = number;
-        backPreviewNumber.hidden = !number;
-    }
-    nameInput.addEventListener("input", updatePersonalizationPreview);
-    numberInput.addEventListener("input", updatePersonalizationPreview);
-    personalizationFields.append(nameLabel, numberLabel, personalizationHint, preview);
-    personalizationCheckbox.addEventListener("change", () => { personalizationFields.hidden = !personalizationCheckbox.checked; });
-    if (personalizable) personalizationBox.append(personalizationToggle, personalizationFields); else personalizationBox.hidden = true;
-
     const addButton = document.createElement("button");
     addButton.type = "button";
     addButton.className = "product-detail-button shop-cart-add-button";
@@ -1295,7 +1225,7 @@ function renderProductDetails(product) {
         const baseCurrentPrice = variant && variant.price_cents !== null && variant.price_cents !== undefined
             ? Number(variant.price_cents)
             : Number(product.price_cents);
-        const currentPrice = baseCurrentPrice + (personalizationCheckbox.checked ? 500 : 0);
+        const currentPrice = baseCurrentPrice;
         const comparePrice = variant && variant.compare_at_price_cents !== null && variant.compare_at_price_cents !== undefined
             ? Number(variant.compare_at_price_cents)
             : product.compare_at_price_cents;
@@ -1319,9 +1249,6 @@ function renderProductDetails(product) {
         addButton.disabled = soldOut || (activeVariants.length > 0 && !selectedVariant);
         addButton.textContent = soldOut ? "AUSVERKAUFT" : "IN DEN WARENKORB";
     }
-
-    personalizationCheckbox.addEventListener("change", () => updateVariant(selectedVariant));
-
 
     if (activeVariants.length) {
         const placeholder = document.createElement("option");
@@ -1371,16 +1298,7 @@ function renderProductDetails(product) {
             showCartFeedback("Bitte wähle zuerst eine Variante aus.");
             return;
         }
-        let personalization = null;
-        if (personalizationCheckbox.checked) {
-            const customName = nameInput.value.trim().toUpperCase();
-            const customNumber = numberInput.value.trim();
-            if ((!customName && !customNumber) || customName.length > 14 || !/^[\p{L}0-9 .'-]*$/u.test(customName) || !/^\d{0,2}$/.test(customNumber)) {
-                showCartFeedback("Bitte gib einen Namen oder eine Nummer ein. Name max. 14 Zeichen, Nummer max. 2 Ziffern."); return;
-            }
-            personalization = { enabled: true, name: customName, number: customNumber };
-        }
-        if (addProductToCart(product, selectedVariant, personalization)) {
+        if (addProductToCart(product, selectedVariant)) {
             addButton.textContent = "HINZUGEFÜGT ✓";
             window.setTimeout(() => {
                 if (addButton.isConnected) addButton.textContent = "IN DEN WARENKORB";
@@ -1389,8 +1307,6 @@ function renderProductDetails(product) {
     });
 
     info.append(category, name, description, price);
-    if (personalizable) info.append(personalizationBox);
-
     if (activeVariants.length) {
         info.append(variantLabel, variantSelect);
     }
