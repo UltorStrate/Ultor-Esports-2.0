@@ -31,12 +31,6 @@ function testAccessConfigured(env) {
     env.SHOP_TEST_ACCESS_CODE.length <= 256;
 }
 
-function testAccessConfiguredForStatus(env) {
-  return typeof env.SHOP_TEST_ACCESS_CODE === "string" &&
-    env.SHOP_TEST_ACCESS_CODE.length >= 32 &&
-    env.SHOP_TEST_ACCESS_CODE.length <= 256;
-}
-
 function constantTimeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
     return false;
@@ -60,18 +54,18 @@ export async function handleCheckoutApi(request, env) {
 
   if (path === "/api/checkout/config" && request.method === "GET") {
     const testModeRequested = env.SHOP_CHECKOUT_MODE === "test";
-    const testAccessConfigured = testAccessConfiguredForStatus(env);
+    const testAccessReady = testAccessConfigured(env);
     const shippingCents = Number(env.SHOP_TEST_SHIPPING_CENTS);
     const shippingConfigured = Number.isInteger(shippingCents) &&
       shippingCents >= 0 && shippingCents <= 50000;
-    const available = testModeRequested && testAccessConfigured && shippingConfigured;
+    const available = testModeRequested && testAccessReady && shippingConfigured;
 
     return json({
       success: true,
       mode: testModeRequested ? "test" : "disabled",
       checkout_available: available,
       shipping_cents: shippingConfigured ? shippingCents : null,
-      test_access_configured: testAccessConfigured,
+      test_access_configured: testAccessReady,
       shipping_configured: shippingConfigured,
       payments_enabled: false,
       printful_submission_enabled: false,
