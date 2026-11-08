@@ -373,9 +373,15 @@ function ensureShopPriceStyles() {
       .ultor-product-visual-front,.ultor-product-visual-back{width:100%;height:100%;min-height:360px;display:flex;align-items:center;justify-content:center}
       .ultor-product-visual-front[hidden],.ultor-product-visual-back[hidden]{display:none!important}
       .ultor-product-visual-front img{display:block;width:100%;height:100%;min-height:360px;object-fit:contain}
-      .ultor-product-visual-back{position:relative;flex-direction:column;gap:0;background:radial-gradient(ellipse at 50% 42%,#282033 0%,#171321 58%,#100d18 100%)}
-      .ultor-back-jersey-svg{display:block;width:100%;height:100%;max-height:520px;min-height:340px}
-      .ultor-back-preview-note{position:absolute;bottom:9px;left:0;right:0;text-align:center;color:#bba9d3;font-size:9px;letter-spacing:.12em}
+      .product-detail-image.ultor-product-visual.is-back-view{aspect-ratio:auto;min-height:0;height:auto;overflow:visible;background:#252525}
+      .ultor-product-visual.is-back-view .ultor-product-visual-stage{min-height:0;height:auto;flex:none;overflow:visible;background:transparent}
+      .ultor-product-visual-back{position:relative;display:block;width:100%;max-width:420px;aspect-ratio:3/4;height:auto;min-height:0;overflow:hidden;background:#252525;flex:none}
+      .ultor-back-jersey-image{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain}
+      .ultor-back-personalized-name{position:absolute;z-index:2;top:27%;left:50%;transform:translateX(-50%);max-width:72%;overflow:hidden;white-space:nowrap;text-align:center;text-transform:uppercase;color:#fff;font-family:'Barlow Condensed',Impact,sans-serif;font-style:italic;font-weight:900;font-size:clamp(17px,2.8vw,31px);letter-spacing:.14em;line-height:1;text-shadow:0 2px 5px rgba(0,0,0,.72)}
+      .ultor-back-personalized-number{position:absolute;z-index:2;top:36%;left:50%;transform:translateX(-50%);white-space:nowrap;color:#fff;font-family:'Barlow Condensed',Impact,sans-serif;font-style:italic;font-weight:900;font-size:clamp(58px,9vw,104px);line-height:.95;text-shadow:0 3px 8px rgba(0,0,0,.65)}
+      .ultor-back-personalized-number[hidden]{display:none!important}
+      .ultor-product-visual-controls{flex:none}
+      @media(max-width:600px){.ultor-product-visual-back{max-width:100%}.ultor-back-personalized-name{font-size:clamp(16px,5vw,26px)}.ultor-back-personalized-number{font-size:clamp(56px,16vw,90px)}}
       .ultor-product-visual-controls{display:flex;justify-content:center;gap:8px}
       .ultor-product-visual-controls button{min-width:125px;padding:10px 16px;background:#130f1b;border:1px solid #59436f;color:#d8cce5;font:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:background .18s,border-color .18s}
       .ultor-product-visual-controls button.is-active{background:#8735f5;border-color:#a66aff;color:#fff}
@@ -1141,62 +1147,21 @@ function renderProductDetails(product) {
     const backView = document.createElement("div");
     backView.className = "ultor-product-visual-back";
     backView.hidden = true;
-    backView.setAttribute("aria-label", "Illustrative Rückansicht mit Live-Personalisierung");
-    backView.innerHTML = `
-      <svg class="ultor-back-jersey-svg" viewBox="0 0 500 620" role="img" aria-label="Rückansicht des schwarzen ULTOR-Trikots mit violetten und grauen Designelementen">
-        <defs>
-          <linearGradient id="ultorBackFabric" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#22212a"/>
-            <stop offset=".42" stop-color="#09090d"/>
-            <stop offset="1" stop-color="#17121f"/>
-          </linearGradient>
-          <linearGradient id="ultorBackPurple" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#4d1594"/>
-            <stop offset=".48" stop-color="#a23cff"/>
-            <stop offset="1" stop-color="#4a087e"/>
-          </linearGradient>
-          <linearGradient id="ultorBackSilver" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#f0eff4"/>
-            <stop offset="1" stop-color="#777580"/>
-          </linearGradient>
-          <filter id="ultorBackShadow" x="-25%" y="-20%" width="150%" height="150%">
-            <feGaussianBlur stdDeviation="12"/>
-          </filter>
-          <clipPath id="ultorBackShirtClip">
-            <path d="M158 55 C187 43 210 39 225 48 Q250 71 275 48 C290 39 313 43 342 55 L452 137 L407 224 L355 194 L350 559 Q250 592 150 559 L145 194 L93 224 L48 137 Z"/>
-          </clipPath>
-        </defs>
-        <ellipse cx="250" cy="570" rx="155" ry="19" fill="#000" opacity=".35" filter="url(#ultorBackShadow)"/>
-        <path d="M158 55 C187 43 210 39 225 48 Q250 71 275 48 C290 39 313 43 342 55 L452 137 L407 224 L355 194 L350 559 Q250 592 150 559 L145 194 L93 224 L48 137 Z"
-          fill="url(#ultorBackFabric)" stroke="#393440" stroke-width="3"/>
-        <g clip-path="url(#ultorBackShirtClip)">
-          <path d="M5 475 C95 430 163 380 240 305 S390 185 500 145 L520 205 C418 245 361 299 298 369 S119 500 -5 550 Z" fill="url(#ultorBackPurple)" opacity=".94"/>
-          <path d="M-5 510 C102 454 170 412 244 340 S377 228 500 185" fill="none" stroke="#d08aff" stroke-width="8" opacity=".8"/>
-          <path d="M8 535 C105 493 176 448 252 378 S390 267 506 231" fill="none" stroke="#4d1a86" stroke-width="18" opacity=".9"/>
-          <path d="M260 60 C330 78 391 114 467 185 L442 211 C375 151 326 119 270 101 Z" fill="url(#ultorBackSilver)" opacity=".9"/>
-          <path d="M-5 245 C65 263 104 280 153 316 L139 341 C88 308 48 290 -10 276 Z" fill="#8b8994" opacity=".75"/>
-          <path d="M72 487 C110 451 144 419 174 383" fill="none" stroke="#777580" stroke-width="10" opacity=".45"/>
-          <path d="M342 98 L391 130 L407 148" fill="none" stroke="#9b38ed" stroke-width="7" opacity=".85"/>
-        </g>
-        <path d="M48 137 L93 224 L145 194 L150 559" fill="none" stroke="#48434f" stroke-width="3" opacity=".8"/>
-        <path d="M452 137 L407 224 L355 194 L350 559" fill="none" stroke="#48434f" stroke-width="3" opacity=".8"/>
-        <path d="M45 137 L93 224 L114 213 L70 131 Z" fill="#17131f"/>
-        <path d="M455 137 L407 224 L386 213 L430 131 Z" fill="#17131f"/>
-        <path d="M45 137 L93 224 L114 213" fill="none" stroke="#777580" stroke-width="5"/>
-        <path d="M455 137 L407 224 L386 213" fill="none" stroke="#777580" stroke-width="5"/>
-        <path d="M150 559 Q250 586 350 559" fill="none" stroke="#4c4654" stroke-width="3"/>
-        <path d="M225 49 Q250 84 275 49" fill="none" stroke="#625b6b" stroke-width="10"/>
-        <path d="M230 50 Q250 76 270 50" fill="none" stroke="#050507" stroke-width="7"/>
-        <path d="M94 205 L110 220 L96 244 L80 229 Z" fill="#8735f5"/>
-        <path d="M406 205 L390 220 L404 244 L420 229 Z" fill="#8735f5"/>
-        <text x="250" y="151" text-anchor="middle" fill="#a66aff" font-family="Arial,sans-serif" font-size="31" font-weight="900">U</text>
-        <text data-back-name x="250" y="218" text-anchor="middle" fill="#fff" font-family="Barlow Condensed,Arial,sans-serif" font-size="32" font-style="italic" font-weight="900" letter-spacing="4">DEIN NAME</text>
-        <text data-back-number x="250" y="376" text-anchor="middle" fill="#fff" font-family="Barlow Condensed,Arial,sans-serif" font-size="132" font-style="italic" font-weight="900" opacity=".98" display="none">07</text>
-        <path d="M232 584 Q250 590 268 584" fill="none" stroke="#8735f5" stroke-width="4" opacity=".8"/>
-      </svg>
-      <span class="ultor-back-preview-note">ILLUSTRATIVE RÜCKANSICHT · LIVE-VORSCHAU</span>
-    `;
-
+    backView.setAttribute("aria-label", "Rückansicht des originalen ULTOR-Trikots mit Live-Personalisierung");
+    const backImage = document.createElement("img");
+    backImage.className = "ultor-back-jersey-image";
+    backImage.src = "/shop/jersey-back-nokto.webp";
+    backImage.alt = "Originale Rückansicht des schwarzen ULTOR ESPORTS Trikots";
+    backImage.loading = "eager";
+    backImage.decoding = "async";
+    const backPreviewName = document.createElement("strong");
+    backPreviewName.className = "ultor-back-personalized-name";
+    backPreviewName.textContent = "DEIN NAME";
+    const backPreviewNumber = document.createElement("strong");
+    backPreviewNumber.className = "ultor-back-personalized-number";
+    backPreviewNumber.textContent = "";
+    backPreviewNumber.hidden = true;
+    backView.append(backImage, backPreviewName, backPreviewNumber);
     visualStage.append(frontView, backView);
 
     if (personalizableProduct) {
@@ -1218,6 +1183,7 @@ function renderProductDetails(product) {
             const showBack = side === "back";
             frontView.hidden = showBack;
             backView.hidden = !showBack;
+            imageArea.classList.toggle("is-back-view", showBack);
             frontButton.classList.toggle("is-active", !showBack);
             backButton.classList.toggle("is-active", showBack);
             frontButton.setAttribute("aria-pressed", String(!showBack));
@@ -1302,32 +1268,16 @@ function renderProductDetails(product) {
     previewCaption.textContent = "VORSCHAU · WEISSE ULTOR-SCHRIFT";
     previewCaption.style.cssText = "font-size:9px;letter-spacing:.12em;color:#bda4dd";
     preview.append(previewName, previewNumber, previewCaption);
-    const backPreviewName = backView.querySelector("[data-back-name]");
-    const backPreviewNumber = backView.querySelector("[data-back-number]");
-
     function updatePersonalizationPreview() {
         const name = nameInput.value.trim().toUpperCase();
         const number = numberInput.value.trim();
-
         previewName.textContent = name || "DEIN NAME";
         previewNumber.textContent = number || "07";
         previewNumber.hidden = !number;
-
-        if (backPreviewName) {
-            backPreviewName.textContent = name || "DEIN NAME";
-            backPreviewName.setAttribute("font-size", name.length > 10 ? "24" : "32");
-            if (name.length > 10) {
-                backPreviewName.setAttribute("textLength", "205");
-                backPreviewName.setAttribute("lengthAdjust", "spacingAndGlyphs");
-            } else {
-                backPreviewName.removeAttribute("textLength");
-                backPreviewName.removeAttribute("lengthAdjust");
-            }
-        }
-        if (backPreviewNumber) {
-            backPreviewNumber.textContent = number;
-            backPreviewNumber.setAttribute("display", number ? "inline" : "none");
-        }
+        backPreviewName.textContent = name || "DEIN NAME";
+        backPreviewName.style.fontSize = name.length > 10 ? "clamp(14px, 2.1vw, 23px)" : "clamp(17px, 2.8vw, 31px)";
+        backPreviewNumber.textContent = number;
+        backPreviewNumber.hidden = !number;
     }
     nameInput.addEventListener("input", updatePersonalizationPreview);
     numberInput.addEventListener("input", updatePersonalizationPreview);
