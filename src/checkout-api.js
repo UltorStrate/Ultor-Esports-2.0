@@ -249,31 +249,7 @@ export async function handleCheckoutApi(request, env) {
       return json({ error: `Für ${product.name} ist kein gültiger Verkaufspreis hinterlegt.` }, 409);
     }
 
-    const rawPersonalization = raw?.personalization;
-    let personalization = null;
-    if (rawPersonalization && rawPersonalization.enabled === true) {
-      const isJersey = /jersey|trikot/i.test(String(product.slug || "") + " " + String(product.name || ""));
-      const rawName = typeof rawPersonalization.name === "string" ? rawPersonalization.name.trim() : "";
-      const rawNumber = typeof rawPersonalization.number === "string" ? rawPersonalization.number.trim() : "";
-      const customName = rawName.toUpperCase();
-      const customNumber = rawNumber;
-      if (!isJersey || rawName.length > 14 || rawNumber.length > 2 ||
-          (!customName && !customNumber) ||
-          !/^[\p{L}0-9 .'-]*$/u.test(customName) ||
-          !/^\d{0,2}$/.test(customNumber)) {
-        return json({ error: "Die Trikot-Personalisierung ist ungültig." }, 400);
-      }
-      personalization = {
-        enabled: true,
-        name: customName,
-        number: customNumber,
-        font: "ultor",
-        color: "white",
-        surcharge_cents: 500
-      };
-    }
-
-    const priceCents = basePriceCents + (personalization ? 500 : 0);
+    const priceCents = basePriceCents;
     const lineTotal = priceCents * quantity;
     subtotalCents += lineTotal;
     if (!Number.isSafeInteger(subtotalCents) || subtotalCents > 100000000) {
@@ -300,10 +276,7 @@ export async function handleCheckoutApi(request, env) {
       unit_price_cents: priceCents,
       line_total_cents: lineTotal,
       product_snapshot_json: JSON.stringify({ id: product.id, name: product.name, slug: product.slug }),
-      variant_snapshot_json: JSON.stringify({
-        ...(variant || {}),
-        ...(personalization ? { personalization } : {})
-      })
+      variant_snapshot_json: JSON.stringify(variant || {})
     });
   }
 
