@@ -167,17 +167,42 @@ export async function handleAdminOrdersApi(request, env, auth) {
     ).bind(orderId).first();
     if (!testEvent) return json({ error: "Nur ausdrücklich gekennzeichnete Testbestellungen dürfen gelöscht werden." }, 409);
     if (order.payment_status !== "unpaid" || order.printful_order_id ||
-        !["unfulfilled", "not_submitted"].includes(order.fulfillment_status)) {
+        order.fulfillment_status !== "unfulfilled") {
       return json({ error: "Die Testbestellung ist nicht mehr sicher löschbar (Zahlung oder Fulfillment vorhanden)." }, 409);
     }
     const fulfillment = await env.DB.prepare(
       "SELECT status FROM shop_printful_fulfillments WHERE order_id = ?"
     ).bind(orderId).first();
-    if (fulfillment && !["not_submitted", "failed"].includes(fulfillment.status)) {
-      return json({ error: "Für diese Bestellung besteht bereits ein Printful-Fulfillment-Vorgang." }, 409);
+    // Even a failed submission can be ambiguous (e.g. timeout after Printful
+    // accepted the request). Only a record that was never submitted is deletable.
+    if (fulfillment && fulfillment.status !== "not_submitted") {
+      return json({ error: "Für diese Bestellung existiert bereits ein Printful-Fulfillment-Vorgang. Bitte nicht löschen." }, 409);
+    }
+
+    // Re-check all safety conditions atomically in the DELETE statement.
+    // Child items, events and fulfillment rows are removed via ON DELETE CASCADE.
+    const deletion = await env.DB.prepare(`
+      DELETE FROM shop_orders
+      WHERE id = ?
+        AND payment_status = 'unpaid'
+        AND fulfillment_status = 'unfulfilled'
+        AND printful_order_id IS NULL
+        AND EXISTS (
+          SELECT 1 FROM shop_order_events e
+          WHERE e.order_id = shop_orders.id
+            AND e.event_type = 'test_order_created'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM shop_printful_fulfillments f
+          WHERE f.order_id = shop_orders.id
+            AND f.status <> 'not_submitted'
+        )
+    `).bind(orderId).run();
+
+    if (!deletion.meta || deletion.meta.changes !== 1) {
+      return json({ error: "Die Bestellung hat sich zwischenzeitlich geändert und wurde nicht gelöscht. Bitte aktualisieren." }, 409);
     }
     await audit(env, current.user.id, "shop.order.test_deleted", orderId, { order_number: order.order_number });
-    await env.DB.prepare("DELETE FROM shop_orders WHERE id = ?").bind(orderId).run();
     return json({ success: true, message: "Testbestellung wurde gelöscht." });
   }
 
