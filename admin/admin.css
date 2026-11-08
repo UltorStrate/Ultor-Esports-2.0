@@ -2296,3 +2296,11 @@ body.dashboard-page .coming-soon {
 .ultor-order-note-form{display:grid;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border,rgba(255,255,255,.12))}
 .ultor-order-note-form textarea{width:100%;padding:12px;background:var(--surface,#100d17);border:1px solid var(--border,rgba(255,255,255,.14));border-radius:6px;color:var(--text);font:inherit}
 @media(max-width:760px){.ultor-orders-toolbar{grid-template-columns:1fr}.ultor-order-row{grid-template-columns:1fr 1fr;gap:10px}.ultor-order-row button{grid-column:1/-1}.ultor-order-detail-grid{grid-template-columns:1fr}.ultor-order-items{display:block;overflow-x:auto}}
+
+
+/* ULTOR ORDER STATUS EDITOR */
+.ultor-order-status-editor{margin-top:18px;padding:15px;border:1px solid rgba(166,106,255,.25);border-radius:7px;background:rgba(139,53,245,.045)}
+.ultor-order-status-editor h4{margin:0 0 12px}
+.ultor-order-status-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ultor-order-status-controls select{flex:1 1 220px;min-height:42px;padding:9px 12px;border:1px solid var(--border,rgba(255,255,255,.14));border-radius:6px;background:var(--surface,#100d17);color:var(--text);font:inherit}
+.ultor-order-status-editor>p{margin:10px 0 0;font-size:11px}
