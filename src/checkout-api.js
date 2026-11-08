@@ -31,7 +31,7 @@ function testAccessConfigured(env) {
     env.SHOP_TEST_ACCESS_CODE.length <= 256;
 }
 
-function constantTimeEqual(a, b) {
+function testAccessConfiguredForStatus(env) {\n  return typeof env.SHOP_TEST_ACCESS_CODE === "string" &&\n    env.SHOP_TEST_ACCESS_CODE.length >= 32 &&\n    env.SHOP_TEST_ACCESS_CODE.length <= 256;\n}\n\nfunction constantTimeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
     return false;
   }
@@ -53,18 +53,25 @@ export async function handleCheckoutApi(request, env) {
   const path = url.pathname.replace(/\/+$/, "") || "/";
 
   if (path === "/api/checkout/config" && request.method === "GET") {
+    const testModeRequested = env.SHOP_CHECKOUT_MODE === "test";
+    const testAccessConfigured = testAccessConfiguredForStatus(env);
+    const shippingCents = Number(env.SHOP_TEST_SHIPPING_CENTS);
+    const shippingConfigured = Number.isInteger(shippingCents) &&
+      shippingCents >= 0 && shippingCents <= 50000;
+    const available = testModeRequested && testAccessConfigured && shippingConfigured;
+
     return json({
       success: true,
-      mode: checkoutMode(env),
-      checkout_available: checkoutMode(env) === "test" &&
-        Number.isInteger(Number(env.SHOP_TEST_SHIPPING_CENTS)) &&
-        Number(env.SHOP_TEST_SHIPPING_CENTS) >= 0,
-      shipping_cents: Number.isInteger(Number(env.SHOP_TEST_SHIPPING_CENTS)) &&
-        Number(env.SHOP_TEST_SHIPPING_CENTS) >= 0
-          ? Number(env.SHOP_TEST_SHIPPING_CENTS)
-          : null,
+      mode: testModeRequested ? "test" : "disabled",
+      checkout_available: available,
+      shipping_cents: shippingConfigured ? shippingCents : null,
+      test_access_configured: testAccessConfigured,
+      shipping_configured: shippingConfigured,
       payments_enabled: false,
-      message: "Der Checkout befindet sich im Vorbereitungsmodus. Es werden keine Zahlungen ausgelöst."
+      printful_submission_enabled: false,
+      message: available
+        ? "Der technische Test-Checkout ist aktiv. Es werden weder Zahlungen ausgelöst noch Aufträge an Printful übermittelt."
+        : "Der Test-Checkout ist noch nicht vollständig konfiguriert. Prüfe SHOP_CHECKOUT_MODE, SHOP_TEST_ACCESS_CODE und SHOP_TEST_SHIPPING_CENTS."
     });
   }
 
