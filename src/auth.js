@@ -23,7 +23,10 @@ export function createAuth(env) {
         baseURL: env.BETTER_AUTH_URL,
         secret: env.BETTER_AUTH_SECRET,
 
+        // Die konfigurierte kanonische URL wird zur Laufzeit als Origin vertraut.
+        // Der bisherige workers.dev-Zugang bleibt für Tests und Rollback erhalten.
         trustedOrigins: [
+          env.BETTER_AUTH_URL,
           "https://ultor-esports-2-0.yoriba03.workers.dev"
         ],
 
