@@ -68,7 +68,11 @@ Once confirmed:
 
 ## Current stop conditions
 
-Do not merge/deploy or change DNS until:
-- the exact registered domain and Cloudflare DNS access are confirmed;
-- the correct canonical hostname is chosen;
-- operator/legal details and open privacy-policy items are verified.
+The exact domain and DNS-account access have been confirmed by the operator. The following checks remain before calling the site fully launch-ready:
+- Confirm that the `ultor-esports.com` zone is **Active** in Cloudflare and the registrar delegation matches its assigned nameservers.
+- Confirm any existing MX, TXT, SPF, DKIM, DMARC and verification records remain intact; do not change nameservers without copying the current DNS zone and preserving mail records.
+- Reconfirm the operator details in the imprint and resolve any applicable register, VAT/business-ID, consumer-dispute and MStV statements.
+- Review Cloudflare's actual DPA/sub-processors/international-transfer terms and set/document actual log and CMS deletion periods.
+- Either self-host Google Fonts or finalize the privacy notice for the external fonts requests.
+- Complete browser storage/network audit, shop test and CMS login checks on the custom domain.
+- The privacy page is currently a noindex working draft until the above privacy-specific checks have been confirmed.
