@@ -23,19 +23,35 @@
     <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": "https://ultor-esports.com/#organization",
-  "name": "ULTOR ESPORTS",
-  "url": "https://ultor-esports.com/",
-  "logo": "https://ultor-esports.com/assets/logos/ultor-logo-transparent.png",
-  "email": "management@ultor-esports.com",
-  "description": "Discover ULTOR ESPORTS, a League of Legends esports organization focused on competitive teams, player development and community.",
-  "sameAs": [
-    "https://www.youtube.com/@ULTORESPORTS",
-    "https://www.twitch.tv/ultoresports",
-    "https://www.tiktok.com/@ultoresports",
-    "https://x.com/ultoresports",
-    "https://discord.com/invite/dAZfn2vp3X"
+  "@graph": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://ultor-esports.com/#organization",
+      "name": "ULTOR ESPORTS",
+      "url": "https://ultor-esports.com/",
+      "logo": "https://ultor-esports.com/assets/logos/ultor-logo-transparent.png",
+      "email": "management@ultor-esports.com",
+      "description": "Discover ULTOR ESPORTS, a League of Legends esports organization focused on competitive teams, player development and community.",
+      "sameAs": [
+        "https://www.youtube.com/@ULTORESPORTS",
+        "https://www.twitch.tv/ultoresports",
+        "https://www.tiktok.com/@ultoresports",
+        "https://x.com/ultoresports",
+        "https://discord.com/invite/dAZfn2vp3X"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://ultor-esports.com/#website",
+      "url": "https://ultor-esports.com/",
+      "name": "ULTOR ESPORTS",
+      "alternateName": "ULTOR",
+      "publisher": {
+        "@id": "https://ultor-esports.com/#organization"
+      },
+      "inLanguage": "en"
+    }
   ]
 }
     </script>
