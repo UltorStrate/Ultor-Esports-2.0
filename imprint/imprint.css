@@ -1,0 +1,164 @@
+/* ULTOR ESPORTS – LEGAL PAGE */
+.legal-page {
+    min-height: 70vh;
+    background: #09090d;
+    color: #f4f4f7;
+}
+
+.legal-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 105px 0 70px;
+    background:
+        radial-gradient(circle at 78% 28%, rgba(126, 52, 238, .22), transparent 34%),
+        linear-gradient(135deg, #111018 0%, #09090d 72%);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.legal-hero::after {
+    content: "U.";
+    position: absolute;
+    right: 8%;
+    bottom: -70px;
+    color: rgba(255, 255, 255, .025);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(230px, 35vw, 440px);
+    font-weight: 900;
+    line-height: .8;
+    pointer-events: none;
+}
+
+.legal-hero .container,
+.legal-content {
+    width: 90%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.legal-eyebrow,
+.legal-kicker {
+    display: inline-block;
+    color: #a879ff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.legal-hero h1 {
+    position: relative;
+    z-index: 1;
+    margin: 18px 0 12px;
+    color: #fff;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(58px, 9vw, 108px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: .95;
+}
+
+.legal-hero h1 span {
+    color: #a879ff;
+}
+
+.legal-hero p {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+    margin: 18px 0 0;
+    color: #b8b7c3;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+.legal-content-section {
+    padding: 70px 0 100px;
+}
+
+.legal-content {
+    max-width: 900px;
+}
+
+.legal-card {
+    padding: clamp(25px, 5vw, 48px);
+    background: linear-gradient(145deg, rgba(24, 23, 33, .98), rgba(14, 14, 20, .98));
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 12px;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, .22);
+}
+
+.legal-card h2 {
+    margin: 14px 0 34px;
+    color: #fff;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: .5px;
+}
+
+.legal-card h3 {
+    margin: 28px 0 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.legal-card p {
+    margin: 0;
+    color: #c5c4ce;
+    font-size: 14px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+.legal-card a {
+    color: #b78aff;
+    text-decoration: none;
+}
+
+.legal-card a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.legal-card .legal-note {
+    margin-top: 35px;
+    padding-top: 22px;
+    color: #8f8e9b;
+    border-top: 1px solid rgba(255, 255, 255, .09);
+    font-size: 12px;
+}
+
+.legal-back-link {
+    margin-top: 28px;
+}
+
+.legal-back-link a {
+    color: #b78aff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-decoration: none;
+}
+
+.legal-back-link a:hover {
+    color: #fff;
+}
+
+@media (max-width: 650px) {
+    .legal-hero {
+        padding: 78px 0 55px;
+    }
+
+    .legal-content-section {
+        padding: 45px 0 70px;
+    }
+
+    .legal-card h2 {
+        font-size: 32px;
+    }
+
+    .legal-card p {
+        font-size: 13px;
+    }
+}
