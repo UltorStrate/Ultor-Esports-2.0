@@ -6,21 +6,21 @@ Stand: 10.11.2026
 
 - GitHub repository: `UltorStrate/Ultor-Esports-2.0`
 - Production/default branch at review time: `main`
-- Separate preparation branch: `feature/legal-domain-launch`
+- Release pull request: [#3](https://github.com/UltorStrate/Ultor-Esports-2.0/pull/3), merged to `main` on 10.11.2026
 - Cloudflare Worker name: `ultor-esports-2-0`
 - Worker entry point: `src/worker.js`
-- Current public Worker URL: `https://ultor-esports-2-0.yoriba03.workers.dev`
-- Current `BETTER_AUTH_URL` in `wrangler.jsonc`: the same `workers.dev` URL
+- Last previously confirmed Worker URL: `https://ultor-esports-2-0.yoriba03.workers.dev`
+- `main` now configures `BETTER_AUTH_URL=https://ultor-esports.com`; the live Worker configuration has not been verified as deployed yet.
 - Static assets: repository root, bound as `ASSETS`; `run_worker_first` is enabled.
 - Data services: Cloudflare D1 (`ultor-cms`) and R2 (`ultor-media`).
 
-The `main` branch has not been changed or deployed as part of this preparation.
+The legal/domain/favicons release was merged to `main` through PR #3. No Cloudflare deployment or DNS mutation was performed by this preparation.
 
 ## Legal pages
 
 - `/imprint/index.html` already exists on `main`. Its operator and contact details are prefilled. The operator identity, business designation, postal address and email must be reconfirmed by the operator before launch.
 - `/privacy/index.html` did not exist on `main`, although the homepage footer already links to `/privacy/`.
-- A first privacy-policy draft was added on `feature/legal-domain-launch`. It is marked noindex and explicitly identifies itself as an internal draft. Do not publish this draft as final until all checks below are completed.
+- The new `/privacy/` page is now in `main`. It remains marked noindex and identifies itself as a working draft until the actual Cloudflare-account settings, data-retention practices and legal details have been verified.
 - Both pages use the existing ULTOR legal styling in `/imprint/imprint.css`.
 
 ### Legal facts and decisions to confirm
@@ -42,13 +42,13 @@ The `main` branch has not been changed or deployed as part of this preparation.
 
 The operator confirmed on 10.11.2026 that `ultor-esports.com` is the intended registered domain and that they have access to its DNS management. The project is prepared to use `https://ultor-esports.com` as the canonical hostname. Cloudflare zone activation and registrar nameserver delegation have not been independently verified from the repository.
 
-Once confirmed:
+Current configuration and deployment sequence:
 
 1. The preparation branch now contains Wrangler Custom Domain routes for `ultor-esports.com` and `www.ultor-esports.com`, with `previews_enabled: false`. It sets `BETTER_AUTH_URL` to `https://ultor-esports.com` and redirects `www` to the apex hostname in the Worker.
 2. Cloudflare requires an active zone for the domain. On deployment, the Custom Domain configuration should create the corresponding DNS records and TLS certificates. Do not add competing A/CNAME records manually.
 3. Verify the Cloudflare zone shows **Active** and that the authoritative nameservers at the registrar are exactly the two nameservers assigned in the Cloudflare zone. If not active, finish activation before deploying the custom-domain routes.
 4. The preparation branch changes Better Auth's trusted-origin list to use `env.BETTER_AUTH_URL` and preserves the existing `workers.dev` origin for rollback/testing. `BETTER_AUTH_SECRET` remains a secret and must never be committed.
-5. Merge the reviewed preparation branch and deploy only after Cloudflare confirms the zone is active and legal sign-off is complete. Re-check environment variables and bindings after deployment.
+5. After zone activation and legal sign-off, deploy the merged `main` configuration using the connected Cloudflare Workers Build pipeline (if enabled) or `npx wrangler deploy` from the repository root. Re-check environment variables and bindings after deployment.
 
 ## Post-deployment smoke test
 
