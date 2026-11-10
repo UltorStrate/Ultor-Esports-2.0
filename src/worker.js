@@ -36,6 +36,15 @@ const BLOCKED_FILES = [
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Use the apex hostname as the single canonical public address.
+    if (url.hostname.toLowerCase() === "www.ultor-esports.com") {
+      return Response.redirect(
+        `https://ultor-esports.com${url.pathname}${url.search}`,
+        301
+      );
+    }
+
     let pathname;
 
     // URL-Pfad sicher dekodieren
