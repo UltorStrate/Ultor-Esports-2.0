@@ -40,17 +40,15 @@ The `main` branch has not been changed or deployed as part of this preparation.
 
 ## Custom-domain connection (Cloudflare)
 
-The intended hostname has **not** been confirmed. The email address in the imprint suggests `ultor-esports.com`, but this is not proof that the domain is registered, owned or intended as the canonical website address. Do not change DNS until the operator confirms the exact domain and access.
+The operator confirmed on 10.11.2026 that `ultor-esports.com` is the intended registered domain and that they have access to its DNS management. The project is prepared to use `https://ultor-esports.com` as the canonical hostname. Cloudflare zone activation and registrar nameserver delegation have not been independently verified from the repository.
 
 Once confirmed:
 
-1. Confirm that the domain is registered and that its DNS zone is active in the Cloudflare account. If DNS is managed elsewhere, follow Cloudflare's current zone-activation/nameserver process first.
-2. In Cloudflare Dashboard open **Workers & Pages → Overview → ultor-esports-2-0 → Settings → Domains & Routes → Add → Custom Domain**.
-3. Enter the confirmed canonical hostname (for example, the apex/root hostname if that is the desired primary address). Cloudflare's Custom Domain flow creates the required DNS record and provisions the TLS certificate for the Worker. Do not manually invent an A or CNAME target.
-4. Choose one canonical hostname (root or www). Add/redirect the alternate hostname only after confirming the canonical choice and testing authentication on it.
-5. Update the Worker variable `BETTER_AUTH_URL` to the final canonical `https://...` hostname. Keep `BETTER_AUTH_SECRET` as a secret; never commit its value.
-6. The preparation branch changes Better Auth's trusted-origin list to use `env.BETTER_AUTH_URL` and preserve the existing `workers.dev` origin for rollback/testing.
-7. Merge the reviewed preparation branch and deploy only after the hostname is confirmed and all legal placeholders/checks are resolved. Re-check environment variables and bindings after deployment.
+1. The preparation branch now contains Wrangler Custom Domain routes for `ultor-esports.com` and `www.ultor-esports.com`, with `previews_enabled: false`. It sets `BETTER_AUTH_URL` to `https://ultor-esports.com` and redirects `www` to the apex hostname in the Worker.
+2. Cloudflare requires an active zone for the domain. On deployment, the Custom Domain configuration should create the corresponding DNS records and TLS certificates. Do not add competing A/CNAME records manually.
+3. Verify the Cloudflare zone shows **Active** and that the authoritative nameservers at the registrar are exactly the two nameservers assigned in the Cloudflare zone. If not active, finish activation before deploying the custom-domain routes.
+4. The preparation branch changes Better Auth's trusted-origin list to use `env.BETTER_AUTH_URL` and preserves the existing `workers.dev` origin for rollback/testing. `BETTER_AUTH_SECRET` remains a secret and must never be committed.
+5. Merge the reviewed preparation branch and deploy only after Cloudflare confirms the zone is active and legal sign-off is complete. Re-check environment variables and bindings after deployment.
 
 ## Post-deployment smoke test
 
