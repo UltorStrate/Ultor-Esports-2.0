@@ -4,7 +4,7 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-11-06",
   "vars": {
-    "BETTER_AUTH_URL": "https://ultor-esports-2-0.yoriba03.workers.dev",
+    "BETTER_AUTH_URL": "https://ultor-esports.com",
     "SHOP_CHECKOUT_MODE": "test",
     "SHOP_TEST_SHIPPING_CENTS": "389"
   },
@@ -26,5 +26,15 @@
       "database_id": "d1aa2bb9-2514-4ee7-8fff-b7bc51dcca48"
     }
   ],
-  "workers_dev": true
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "ultor-esports.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.ultor-esports.com",
+      "custom_domain": true
+    }
+  ]
 }
