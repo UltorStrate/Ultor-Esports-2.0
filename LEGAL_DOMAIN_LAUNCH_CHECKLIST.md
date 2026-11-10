@@ -10,7 +10,8 @@ Stand: 10.11.2026
 - Cloudflare Worker name: `ultor-esports-2-0`
 - Worker entry point: `src/worker.js`
 - Last previously confirmed Worker URL: `https://ultor-esports-2-0.yoriba03.workers.dev`
-- `main` now configures `BETTER_AUTH_URL=https://ultor-esports.com`; the live Worker configuration has not been verified as deployed yet.
+- Recovery commit `120f6e63` explicitly sets `workers_dev: true` and restores `BETTER_AUTH_URL` to the previously used `workers.dev` hostname. The unresolvable Custom Domain routes were removed from Wrangler until the Cloudflare zone is active.
+- The recovery config is committed to `main`; Cloudflare must complete a new successful build/deploy before the `workers.dev` URL is available again.
 - Static assets: repository root, bound as `ASSETS`; `run_worker_first` is enabled.
 - Data services: Cloudflare D1 (`ultor-cms`) and R2 (`ultor-media`).
 
@@ -44,10 +45,10 @@ The operator confirmed on 10.11.2026 that `ultor-esports.com` is the intended re
 
 Current configuration and deployment sequence:
 
-1. The preparation branch now contains Wrangler Custom Domain routes for `ultor-esports.com` and `www.ultor-esports.com`, with `previews_enabled: false`. It sets `BETTER_AUTH_URL` to `https://ultor-esports.com` and redirects `www` to the apex hostname in the Worker.
-2. Cloudflare requires an active zone for the domain. On deployment, the Custom Domain configuration should create the corresponding DNS records and TLS certificates. Do not add competing A/CNAME records manually.
-3. Verify the Cloudflare zone shows **Active** and that the authoritative nameservers at the registrar are exactly the two nameservers assigned in the Cloudflare zone. If not active, finish activation before deploying the custom-domain routes.
-4. The preparation branch changes Better Auth's trusted-origin list to use `env.BETTER_AUTH_URL` and preserves the existing `workers.dev` origin for rollback/testing. `BETTER_AUTH_SECRET` remains a secret and must never be committed.
+1. Do not add Custom Domain routes to Wrangler until `ultor-esports.com` exists as an active DNS zone in the same Cloudflare account used for the Worker. Wrangler currently has no custom routes and explicitly sets `workers_dev: true` as a recovery measure.
+2. First verify/activate the zone in Cloudflare Websites. If the DNS zone is currently managed elsewhere, import the existing DNS records and preserve MX, TXT, SPF, DKIM, DMARC and other verification records before changing nameservers at the registrar. Do not change nameservers until the records are reviewed.
+3. Verify the Cloudflare zone shows **Active** and that the registrar uses the two nameservers assigned by Cloudflare. Only then configure the apex and www Custom Domains from Workers & Pages → ultor-esports-2-0 → Settings → Domains & Routes.
+4. After connecting the custom domains, set `BETTER_AUTH_URL=https://ultor-esports.com` in the Worker and keep both the custom domain and the `workers.dev` origin trusted. `BETTER_AUTH_SECRET` remains a secret and must never be committed.
 5. After zone activation and legal sign-off, deploy the merged `main` configuration using the connected Cloudflare Workers Build pipeline (if enabled) or `npx wrangler deploy` from the repository root. Re-check environment variables and bindings after deployment.
 
 ## Post-deployment smoke test
