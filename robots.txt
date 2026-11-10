@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Private administration interface
+Disallow: /admin/
+
+Sitemap: https://ultor-esports.com/sitemap.xml
